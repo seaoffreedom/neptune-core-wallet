@@ -34,7 +34,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
         window.electronAPI.peer.getActive(network),
         window.electronAPI.peer.getBanned(network),
       ]);
-      console.log(`✅ Peers loaded for network '${network}':`, {
+      console.log("✅ Peers loaded for network '" + network + "':", {
         active: active.length,
         banned: banned.length,
         activeDetails: active,

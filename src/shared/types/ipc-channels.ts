@@ -5,272 +5,272 @@
  * Ensures type safety for all IPC operations.
  */
 
-import type { IpcChannel } from '../constants/ipc-channels';
+import type { IpcChannel } from "../constants/ipc-channels";
 
 // Base IPC message structure
-export interface IpcMessage<T = unknown> {
-  channel: IpcChannel;
-  data: T;
+export interface IpcMessage<T = any> {
+    channel: IpcChannel;
+    data: T;
 }
 
 // App lifecycle types
 export interface AppQuitRequest {
-  force?: boolean;
+    force?: boolean;
 }
 
 export interface AppVersionResponse {
-  version: string;
-  electronVersion: string;
-  nodeVersion: string;
+    version: string;
+    electronVersion: string;
+    nodeVersion: string;
 }
 
 // Window management types
 export interface WindowTitleRequest {
-  title: string;
+    title: string;
 }
 
 export interface WindowMaximizedResponse {
-  isMaximized: boolean;
+    isMaximized: boolean;
 }
 
 // File operation types
 export interface FileDialogRequest {
-  title?: string;
-  defaultPath?: string;
-  filters?: Array<{
-    name: string;
-    extensions: string[];
-  }>;
-  properties?: Array<
-    'openFile' | 'openDirectory' | 'multiSelections' | 'showHiddenFiles'
-  >;
+    title?: string;
+    defaultPath?: string;
+    filters?: Array<{
+        name: string;
+        extensions: string[];
+    }>;
+    properties?: Array<
+        "openFile" | "openDirectory" | "multiSelections" | "showHiddenFiles"
+    >;
 }
 
 export interface FileDialogResponse {
-  canceled: boolean;
-  filePaths: string[];
+    canceled: boolean;
+    filePaths: string[];
 }
 
 export interface FileReadRequest {
-  path: string;
-  encoding?: BufferEncoding;
+    path: string;
+    encoding?: BufferEncoding;
 }
 
 export interface FileReadResponse {
-  success: boolean;
-  data?: string;
-  error?: string;
+    success: boolean;
+    data?: string;
+    error?: string;
 }
 
 export interface FileWriteRequest {
-  path: string;
-  data: string;
-  encoding?: BufferEncoding;
+    path: string;
+    data: string;
+    encoding?: BufferEncoding;
 }
 
 export interface FileWriteResponse {
-  success: boolean;
-  error?: string;
+    success: boolean;
+    error?: string;
 }
 
 export interface FileExistsRequest {
-  path: string;
+    path: string;
 }
 
 export interface FileExistsResponse {
-  exists: boolean;
+    exists: boolean;
 }
 
 export interface FileDeleteRequest {
-  path: string;
+    path: string;
 }
 
 export interface FileDeleteResponse {
-  success: boolean;
-  error?: string;
+    success: boolean;
+    error?: string;
 }
 
 // Settings management types
 export interface SettingsGetRequest {
-  key: string;
+    key: string;
 }
 
-export interface SettingsGetResponse<T = unknown> {
-  success: boolean;
-  value?: T;
-  error?: string;
+export interface SettingsGetResponse<T = any> {
+    success: boolean;
+    value?: T;
+    error?: string;
 }
 
-export interface SettingsSetRequest<T = unknown> {
-  key: string;
-  value: T;
+export interface SettingsSetRequest<T = any> {
+    key: string;
+    value: T;
 }
 
 export interface SettingsSetResponse {
-  success: boolean;
-  error?: string;
+    success: boolean;
+    error?: string;
 }
 
 export interface SettingsResetRequest {
-  key?: string; // If not provided, resets all settings
+    key?: string; // If not provided, resets all settings
 }
 
 export interface SettingsResetResponse {
-  success: boolean;
-  error?: string;
+    success: boolean;
+    error?: string;
 }
 
 export interface SettingsExportRequest {
-  path?: string; // If not provided, uses default location
+    path?: string; // If not provided, uses default location
 }
 
 export interface SettingsExportResponse {
-  success: boolean;
-  path?: string;
-  error?: string;
+    success: boolean;
+    path?: string;
+    error?: string;
 }
 
 export interface SettingsImportRequest {
-  path: string;
+    path: string;
 }
 
 export interface SettingsImportResponse {
-  success: boolean;
-  error?: string;
+    success: boolean;
+    error?: string;
 }
 
 // Process management types
 export interface ProcessSpawnRequest {
-  command: string;
-  args?: string[];
-  options?: {
-    cwd?: string;
-    env?: Record<string, string>;
-    shell?: boolean;
-  };
+    command: string;
+    args?: string[];
+    options?: {
+        cwd?: string;
+        env?: Record<string, string>;
+        shell?: boolean;
+    };
 }
 
 export interface ProcessSpawnResponse {
-  success: boolean;
-  pid?: number;
-  error?: string;
+    success: boolean;
+    pid?: number;
+    error?: string;
 }
 
 export interface ProcessKillRequest {
-  pid: number;
-  signal?: string;
+    pid: number;
+    signal?: string;
 }
 
 export interface ProcessKillResponse {
-  success: boolean;
-  error?: string;
+    success: boolean;
+    error?: string;
 }
 
 export interface ProcessStatusRequest {
-  pid: number;
+    pid: number;
 }
 
 export interface ProcessStatusResponse {
-  success: boolean;
-  running?: boolean;
-  error?: string;
+    success: boolean;
+    running?: boolean;
+    error?: string;
 }
 
 // Wallet operation types
 export interface WalletCreateRequest {
-  name: string;
-  password?: string;
-  path?: string;
+    name: string;
+    password?: string;
+    path?: string;
 }
 
 export interface WalletCreateResponse {
-  success: boolean;
-  walletId?: string;
-  error?: string;
+    success: boolean;
+    walletId?: string;
+    error?: string;
 }
 
 export interface WalletLoadRequest {
-  path: string;
-  password?: string;
+    path: string;
+    password?: string;
 }
 
 export interface WalletLoadResponse {
-  success: boolean;
-  wallet?: {
-    id: string;
-    name: string;
-    addresses: string[];
-  };
-  error?: string;
+    success: boolean;
+    wallet?: {
+        id: string;
+        name: string;
+        addresses: string[];
+    };
+    error?: string;
 }
 
 export interface WalletSaveRequest {
-  walletId: string;
-  path: string;
-  password?: string;
+    walletId: string;
+    path: string;
+    password?: string;
 }
 
 export interface WalletSaveResponse {
-  success: boolean;
-  error?: string;
+    success: boolean;
+    error?: string;
 }
 
 export interface WalletEncryptRequest {
-  walletId: string;
-  password: string;
+    walletId: string;
+    password: string;
 }
 
 export interface WalletEncryptResponse {
-  success: boolean;
-  error?: string;
+    success: boolean;
+    error?: string;
 }
 
 export interface WalletDecryptRequest {
-  walletId: string;
-  password: string;
+    walletId: string;
+    password: string;
 }
 
 export interface WalletDecryptResponse {
-  success: boolean;
-  error?: string;
+    success: boolean;
+    error?: string;
 }
 
 // System integration types
 export interface NotificationRequest {
-  title: string;
-  body?: string;
-  icon?: string;
-  silent?: boolean;
+    title: string;
+    body?: string;
+    icon?: string;
+    silent?: boolean;
 }
 
 export interface NotificationResponse {
-  success: boolean;
-  error?: string;
+    success: boolean;
+    error?: string;
 }
 
 export interface PlatformResponse {
-  platform: string;
-  arch: string;
+    platform: string;
+    arch: string;
 }
 
 export interface SystemPathRequest {
-  name:
-    | 'home'
-    | 'appData'
-    | 'userData'
-    | 'temp'
-    | 'exe'
-    | 'module'
-    | 'desktop'
-    | 'documents'
-    | 'downloads'
-    | 'music'
-    | 'pictures'
-    | 'videos';
+    name:
+        | "home"
+        | "appData"
+        | "userData"
+        | "temp"
+        | "exe"
+        | "module"
+        | "desktop"
+        | "documents"
+        | "downloads"
+        | "music"
+        | "pictures"
+        | "videos";
 }
 
 export interface SystemPathResponse {
-  success: boolean;
-  path?: string;
-  error?: string;
+    success: boolean;
+    path?: string;
+    error?: string;
 }
