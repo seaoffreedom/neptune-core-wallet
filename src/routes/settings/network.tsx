@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { NetworkSettingsForm } from '@/components/settings/network-settings-form';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,6 +8,7 @@ import {
   networkSettingsSchema,
 } from '@/lib/validation/settings-schemas';
 import { useSettingsForm } from '@/renderer/hooks/use-settings-form';
+import { useNetworkSettings } from '@/store/neptune-core-settings.store';
 
 export const Route = createFileRoute('/settings/network')({
   component: NetworkSettings,
@@ -17,6 +19,14 @@ function NetworkSettings() {
     category: 'network',
     schema: networkSettingsSchema,
   });
+
+  // Watch for Zustand store changes and reset form accordingly
+  const networkSettings = useNetworkSettings();
+  useEffect(() => {
+    if (networkSettings && !isLoading) {
+      form.reset(networkSettings);
+    }
+  }, [networkSettings, form, isLoading]);
 
   return (
     <PageContainer>
