@@ -4,6 +4,7 @@ import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { SidebarWrapper } from '@/components/layout/SidebarWrapper';
 import { SplashScreen } from '@/components/splash/SplashScreen';
+import { Toaster } from '@/components/ui/sonner';
 import { useAutoPolling } from '@/renderer/hooks/use-onchain-data';
 
 const MainApp = () => {
@@ -22,6 +23,7 @@ const MainApp = () => {
         </main>
       </div>
       <Footer />
+      <Toaster />
     </div>
   );
 };
