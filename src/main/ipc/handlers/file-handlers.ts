@@ -4,9 +4,9 @@
  * Handles file-related IPC communication between main and renderer processes.
  */
 
-import fs from "fs-extra";
 import path from "node:path";
 import { dialog, ipcMain } from "electron";
+import { readFileWithRetry, writeFileWithRetry, fileExistsWithRetry } from "../../utils/async-file-operations";
 import { IPC_CHANNELS } from "../../../shared/constants/ipc-channels";
 import type {
     FileDeleteRequest,
@@ -84,8 +84,10 @@ export async function handleFileRead(
     request: FileReadRequest,
 ): Promise<FileReadResponse> {
     try {
-        const data = await fs.readFile(request.path, {
+        const data = await readFileWithRetry(request.path, {
             encoding: request.encoding || "utf8",
+            retries: 2,
+            timeout: 3000
         });
         return {
             success: true,
@@ -108,11 +110,11 @@ export async function handleFileWrite(
     request: FileWriteRequest,
 ): Promise<FileWriteResponse> {
     try {
-        // Ensure directory exists using fs-extra
-        await fs.ensureDir(path.dirname(request.path));
-
-        await fs.writeFile(request.path, request.data, {
+        // Ensure directory exists
+        await writeFileWithRetry(request.path, request.data, {
             encoding: request.encoding || "utf8",
+            retries: 2,
+            timeout: 3000
         });
         return {
             success: true,
@@ -134,8 +136,8 @@ export async function handleFileExists(
     request: FileExistsRequest,
 ): Promise<FileExistsResponse> {
     try {
-        await fs.access(request.path);
-        return { exists: true };
+        const exists = await fileExistsWithRetry(request.path, { retries: 2, timeout: 2000 });
+        return { exists };
     } catch {
         return { exists: false };
     }

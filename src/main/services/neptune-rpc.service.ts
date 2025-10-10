@@ -8,7 +8,6 @@
 import { Mutex } from "async-mutex";
 import ky from "ky";
 import pino from "pino";
-import { getCacheService } from "./cache.service";
 
 const logger = pino({ level: "info" });
 
@@ -62,7 +61,6 @@ export class NeptuneRpcService {
     private abortController?: AbortController;
     private pendingRequests = new Set<number>();
     private requestMutex = new Mutex();
-    private cache = getCacheService();
 
     constructor(rpcPort: number = 9801) {
         this.rpcUrl = `http://localhost:${rpcPort}`;
@@ -74,13 +72,9 @@ export class NeptuneRpcService {
     setCookie(cookie: string): void {
         this.cookie = cookie;
         this.isConnected = true;
-
-        // Clear cache when cookie changes to ensure fresh data
-        this.cache.flush();
-
         logger.info(
             { cookiePreview: `${cookie.substring(0, 16)}...` },
-            "RPC cookie set, connection established, and cache cleared",
+            "RPC cookie set and connection established",
         );
     }
 
@@ -108,36 +102,6 @@ export class NeptuneRpcService {
     /**
      * Make a JSON-RPC call with connection health checks, abort support, and request serialization
      */
-    /**
-     * Make a cached JSON-RPC call to neptune-cli
-     */
-    private async cachedCall<T>(
-        method: string,
-        params?: Record<string, unknown> | unknown[],
-        timeout: number = 10000,
-        cacheKey?: string,
-        cacheTTL: number = 30, // 30 seconds default
-    ): Promise<T> {
-        // Generate cache key if not provided
-        const key = cacheKey || `rpc:${method}:${JSON.stringify(params || {})}`;
-
-        // Try to get from cache first
-        const cached = this.cache.get<T>(key);
-        if (cached !== undefined) {
-            logger.debug({ method, key }, "RPC cache hit");
-            return cached;
-        }
-
-        // Make the actual RPC call
-        const result = await this.call<T>(method, params, timeout);
-
-        // Cache the result
-        this.cache.set(key, result, cacheTTL);
-        logger.debug({ method, key, ttl: cacheTTL }, "RPC cache set");
-
-        return result;
-    }
-
     private async call<T>(
         method: string,
         params?: Record<string, unknown> | unknown[],
@@ -269,16 +233,10 @@ export class NeptuneRpcService {
     }
 
     /**
-     * Get comprehensive dashboard overview data (cached for 10 seconds)
+     * Get comprehensive dashboard overview data
      */
     async getDashboardOverview(): Promise<DashboardOverviewData> {
-        return this.cachedCall<DashboardOverviewData>(
-            "dashboard_overview_data",
-            undefined,
-            10000,
-            "dashboard_overview",
-            10, // 10 seconds cache
-        );
+        return this.call<DashboardOverviewData>("dashboard_overview_data");
     }
 
     /**
@@ -289,16 +247,10 @@ export class NeptuneRpcService {
     }
 
     /**
-     * Get network type (cached for 60 seconds)
+     * Get network type
      */
     async getNetwork(): Promise<string> {
-        return this.cachedCall<string>(
-            "network",
-            undefined,
-            10000,
-            "network",
-            60, // 60 seconds cache - network rarely changes
-        );
+        return this.call<string>("network");
     }
 
     /**
@@ -598,16 +550,10 @@ export class NeptuneRpcService {
     }
 
     /**
-     * Get CPU temperature (cached for 5 seconds)
+     * Get CPU temperature
      */
     async getCpuTemp(): Promise<number | null> {
-        return this.cachedCall<number | null>(
-            "cpu_temp",
-            undefined,
-            10000,
-            "cpu_temp",
-            5, // 5 seconds cache - temperature changes frequently
-        );
+        return this.call<number | null>("cpu_temp");
     }
 
     /**
@@ -743,21 +689,6 @@ export class NeptuneRpcService {
     async getPowPuzzleInternalKey(): Promise<unknown> {
         return this.call<unknown>("pow_puzzle_internal_key");
     }
-
-    /**
-     * Get cache statistics for monitoring
-     */
-    getCacheStats() {
-        return this.cache.getStats();
-    }
-
-    /**
-     * Clear RPC cache manually
-     */
-    clearCache(): void {
-        this.cache.flush();
-        logger.info("RPC cache manually cleared");
-    }
 }
 
 // Export singleton instance
@@ -777,9 +708,9 @@ export function getNeptuneRpcService(): NeptuneRpcService {
 
 // Backward compatibility - keep the old export for existing code
 export const neptuneRpcService = new Proxy({} as NeptuneRpcService, {
-    get(_target, prop: string | symbol) {
+    get(_target, prop) {
         const instance = getNeptuneRpcService();
-        const value = (instance as any)[prop];
+        const value = (instance as Record<string, unknown>)[prop];
         return typeof value === "function" ? value.bind(instance) : value;
     },
 });
