@@ -1057,13 +1057,35 @@ export function useAutoPolling(intervalMs = 10000) {
 
         // Set up polling with coordinated fetches
         const interval = setInterval(() => {
-            performCoordinatedFetch(false);
+            // Only poll if the app is visible and not in background
+            if (document.visibilityState === "visible") {
+                performCoordinatedFetch(false);
+            } else {
+                console.log("⏸️ Skipping poll - app in background");
+            }
         }, intervalMs);
+
+        // Pause polling when app goes to background, resume when visible
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                console.log("▶️ Resuming polling - app visible");
+                // Perform immediate fetch when becoming visible
+                performCoordinatedFetch(false);
+            } else {
+                console.log("⏸️ App went to background");
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
 
         return () => {
             console.log("🛑 Auto-polling stopped");
             clearTimeout(initialFetchTimeout);
             clearInterval(interval);
+            document.removeEventListener(
+                "visibilitychange",
+                handleVisibilityChange,
+            );
         };
     }, [intervalMs, performCoordinatedFetch]);
 
