@@ -61,7 +61,6 @@ export class NeptuneCoreArgsBuilder {
         );
 
         // Add peer flags from peer store
-        console.log(`🌐 Using network: ${settings.network.network}`);
         await this.addPeerFlags(args, settings.network.network);
 
         // Add computed flags

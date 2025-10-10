@@ -78,25 +78,8 @@ export class PeerService {
 
     async getAllPeers(network?: string): Promise<PeerEntry[]> {
         const peers = peerStore.get("peers");
-        console.log(`🗄️ Raw peer store data: ${peers.length} total peers`);
-        console.log(
-            `📊 Peer store contents:`,
-            peers.map((p) => ({
-                address: p.address,
-                label: p.label,
-                network: p.network,
-                enabled: p.enabled,
-                isBanned: p.isBanned,
-                type: p.type,
-            })),
-        );
-
         if (network) {
-            const filtered = peers.filter((p) => p.network === network);
-            console.log(
-                `🔍 Filtered for network '${network}': ${filtered.length} peers`,
-            );
-            return filtered;
+            return peers.filter((p) => p.network === network);
         }
         return peers;
     }
@@ -113,29 +96,8 @@ export class PeerService {
     }
 
     async getEnabledPeers(network: string): Promise<PeerEntry[]> {
-        const allPeers = await this.getAllPeers(network);
-        console.log(
-            `🔍 getEnabledPeers: Found ${allPeers.length} total peers for network '${network}'`,
-        );
-        console.log(
-            `📋 All peers:`,
-            allPeers.map((p) => ({
-                address: p.address,
-                label: p.label,
-                network: p.network,
-                enabled: p.enabled,
-                isBanned: p.isBanned,
-                type: p.type,
-            })),
-        );
-
-        const activePeers = await this.getActivePeers(network);
-        console.log(`📋 Active peers (not banned): ${activePeers.length}`);
-
-        const enabledPeers = activePeers.filter((p) => p.enabled);
-        console.log(`📋 Enabled peers: ${enabledPeers.length}`);
-
-        return enabledPeers;
+        const peers = await this.getActivePeers(network);
+        return peers.filter((p) => p.enabled);
     }
 
     // Ban Operation
