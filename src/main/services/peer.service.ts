@@ -78,8 +78,25 @@ export class PeerService {
 
     async getAllPeers(network?: string): Promise<PeerEntry[]> {
         const peers = peerStore.get("peers");
+        console.log(`🗄️ Raw peer store data: ${peers.length} total peers`);
+        console.log(
+            `📊 Peer store contents:`,
+            peers.map((p) => ({
+                address: p.address,
+                label: p.label,
+                network: p.network,
+                enabled: p.enabled,
+                isBanned: p.isBanned,
+                type: p.type,
+            })),
+        );
+
         if (network) {
-            return peers.filter((p) => p.network === network);
+            const filtered = peers.filter((p) => p.network === network);
+            console.log(
+                `🔍 Filtered for network '${network}': ${filtered.length} peers`,
+            );
+            return filtered;
         }
         return peers;
     }
