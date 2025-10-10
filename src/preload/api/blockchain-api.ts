@@ -4,239 +4,295 @@
  * Exposes blockchain data fetching functions to the renderer process
  */
 
-import { ipcRenderer } from 'electron';
-import { IPC_CHANNELS } from '@/shared/constants/ipc-channels';
+import { ipcRenderer } from "electron";
+import { IPC_CHANNELS } from "@/shared/constants/ipc-channels";
 
 export const blockchainAPI = {
-  /**
-   * Set authentication cookie for RPC requests
-   */
-  setCookie: (cookie: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_SET_COOKIE, cookie),
+    /**
+     * Set authentication cookie for RPC requests
+     */
+    setCookie: (cookie: string) =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_SET_COOKIE, cookie),
 
-  /**
-   * Get comprehensive dashboard overview data
-   */
-  getDashboardOverview: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_DASHBOARD),
+    /**
+     * Get comprehensive dashboard overview data
+     */
+    getDashboardOverview: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_DASHBOARD),
 
-  /**
-   * Get current block height
-   */
-  getBlockHeight: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_BLOCK_HEIGHT),
+    /**
+     * Get current block height
+     */
+    getBlockHeight: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_BLOCK_HEIGHT),
 
-  /**
-   * Get network type
-   */
-  getNetwork: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_NETWORK),
+    /**
+     * Get network type
+     */
+    getNetwork: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_NETWORK),
 
-  /**
-   * Get wallet balance (confirmed and unconfirmed)
-   */
-  getBalance: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_BALANCE),
+    /**
+     * Get wallet status
+     */
+    getWalletStatus: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_WALLET_STATUS),
 
-  /**
-   * Get wallet status
-   */
-  getWalletStatus: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_WALLET_STATUS),
+    /**
+     * Get next receiving address
+     */
+    getNextReceivingAddress: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_NEXT_ADDRESS),
 
-  /**
-   * Get next receiving address
-   */
-  getNextReceivingAddress: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_NEXT_ADDRESS),
+    /**
+     * Get transaction history
+     */
+    getHistory: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_HISTORY),
 
-  /**
-   * Get transaction history
-   */
-  getHistory: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_HISTORY),
+    // ========================================================================
+    // Tier 1: Additional Critical Endpoints
+    // ========================================================================
 
-  // ========================================================================
-  // Tier 1: Additional Critical Endpoints
-  // ========================================================================
+    /**
+     * Get confirmations count
+     */
+    getConfirmations: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_CONFIRMATIONS),
 
-  /**
-   * Get confirmations count
-   */
-  getConfirmations: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_CONFIRMATIONS),
+    /**
+     * List own coins/UTXOs
+     */
+    listOwnCoins: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_LIST_OWN_COINS),
 
-  /**
-   * List own coins/UTXOs
-   */
-  listOwnCoins: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_LIST_OWN_COINS),
+    /**
+     * Send private transaction
+     */
+    send: (params: {
+        outputs: Array<{ address: string; amount: string }>;
+        change_policy?: string;
+        fee?: string;
+    }) => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_SEND, params),
 
-  /**
-   * Send private transaction
-   */
-  send: (params: {
-    outputs: Array<{ address: string; amount: string }>;
-    change_policy?: string;
-    fee?: string;
-  }) => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_SEND, params),
+    /**
+     * Send transparent transaction
+     */
+    sendTransparent: (params: {
+        outputs: Array<{ address: string; amount: string }>;
+        change_policy?: string;
+        fee?: string;
+    }) => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_SEND_TRANSPARENT, params),
 
-  /**
-   * Send transparent transaction
-   */
-  sendTransparent: (params: {
-    outputs: Array<{ address: string; amount: string }>;
-    change_policy?: string;
-    fee?: string;
-  }) => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_SEND_TRANSPARENT, params),
+    /**
+     * Get mempool transaction count
+     */
+    getMempoolTxCount: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_TX_COUNT),
 
-  /**
-   * Get mempool transaction count
-   */
-  getMempoolTxCount: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_TX_COUNT),
+    /**
+     * Get mempool size in bytes
+     */
+    getMempoolSize: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_SIZE),
 
-  /**
-   * Get mempool size in bytes
-   */
-  getMempoolSize: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_SIZE),
+    // ========================================================================
+    // Tier 2: Important Endpoints
+    // ========================================================================
 
-  /**
-   * Get peer info
-   */
-  getPeerInfo: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_PEER_INFO),
+    /**
+     * List all UTXOs
+     */
+    listUtxos: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_LIST_UTXOS),
 
-  // ========================================================================
-  // Tier 2: Important Endpoints
-  // ========================================================================
+    /**
+     * Get all spendable inputs
+     */
+    getSpendableInputs: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_SPENDABLE_INPUTS),
 
-  /**
-   * List all UTXOs
-   */
-  listUtxos: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_LIST_UTXOS),
+    /**
+     * Select spendable inputs for amount
+     */
+    selectSpendableInputs: (params: { amount: string }) =>
+        ipcRenderer.invoke(
+            IPC_CHANNELS.BLOCKCHAIN_SELECT_SPENDABLE_INPUTS,
+            params,
+        ),
 
-  /**
-   * Get all spendable inputs
-   */
-  getSpendableInputs: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_SPENDABLE_INPUTS),
+    /**
+     * Get all mempool transaction IDs
+     */
+    getMempoolTxIds: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_TX_IDS),
 
-  /**
-   * Select spendable inputs for amount
-   */
-  selectSpendableInputs: (params: { amount: string }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_SELECT_SPENDABLE_INPUTS, params),
+    /**
+     * Broadcast all mempool transactions
+     */
+    broadcastAllMempoolTxs: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_BROADCAST_ALL_MEMPOOL_TXS),
 
-  /**
-   * Get mempool overview with pagination
-   */
-  getMempoolOverview: (params: { start_index: number; number: number }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_OVERVIEW, params),
+    /**
+     * Clear all transactions from mempool
+     */
+    clearMempool: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_CLEAR_MEMPOOL),
 
-  /**
-   * Get all mempool transaction IDs
-   */
-  getMempoolTxIds: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_TX_IDS),
+    /**
+     * Get mempool transaction kernel by ID
+     */
+    getMempoolTxKernel: (params: { tx_kernel_id: string }) =>
+        ipcRenderer.invoke(
+            IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_TX_KERNEL,
+            params,
+        ),
 
-  /**
-   * Validate Neptune address
-   */
-  validateAddress: (params: { address: string }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_VALIDATE_ADDRESS, params),
+    /**
+     * Get sync status
+     */
+    getSyncStatus: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_SYNC_STATUS),
 
-  /**
-   * Validate amount
-   */
-  validateAmount: (params: { amount: string }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_VALIDATE_AMOUNT, params),
+    /**
+     * Get network information
+     */
+    getNetworkInfo: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_NETWORK_INFO),
 
-  /**
-   * Get nth receiving address
-   */
-  getNthReceivingAddress: (params: { n: number }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_NTH_ADDRESS, params),
+    /**
+     * Get peer information
+     */
+    getPeerInfo: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_PEER_INFO),
 
-  /**
-   * Get block digest by height
-   */
-  getBlockDigest: (params: { height: number }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_BLOCK_DIGEST, params),
+    /**
+     * Get total balance
+     */
+    getBalance: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_BALANCE),
 
-  /**
-   * Get latest N tip digests
-   */
-  getLatestTipDigests: (params: { n: number }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_LATEST_TIP_DIGESTS, params),
+    /**
+     * Get block difficulties
+     */
+    getBlockDifficulties: (params: {
+        block_selector: string;
+        max_num_blocks: number;
+    }) =>
+        ipcRenderer.invoke(
+            IPC_CHANNELS.BLOCKCHAIN_GET_BLOCK_DIFFICULTIES,
+            params,
+        ),
 
-  /**
-   * Get own instance ID
-   */
-  getInstanceId: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_INSTANCE_ID),
+    /**
+     * Get block intervals
+     */
+    getBlockIntervals: (params: {
+        block_selector: string;
+        max_num_blocks: number;
+    }) =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_BLOCK_INTERVALS, params),
 
-  /**
-   * Shutdown neptune-core
-   */
-  shutdown: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_SHUTDOWN),
+    /**
+     * Validate Neptune address
+     */
+    validateAddress: (params: { address: string }) =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_VALIDATE_ADDRESS, params),
 
-  /**
-   * Get number of expected UTXOs
-   */
-  getNumExpectedUtxos: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_NUM_EXPECTED_UTXOS),
+    /**
+     * Validate amount
+     */
+    validateAmount: (params: { amount: string }) =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_VALIDATE_AMOUNT, params),
 
-  /**
-   * Upgrade transaction proof
-   */
-  upgradeTransaction: (params: { tx_kernel_id: string }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_UPGRADE_TRANSACTION, params),
+    /**
+     * Get nth receiving address
+     */
+    getNthReceivingAddress: (params: { n: number }) =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_NTH_ADDRESS, params),
 
-  /**
-   * Claim off-chain UTXO
-   */
-  claimUtxo: (params: {
-    utxo_transfer_encrypted: string;
-    max_search_depth: number;
-  }) => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_CLAIM_UTXO, params),
+    /**
+     * Get block digest by height
+     */
+    getBlockDigest: (params: { height: number }) =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_BLOCK_DIGEST, params),
 
-  // ========================================================================
-  // Tier 3: Advanced Endpoints
-  // ========================================================================
+    /**
+     * Get latest N tip digests
+     */
+    getLatestTipDigests: (params: { n: number }) =>
+        ipcRenderer.invoke(
+            IPC_CHANNELS.BLOCKCHAIN_GET_LATEST_TIP_DIGESTS,
+            params,
+        ),
 
-  /**
-   * Pause miner
-   */
-  pauseMiner: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_PAUSE_MINER),
+    /**
+     * Get own instance ID
+     */
+    getInstanceId: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_INSTANCE_ID),
 
-  /**
-   * Restart miner
-   */
-  restartMiner: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_RESTART_MINER),
+    /**
+     * Shutdown neptune-core
+     */
+    shutdown: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_SHUTDOWN),
 
-  /**
-   * Get CPU temperature
-   */
-  getCpuTemp: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_CPU_TEMP),
+    /**
+     * Get number of expected UTXOs
+     */
+    getNumExpectedUtxos: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_NUM_EXPECTED_UTXOS),
 
-  /**
-   * Generate new wallet
-   */
-  generateWallet: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GENERATE_WALLET),
+    /**
+     * Upgrade transaction proof
+     */
+    upgradeTransaction: (params: { tx_kernel_id: string }) =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_UPGRADE_TRANSACTION, params),
 
-  /**
-   * Export seed phrase
-   */
-  exportSeedPhrase: () =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_EXPORT_SEED),
+    /**
+     * Claim off-chain UTXO
+     */
+    claimUtxo: (params: {
+        utxo_transfer_encrypted: string;
+        max_search_depth: number;
+    }) => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_CLAIM_UTXO, params),
 
-  /**
-   * Import seed phrase
-   */
-  importSeedPhrase: (params: { seed_phrase: string }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_IMPORT_SEED, params),
+    // ========================================================================
+    // Tier 3: Advanced Endpoints
+    // ========================================================================
 
-  /**
-   * Get wallet file path
-   */
-  whichWallet: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_WHICH_WALLET),
+    /**
+     * Pause miner
+     */
+    pauseMiner: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_PAUSE_MINER),
+
+    /**
+     * Restart miner
+     */
+    restartMiner: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_RESTART_MINER),
+
+    /**
+     * Get CPU temperature
+     */
+    getCpuTemp: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GET_CPU_TEMP),
+
+    /**
+     * Generate new wallet
+     */
+    generateWallet: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_GENERATE_WALLET),
+
+    /**
+     * Export seed phrase
+     */
+    exportSeedPhrase: () =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_EXPORT_SEED),
+
+    /**
+     * Import seed phrase
+     */
+    importSeedPhrase: (params: { seed_phrase: string }) =>
+        ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_IMPORT_SEED, params),
+
+    /**
+     * Get wallet file path
+     */
+    whichWallet: () => ipcRenderer.invoke(IPC_CHANNELS.BLOCKCHAIN_WHICH_WALLET),
 };

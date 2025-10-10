@@ -8,11 +8,13 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
     BookUser,
     Coins,
+    Database,
     History,
     LayoutDashboard,
     Network,
     QrCode,
     Send,
+    Zap,
 } from "lucide-react";
 import { useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -66,9 +68,11 @@ export function WalletSidebar() {
             label: "Transaction History",
             href: "/wallet/history",
         },
+        { icon: Database, label: "Mempool", href: "/wallet/mempool" },
         { icon: Coins, label: "UTXOs & Coins", href: "/wallet/utxos" },
         { icon: BookUser, label: "Address Book", href: "/wallet/address-book" },
         { icon: Network, label: "Peer Manager", href: "/wallet/peers" },
+        { icon: Zap, label: "Mining", href: "/wallet/mining" },
     ];
     return (
         <div className="h-full flex flex-col">
@@ -192,7 +196,7 @@ export function WalletSidebar() {
                         <Separator />
 
                         {/* Recent Transactions */}
-                        <div className="space-y-2">
+                        {/* <div className="space-y-2">
                             <h3 className="text-sm font-medium text-muted-foreground">
                                 Recent Activity
                             </h3>
@@ -218,7 +222,7 @@ export function WalletSidebar() {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </div> */}
 
                         <Separator />
 

@@ -15,6 +15,7 @@ import pino from "pino";
 import { NeptuneCoreArgsBuilder } from "./neptune-core-args-builder";
 import { neptuneCoreSettingsService } from "./neptune-core-settings.service";
 import { peerService } from "./peer.service";
+import { systemResourceService } from "./system-resource.service";
 
 // Get the project root directory
 const PROJECT_ROOT = path.resolve(__dirname, "../../../");
@@ -259,12 +260,27 @@ export class NeptuneProcessManager {
                 logger.info(
                     `neptune-core exited with code ${code}, signal ${signal}`,
                 );
+                // Clear the PID from system resource monitoring
+                systemResourceService.setNeptuneProcessPids(
+                    undefined,
+                    this.cliProcess?.pid,
+                );
             });
 
+            // Set the PID for system resource monitoring
+            if (this.coreProcess.pid) {
+                systemResourceService.setNeptuneProcessPids(
+                    this.coreProcess.pid,
+                    this.cliProcess?.pid,
+                );
+            }
+
             // Catch the promise rejection when process is killed
-            this.coreProcess.catch((error) => {
+            this.coreProcess.on("error", (error: Error) => {
                 // Only log if it's not a graceful SIGTERM shutdown
-                if (error.signal !== "SIGTERM") {
+                if (
+                    (error as Error & { signal?: string }).signal !== "SIGTERM"
+                ) {
                     logger.error({ error }, "neptune-core process error");
                 }
             });
@@ -406,12 +422,27 @@ export class NeptuneProcessManager {
                 logger.info(
                     `neptune-cli exited with code ${code}, signal ${signal}`,
                 );
+                // Clear the PID from system resource monitoring
+                systemResourceService.setNeptuneProcessPids(
+                    this.coreProcess?.pid,
+                    undefined,
+                );
             });
 
+            // Set the PID for system resource monitoring
+            if (this.cliProcess.pid) {
+                systemResourceService.setNeptuneProcessPids(
+                    this.coreProcess?.pid,
+                    this.cliProcess.pid,
+                );
+            }
+
             // Catch the promise rejection when process is killed
-            this.cliProcess.catch((error) => {
+            this.cliProcess.on("error", (error: Error) => {
                 // Only log if it's not a graceful SIGTERM shutdown
-                if (error.signal !== "SIGTERM") {
+                if (
+                    (error as Error & { signal?: string }).signal !== "SIGTERM"
+                ) {
                     logger.error({ error }, "neptune-cli process error");
                 }
             });
@@ -545,8 +576,12 @@ export class NeptuneProcessManager {
     async shutdown(): Promise<void> {
         logger.info("Shutting down Neptune processes...");
 
-        // Stop data polling
+        // Stop data polling first
         this.stopDataPolling();
+
+        // Disconnect RPC service to abort any pending requests
+        const { neptuneRpcService } = await import("./neptune-rpc.service");
+        neptuneRpcService.disconnect();
 
         // Stop CLI process
         if (this.cliProcess && !this.cliProcess.killed) {

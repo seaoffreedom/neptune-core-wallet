@@ -314,13 +314,6 @@ export interface ElectronAPI {
         error?: string;
     }>;
 
-    getBalance: () => Promise<{
-        success: boolean;
-        confirmed?: string;
-        unconfirmed?: string;
-        error?: string;
-    }>;
-
     getWalletStatus: () => Promise<{
         success: boolean;
         status?: Record<string, unknown>;
@@ -397,12 +390,6 @@ export interface ElectronAPI {
             network?: string;
             error?: string;
         }>;
-        getBalance: () => Promise<{
-            success: boolean;
-            confirmed?: string;
-            unconfirmed?: string;
-            error?: string;
-        }>;
         getWalletStatus: () => Promise<{
             success: boolean;
             status?: unknown;
@@ -456,11 +443,6 @@ export interface ElectronAPI {
             size?: number;
             error?: string;
         }>;
-        getPeerInfo: () => Promise<{
-            success: boolean;
-            peers?: unknown[];
-            error?: string;
-        }>;
         listUtxos: () => Promise<{
             success: boolean;
             utxos?: unknown;
@@ -476,17 +458,80 @@ export interface ElectronAPI {
             inputs?: unknown[];
             error?: string;
         }>;
-        getMempoolOverview: (params: {
-            start_index: number;
-            number: number;
-        }) => Promise<{
-            success: boolean;
-            overview?: unknown;
-            error?: string;
-        }>;
         getMempoolTxIds: () => Promise<{
             success: boolean;
             txIds?: string[];
+            error?: string;
+        }>;
+        broadcastAllMempoolTxs: () => Promise<{
+            success: boolean;
+            result?: string;
+            error?: string;
+        }>;
+        clearMempool: () => Promise<{
+            success: boolean;
+            result?: string;
+            error?: string;
+        }>;
+        getMempoolTxKernel: (params: { tx_kernel_id: string }) => Promise<{
+            success: boolean;
+            result?: unknown;
+            error?: string;
+        }>;
+        getSyncStatus: () => Promise<{
+            success: boolean;
+            result?: {
+                connectedPeers: number;
+                currentBlockHeight: string;
+                isSynced: boolean;
+                lastSyncCheck: string;
+                latestBlockHash: string;
+                pendingTransactions: number;
+            };
+            error?: string;
+        }>;
+        getNetworkInfo: () => Promise<{
+            success: boolean;
+            result?: {
+                blockHeight: string;
+                lastUpdated: string;
+                network: string;
+                tipDigest: string;
+            };
+            error?: string;
+        }>;
+        getPeerInfo: () => Promise<{
+            success: boolean;
+            peers?: Array<{
+                address: string;
+                connected: boolean;
+                lastSeen: number;
+            }>;
+            connectedCount?: number;
+            lastUpdated?: string;
+            error?: string;
+        }>;
+        getBalance: () => Promise<{
+            success: boolean;
+            confirmed?: string;
+            unconfirmed?: string;
+            lastUpdated?: string;
+            error?: string;
+        }>;
+        getBlockDifficulties: (params: {
+            block_selector: string;
+            max_num_blocks: number;
+        }) => Promise<{
+            success: boolean;
+            result?: Array<[number, number[]]>;
+            error?: string;
+        }>;
+        getBlockIntervals: (params: {
+            block_selector: string;
+            max_num_blocks: number;
+        }) => Promise<{
+            success: boolean;
+            result?: Array<[number, number]>;
             error?: string;
         }>;
         validateAddress: (params: { address: string }) => Promise<{
@@ -668,6 +713,44 @@ export interface ElectronAPI {
         toggle: (id: string, enabled: boolean) => Promise<void>;
         ban: (id: string, reason?: string) => Promise<void>;
         validate: (address: string) => Promise<boolean>;
+    };
+
+    // System resource monitoring
+    system: {
+        getResourceStats: () => Promise<{
+            success: boolean;
+            stats?: {
+                cpu: number;
+                memory: number;
+                timestamp: number;
+            };
+            error?: string;
+        }>;
+        getCombinedStats: () => Promise<{
+            success: boolean;
+            stats?: {
+                system: {
+                    cpu: number;
+                    memory: number;
+                    timestamp: number;
+                } | null;
+                neptuneCore: {
+                    pid: number;
+                    cpu: number;
+                    memory: number;
+                    timestamp: number;
+                } | null;
+                neptuneCli: {
+                    pid: number;
+                    cpu: number;
+                    memory: number;
+                    timestamp: number;
+                } | null;
+                totalCpu: number;
+                totalMemory: number;
+            };
+            error?: string;
+        }>;
     };
 
     neptuneCoreSettings: {

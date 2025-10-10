@@ -5,6 +5,7 @@
  * Uses ky for HTTP requests
  */
 
+import { Mutex } from "async-mutex";
 import ky from "ky";
 import pino from "pino";
 
@@ -56,95 +57,179 @@ export class NeptuneRpcService {
     private rpcUrl: string;
     private cookie: string | null = null;
     private requestId = 0;
+    private isConnected = false;
+    private abortController?: AbortController;
+    private pendingRequests = new Set<number>();
+    private requestMutex = new Mutex();
 
     constructor(rpcPort: number = 9801) {
         this.rpcUrl = `http://localhost:${rpcPort}`;
     }
 
     /**
-     * Set authentication cookie
+     * Set authentication cookie and mark as connected
      */
     setCookie(cookie: string): void {
         this.cookie = cookie;
+        this.isConnected = true;
         logger.info(
             { cookiePreview: `${cookie.substring(0, 16)}...` },
-            "RPC cookie set",
+            "RPC cookie set and connection established",
         );
     }
 
     /**
-     * Make a JSON-RPC call
+     * Mark connection as disconnected
+     */
+    disconnect(): void {
+        this.isConnected = false;
+        this.cookie = null;
+        this.pendingRequests.clear();
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = undefined;
+        }
+        logger.info("RPC connection marked as disconnected");
+    }
+
+    /**
+     * Check if connection is healthy
+     */
+    private isConnectionHealthy(): boolean {
+        return this.isConnected && this.cookie !== null;
+    }
+
+    /**
+     * Make a JSON-RPC call with connection health checks, abort support, and request serialization
      */
     private async call<T>(
         method: string,
         params?: Record<string, unknown> | unknown[],
         timeout: number = 10000,
     ): Promise<T> {
-        this.requestId += 1;
-
-        const request: JsonRpcRequest = {
-            jsonrpc: "2.0",
-            method,
-            params: params || {}, // Use empty object if params not provided
-            id: this.requestId,
-        };
-
-        try {
-            const headers: Record<string, string> = {
-                "Content-Type": "application/json",
-            };
-
-            // Add cookie if available
-            if (this.cookie) {
-                headers.Cookie = `neptune-cli=${this.cookie}`;
-            }
-
-            logger.info(
-                {
-                    method,
-                    id: this.requestId,
-                    cookie: this.cookie
-                        ? `${this.cookie.substring(0, 16)}...`
-                        : "none",
-                    requestBody: request,
-                    headers,
-                },
-                "Making RPC call",
-            );
-
-            const response = await ky
-                .post(this.rpcUrl, {
-                    json: request,
-                    headers: {
-                        ...headers,
-                        Connection: "close", // Force new connection each time
-                    },
-                    timeout, // Configurable timeout
-                })
-                .json<JsonRpcResponse<T>>();
-
-            logger.info({ method, id: this.requestId }, "RPC call successful");
-
-            if (response.error) {
+        // Use mutex to serialize all RPC requests
+        return this.requestMutex.runExclusive(async () => {
+            // Check connection health before making request
+            if (!this.isConnectionHealthy()) {
                 throw new Error(
-                    `RPC error ${response.error.code}: ${response.error.message}`,
+                    "RPC connection not available - neptune-cli may be shutting down",
                 );
             }
 
-            if (response.result === undefined) {
-                throw new Error("RPC response missing result");
+            this.requestId += 1;
+            const currentRequestId = this.requestId;
+
+            // Track pending request
+            this.pendingRequests.add(currentRequestId);
+
+            const request: JsonRpcRequest = {
+                jsonrpc: "2.0",
+                method,
+                params: params || {}, // Use empty object if params not provided
+                id: currentRequestId,
+            };
+
+            // Create abort controller for this request
+            this.abortController = new AbortController();
+
+            try {
+                const headers: Record<string, string> = {
+                    "Content-Type": "application/json",
+                };
+
+                // Add cookie if available
+                if (this.cookie) {
+                    headers.Cookie = `neptune-cli=${this.cookie}`;
+                }
+
+                logger.info(
+                    {
+                        method,
+                        id: currentRequestId,
+                        cookie: this.cookie
+                            ? `${this.cookie.substring(0, 16)}...`
+                            : "none",
+                        requestBody: request,
+                        headers,
+                    },
+                    "Making RPC call",
+                );
+
+                const response = await ky
+                    .post(this.rpcUrl, {
+                        json: request,
+                        headers: {
+                            ...headers,
+                            Connection: "close", // Force new connection each time
+                            "Cache-Control": "no-cache", // Prevent caching
+                        },
+                        timeout, // Configurable timeout
+                        signal: this.abortController.signal, // Add abort signal
+                        retry: {
+                            limit: 0, // Disable automatic retries to prevent duplicate requests
+                        },
+                    })
+                    .json<JsonRpcResponse<T>>();
+
+                logger.info(
+                    { method, id: currentRequestId },
+                    "RPC call successful",
+                );
+
+                if (response.error) {
+                    throw new Error(
+                        `RPC error ${response.error.code}: ${response.error.message}`,
+                    );
+                }
+
+                if (response.result === undefined) {
+                    throw new Error("RPC response missing result");
+                }
+
+                logger.debug(
+                    { method, id: currentRequestId },
+                    "RPC call successful",
+                );
+
+                return response.result;
+            } catch (error) {
+                // Handle abort errors gracefully
+                if (error instanceof Error && error.name === "AbortError") {
+                    logger.info(
+                        { method, id: currentRequestId },
+                        "RPC call aborted",
+                    );
+                    throw new Error(
+                        "RPC call aborted - neptune-cli may be shutting down",
+                    );
+                }
+
+                // Check if connection is still healthy after error
+                if (!this.isConnectionHealthy()) {
+                    logger.warn(
+                        { method, id: currentRequestId },
+                        "RPC call failed - connection lost",
+                    );
+                    throw new Error(
+                        "RPC connection lost - neptune-cli may be shutting down",
+                    );
+                }
+
+                logger.error(
+                    {
+                        error: (error as Error).message,
+                        method,
+                        id: currentRequestId,
+                    },
+                    "RPC call failed",
+                );
+                throw error;
+            } finally {
+                // Clean up abort controller and remove from pending requests
+                this.abortController = undefined;
+                this.pendingRequests.delete(currentRequestId);
             }
-
-            logger.debug({ method, id: this.requestId }, "RPC call successful");
-
-            return response.result;
-        } catch (error) {
-            logger.error(
-                { error: (error as Error).message, method },
-                "RPC call failed",
-            );
-            throw error;
-        }
+        });
     }
 
     /**
@@ -285,10 +370,17 @@ export class NeptuneRpcService {
     }
 
     /**
-     * Get detailed peer information
+     * Get all punished/banned peers
      */
-    async getPeerInfo(): Promise<unknown[]> {
-        return this.call<unknown[]>("peer_info");
+    async getAllPunishedPeers(): Promise<unknown[]> {
+        return this.call<unknown[]>("all_punished_peers");
+    }
+
+    /**
+     * Get own listen address for peers
+     */
+    async getOwnListenAddressForPeers(): Promise<string> {
+        return this.call<string>("own_listen_address_for_peers");
     }
 
     // ========================================================================
@@ -319,20 +411,33 @@ export class NeptuneRpcService {
     }
 
     /**
-     * Get mempool overview with pagination
-     */
-    async getMempoolOverview(params: {
-        start_index: number;
-        number: number;
-    }): Promise<unknown> {
-        return this.call<unknown>("mempool_overview", params);
-    }
-
-    /**
      * Get all mempool transaction IDs
      */
     async getMempoolTxIds(): Promise<string[]> {
         return this.call<string[]>("mempool_tx_ids");
+    }
+
+    /**
+     * Broadcast all mempool transactions
+     */
+    async broadcastAllMempoolTxs(): Promise<string> {
+        return this.call<string>("broadcast_all_mempool_txs");
+    }
+
+    /**
+     * Clear all transactions from mempool
+     */
+    async clearMempool(): Promise<string> {
+        return this.call<string>("clear_mempool");
+    }
+
+    /**
+     * Get mempool transaction kernel by ID
+     */
+    async getMempoolTxKernel(params: {
+        tx_kernel_id: string;
+    }): Promise<unknown> {
+        return this.call<unknown>("mempool_tx_kernel", params);
     }
 
     /**
@@ -449,6 +554,105 @@ export class NeptuneRpcService {
      */
     async getCpuTemp(): Promise<number | null> {
         return this.call<number | null>("cpu_temp");
+    }
+
+    /**
+     * Get sync status
+     */
+    async getSyncStatus(): Promise<{
+        connectedPeers: number;
+        currentBlockHeight: string;
+        isSynced: boolean;
+        lastSyncCheck: string;
+        latestBlockHash: string;
+        pendingTransactions: number;
+    }> {
+        return this.call<{
+            connectedPeers: number;
+            currentBlockHeight: string;
+            isSynced: boolean;
+            lastSyncCheck: string;
+            latestBlockHash: string;
+            pendingTransactions: number;
+        }>("get_sync_status");
+    }
+
+    /**
+     * Get network information
+     */
+    async getNetworkInfo(): Promise<{
+        blockHeight: string;
+        lastUpdated: string;
+        network: string;
+        tipDigest: string;
+    }> {
+        return this.call<{
+            blockHeight: string;
+            lastUpdated: string;
+            network: string;
+            tipDigest: string;
+        }>("get_network_info");
+    }
+
+    /**
+     * Get peer information
+     */
+    async getPeerInfo(): Promise<{
+        connectedCount: number;
+        lastUpdated: string;
+        peers: Array<{
+            address: string;
+            connected: boolean;
+            lastSeen: number;
+        }>;
+    }> {
+        return this.call<{
+            connectedCount: number;
+            lastUpdated: string;
+            peers: Array<{
+                address: string;
+                connected: boolean;
+                lastSeen: number;
+            }>;
+        }>("get_peer_info");
+    }
+
+    /**
+     * Get total wallet balance
+     */
+    async getBalance(): Promise<{
+        confirmed: string;
+        lastUpdated: string;
+        unconfirmed: string;
+    }> {
+        return this.call<{
+            confirmed: string;
+            lastUpdated: string;
+            unconfirmed: string;
+        }>("get_balance");
+    }
+
+    /**
+     * Get block difficulties
+     */
+    async getBlockDifficulties(params: {
+        block_selector: string;
+        max_num_blocks: number;
+    }): Promise<Array<[number, number[]]>> {
+        return this.call<Array<[number, number[]]>>(
+            "block_difficulties",
+            params,
+        );
+    }
+
+    /**
+     * Get block intervals
+     */
+    async getBlockIntervals(params: {
+        block_selector: string;
+        max_num_blocks: number;
+    }): Promise<Array<[number, number]>> {
+        return this.call<Array<[number, number]>>("block_intervals", params);
     }
 
     /**

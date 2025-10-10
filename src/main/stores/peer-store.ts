@@ -1,34 +1,34 @@
-import Store from "electron-store";
+import Store from 'electron-store';
 
 export interface PeerEntry {
-    id: string;
-    address: string;
-    label?: string;
-    type: "bootstrap" | "manual" | "discovered";
-    lastSeen?: number;
-    addedAt: number;
-    enabled: boolean;
-    network: "main" | "testnet" | "regtest";
-    notes?: string;
-    isDefault: boolean;
-    isBanned: boolean;
-    bannedAt?: number;
-    bannedReason?: string;
+  id: string;
+  address: string;
+  label?: string;
+  type: 'bootstrap' | 'manual' | 'discovered';
+  lastSeen?: number;
+  addedAt: number;
+  enabled: boolean;
+  network: 'main' | 'testnet' | 'regtest';
+  notes?: string;
+  isDefault: boolean;
+  isBanned: boolean;
+  bannedAt?: number;
+  bannedReason?: string;
 }
 
 export interface PeerStoreSchema {
-    peers: PeerEntry[];
+  peers: PeerEntry[];
 }
 
 const schema: Store.Schema<PeerStoreSchema> = {
-    peers: {
-        type: "array",
-        default: [],
-    },
+  peers: {
+    type: 'array',
+    default: [],
+  },
 };
 
 export const peerStore = new Store<PeerStoreSchema>({
-    name: "peers",
-    schema,
-    watch: true,
+  name: 'peers',
+  schema,
+  watch: true,
 });
