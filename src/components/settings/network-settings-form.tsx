@@ -115,7 +115,7 @@ export function NetworkSettingsForm({ form }: NetworkSettingsFormProps) {
                                             {...field}
                                             onChange={(e) => {
                                                 const value = Number.parseInt(
-                                                    e.target.value,
+                                                    e.target.value, 10
                                                 );
                                                 field.onChange(value);
                                                 handleFieldChange(
@@ -147,7 +147,7 @@ export function NetworkSettingsForm({ form }: NetworkSettingsFormProps) {
                                             {...field}
                                             onChange={(e) => {
                                                 const value = Number.parseInt(
-                                                    e.target.value,
+                                                    e.target.value, 10
                                                 );
                                                 field.onChange(value);
                                                 handleFieldChange(
@@ -215,7 +215,7 @@ export function NetworkSettingsForm({ form }: NetworkSettingsFormProps) {
                                             {...field}
                                             onChange={(e) => {
                                                 const value = Number.parseInt(
-                                                    e.target.value,
+                                                    e.target.value, 10
                                                 );
                                                 field.onChange(value);
                                                 handleFieldChange(
@@ -247,7 +247,7 @@ export function NetworkSettingsForm({ form }: NetworkSettingsFormProps) {
                                             {...field}
                                             onChange={(e) => {
                                                 const value = Number.parseInt(
-                                                    e.target.value,
+                                                    e.target.value, 10
                                                 );
                                                 field.onChange(value);
                                                 handleFieldChange(
@@ -278,7 +278,7 @@ export function NetworkSettingsForm({ form }: NetworkSettingsFormProps) {
                                             {...field}
                                             onChange={(e) => {
                                                 const value = Number.parseInt(
-                                                    e.target.value,
+                                                    e.target.value, 10
                                                 );
                                                 field.onChange(value);
                                                 handleFieldChange(

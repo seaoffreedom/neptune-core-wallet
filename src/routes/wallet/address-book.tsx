@@ -146,8 +146,7 @@ function AddressBook() {
 
                 {/* Content */}
                 {!showForm && (
-                    <>
-                        {isInitialLoading ? (
+                    isInitialLoading ? (
                             // Loading skeleton matching table structure
                             <div className="space-y-4">
                                 {/* Search bar skeleton */}
@@ -192,8 +191,7 @@ function AddressBook() {
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
                             />
-                        )}
-                    </>
+                        )
                 )}
 
                 {/* Delete Confirmation Dialog */}

@@ -10,7 +10,7 @@ export function FooterIcon() {
     const isSyncing = dashboardData?.syncing ?? false;
 
     // Consider connected if we have a block height > 0 (means we're receiving data)
-    const isConnected = blockHeight !== null && parseInt(blockHeight) > 0;
+    const isConnected = blockHeight !== null && parseInt(blockHeight, 10) > 0;
 
     const renderIcon = () => {
         if (isLoading) {

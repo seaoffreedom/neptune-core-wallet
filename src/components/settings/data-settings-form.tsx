@@ -135,7 +135,7 @@ export function DataSettingsForm({ form }: DataSettingsFormProps) {
                                             {...field}
                                             onChange={(e) => {
                                                 const value = Number.parseInt(
-                                                    e.target.value,
+                                                    e.target.value, 10
                                                 );
                                                 field.onChange(value);
                                                 handleFieldChange(

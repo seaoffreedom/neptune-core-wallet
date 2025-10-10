@@ -557,7 +557,7 @@ export function useUtxos() {
 
             // Check if time-locked
             if (utxo.release_date) {
-                const releaseTime = parseInt(utxo.release_date);
+                const releaseTime = parseInt(utxo.release_date, 10);
                 if (releaseTime > now) {
                     timeLockedCount++;
                     timeLockedValue += amount;

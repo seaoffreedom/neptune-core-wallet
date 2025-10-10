@@ -5,8 +5,8 @@
  */
 
 import { dialog, ipcMain } from 'electron';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
 import type {
   FileDeleteRequest,
@@ -25,7 +25,7 @@ import type {
  * Handle open file dialog request
  */
 export async function handleFileOpenDialog(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: FileDialogRequest
 ): Promise<FileDialogResponse> {
   try {
@@ -53,7 +53,7 @@ export async function handleFileOpenDialog(
  * Handle save file dialog request
  */
 export async function handleFileSaveDialog(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: FileDialogRequest
 ): Promise<FileDialogResponse> {
   try {
@@ -80,7 +80,7 @@ export async function handleFileSaveDialog(
  * Handle read file request
  */
 export async function handleFileRead(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: FileReadRequest
 ): Promise<FileReadResponse> {
   try {
@@ -104,7 +104,7 @@ export async function handleFileRead(
  * Handle write file request
  */
 export async function handleFileWrite(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: FileWriteRequest
 ): Promise<FileWriteResponse> {
   try {
@@ -131,7 +131,7 @@ export async function handleFileWrite(
  * Handle file exists check request
  */
 export async function handleFileExists(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: FileExistsRequest
 ): Promise<FileExistsResponse> {
   try {
@@ -146,7 +146,7 @@ export async function handleFileExists(
  * Handle delete file request
  */
 export async function handleFileDelete(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: FileDeleteRequest
 ): Promise<FileDeleteResponse> {
   try {

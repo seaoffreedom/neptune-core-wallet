@@ -4,7 +4,7 @@
  * Handles process-related IPC communication between main and renderer processes.
  */
 
-import { type ChildProcess, spawn } from 'child_process';
+import { type ChildProcess, spawn } from 'node:child_process';
 import { ipcMain } from 'electron';
 import { APP_CONSTANTS } from '../../../shared/constants/app-constants';
 import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
@@ -24,7 +24,7 @@ const activeProcesses = new Map<number, ChildProcess>();
  * Handle spawn process request
  */
 export async function handleProcessSpawn(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: ProcessSpawnRequest
 ): Promise<ProcessSpawnResponse> {
   try {
@@ -91,7 +91,7 @@ export async function handleProcessSpawn(
  * Handle kill process request
  */
 export async function handleProcessKill(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: ProcessKillRequest
 ): Promise<ProcessKillResponse> {
   try {
@@ -123,7 +123,7 @@ export async function handleProcessKill(
  * Handle get process status request
  */
 export async function handleProcessStatus(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: ProcessStatusRequest
 ): Promise<ProcessStatusResponse> {
   try {

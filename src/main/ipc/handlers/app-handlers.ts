@@ -15,7 +15,7 @@ import type {
  * Handle app quit request
  */
 export function handleAppQuit(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: AppQuitRequest
 ) {
   try {
@@ -37,7 +37,7 @@ export function handleAppQuit(
 /**
  * Handle app restart request
  */
-export function handleAppRestart(event: Electron.IpcMainInvokeEvent) {
+export function handleAppRestart(_event: Electron.IpcMainInvokeEvent) {
   try {
     app.relaunch();
     app.quit();
@@ -55,7 +55,7 @@ export function handleAppRestart(event: Electron.IpcMainInvokeEvent) {
  * Handle get app version request
  */
 export function handleGetVersion(
-  event: Electron.IpcMainInvokeEvent
+  _event: Electron.IpcMainInvokeEvent
 ): AppVersionResponse {
   try {
     return {

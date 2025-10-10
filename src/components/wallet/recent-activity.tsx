@@ -48,11 +48,11 @@ export function RecentActivity({
         txBlockHeight: string,
     ): "confirmed" | "pending" | "failed" => {
         if (!blockHeight) return "pending";
-        const txHeight = parseInt(txBlockHeight);
-        const currentHeight = parseInt(blockHeight);
+        const txHeight = parseInt(txBlockHeight, 10);
+        const currentHeight = parseInt(blockHeight, 10);
         const txConfirmations = currentHeight - txHeight;
         const requiredConfirmations = confirmations
-            ? parseInt(confirmations)
+            ? parseInt(confirmations, 10)
             : 6;
 
         return txConfirmations >= requiredConfirmations
