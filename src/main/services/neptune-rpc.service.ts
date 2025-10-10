@@ -692,4 +692,25 @@ export class NeptuneRpcService {
 }
 
 // Export singleton instance
-export const neptuneRpcService = new NeptuneRpcService();
+// Lazy singleton instance
+let _neptuneRpcServiceInstance: NeptuneRpcService | null = null;
+
+/**
+ * Get the singleton NeptuneRpcService instance (lazy initialization)
+ */
+export function getNeptuneRpcService(): NeptuneRpcService {
+    if (!_neptuneRpcServiceInstance) {
+        _neptuneRpcServiceInstance = new NeptuneRpcService();
+        logger.info("NeptuneRpcService instance created (lazy initialization)");
+    }
+    return _neptuneRpcServiceInstance;
+}
+
+// Backward compatibility - keep the old export for existing code
+export const neptuneRpcService = new Proxy({} as NeptuneRpcService, {
+    get(_target, prop) {
+        const instance = getNeptuneRpcService();
+        const value = (instance as Record<string, unknown>)[prop];
+        return typeof value === "function" ? value.bind(instance) : value;
+    },
+});
