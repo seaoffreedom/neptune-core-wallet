@@ -7,6 +7,7 @@
 import fs from "fs-extra";
 import path from "node:path";
 import { app, ipcMain } from "electron";
+import { readJsonWithRetry, writeJsonWithRetry } from "../../utils/async-file-operations";
 import { APP_CONSTANTS } from "../../../shared/constants/app-constants";
 import { IPC_CHANNELS } from "../../../shared/constants/ipc-channels";
 import type {
@@ -39,10 +40,10 @@ function getSettingsPath(): string {
 async function loadSettings(): Promise<void> {
     try {
         const settingsPath = getSettingsPath();
-        const data = await fs.readFile(settingsPath, "utf8");
+        const data = await readJsonWithRetry(settingsPath, { retries: 2, timeout: 3000 });
         settingsCache = {
             ...APP_CONSTANTS.DEFAULT_SETTINGS,
-            ...JSON.parse(data),
+            ...data,
         };
         settingsLoaded = true;
     } catch (_error) {
@@ -59,11 +60,7 @@ async function loadSettings(): Promise<void> {
 async function saveSettings(): Promise<void> {
     try {
         const settingsPath = getSettingsPath();
-        await fs.writeFile(
-            settingsPath,
-            JSON.stringify(settingsCache, null, 2),
-            "utf8",
-        );
+        await writeJsonWithRetry(settingsPath, settingsCache, { spaces: 2, retries: 2, timeout: 3000 });
     } catch (error) {
         console.error("Error saving settings:", error);
         throw error;
