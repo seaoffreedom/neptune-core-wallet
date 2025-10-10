@@ -53,12 +53,10 @@ export const IPC_CHANNELS = {
     SYSTEM_GET_COMBINED_STATS: "system:get-combined-stats",
     SYSTEM_GET_PROCESS_STATS: "system:get-process-stats",
 
-    // Worker operations
-    WORKER_CRYPTO_HASH: "worker:crypto-hash",
-    WORKER_CRYPTO_RANDOM: "worker:crypto-random",
-    WORKER_CRYPTO_VALIDATE: "worker:crypto-validate",
-    WORKER_GET_STATS: "worker:get-stats",
-    WORKER_TERMINATE_ALL: "worker:terminate-all",
+    // Worker management (temporarily disabled)
+    // WORKER_EXECUTE: 'worker:execute',
+    // WORKER_STATUS: 'worker:status',
+    // WORKER_TERMINATE_ALL: 'worker:terminate-all',
 
     // Neptune process management
     NEPTUNE_INITIALIZE: "neptune:initialize",

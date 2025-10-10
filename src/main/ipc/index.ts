@@ -24,10 +24,11 @@ import {
     cleanupNeptuneCoreSettingsHandlers,
     registerNeptuneCoreSettingsHandlers,
 } from "./handlers/neptune-core-settings-handlers";
-import {
-    registerWorkerHandlers,
-    removeWorkerHandlers,
-} from "./handlers/worker-handlers";
+// Worker handlers temporarily disabled
+// import {
+//     registerWorkerHandlers,
+//     unregisterWorkerHandlers,
+// } from "./handlers/worker-handlers";
 import {
     registerNeptuneHandlers,
     unregisterNeptuneHandlers,
@@ -67,7 +68,7 @@ export function registerAllHandlers() {
     registerSettingsHandlers();
     registerProcessHandlers();
     registerWalletHandlers();
-    registerWorkerHandlers();
+    // registerWorkerHandlers(); // Temporarily disabled due to path issues
     registerNeptuneHandlers();
     registerBlockchainHandlers();
     registerAddressBookHandlers();
@@ -90,7 +91,7 @@ export function unregisterAllHandlers() {
     unregisterSettingsHandlers();
     unregisterProcessHandlers();
     unregisterWalletHandlers();
-    removeWorkerHandlers();
+    // unregisterWorkerHandlers(); // Temporarily disabled due to path issues
     unregisterNeptuneHandlers();
     unregisterBlockchainHandlers();
     unregisterAddressBookHandlers();

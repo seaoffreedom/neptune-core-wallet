@@ -11,8 +11,6 @@ import path from "node:path";
 import { execa } from "execa";
 import pRetry from "p-retry";
 import pTimeout from "p-timeout";
-import pLimit from "p-limit";
-import PQueue from "p-queue";
 import pino from "pino";
 import { NeptuneCoreArgsBuilder } from "./neptune-core-args-builder";
 import { neptuneCoreSettingsService } from "./neptune-core-settings.service";
@@ -74,14 +72,6 @@ export class NeptuneProcessManager {
     private dataPollingInterval?: NodeJS.Timeout;
     private cookie?: string;
     private argsBuilder: NeptuneCoreArgsBuilder;
-
-    // Concurrency control for process operations
-    private processQueue = new PQueue({
-        concurrency: 2, // Max 2 concurrent process operations
-        interval: 1000, // 1 second interval
-        intervalCap: 1, // 1 operation per interval
-    });
-    private processLimit = pLimit(3); // Max 3 concurrent process spawns
 
     constructor(config: Partial<ProcessConfig> = {}) {
         this.config = { ...DEFAULT_CONFIG, ...config };
@@ -255,35 +245,11 @@ export class NeptuneProcessManager {
         );
 
         try {
-            // Enhanced process spawning with retry
-            this.coreProcess = await this.processQueue.add(() =>
-                this.processLimit(() =>
-                    pRetry(
-                        () =>
-                            execa(binaryPath, args, {
-                                stdio: ["ignore", "pipe", "pipe"],
-                                detached: false,
-                                reject: false, // Don't reject promise on non-zero exit
-                            }),
-                        {
-                            retries: 2,
-                            factor: 2,
-                            minTimeout: 2000,
-                            maxTimeout: 8000,
-                            onFailedAttempt: (error) => {
-                                logger.warn(
-                                    {
-                                        attempt: error.attemptNumber,
-                                        error: error.message || "Unknown error",
-                                        binary: binaryPath,
-                                    },
-                                    "neptune-core spawn retry attempt failed",
-                                );
-                            },
-                        },
-                    ),
-                ),
-            );
+            this.coreProcess = execa(binaryPath, args, {
+                stdio: ["ignore", "pipe", "pipe"],
+                detached: false,
+                reject: false, // Don't reject promise on non-zero exit
+            });
 
             // Handle process events
             this.coreProcess.on("error", (error) => {
@@ -441,35 +407,11 @@ export class NeptuneProcessManager {
         ];
 
         try {
-            // Enhanced process spawning with retry
-            this.cliProcess = await this.processQueue.add(() =>
-                this.processLimit(() =>
-                    pRetry(
-                        () =>
-                            execa(binaryPath, args, {
-                                stdio: ["ignore", "pipe", "pipe"],
-                                detached: false,
-                                reject: false, // Don't reject promise on non-zero exit
-                            }),
-                        {
-                            retries: 2,
-                            factor: 2,
-                            minTimeout: 2000,
-                            maxTimeout: 8000,
-                            onFailedAttempt: (error) => {
-                                logger.warn(
-                                    {
-                                        attempt: error.attemptNumber,
-                                        error: error.message || "Unknown error",
-                                        binary: binaryPath,
-                                    },
-                                    "neptune-cli spawn retry attempt failed",
-                                );
-                            },
-                        },
-                    ),
-                ),
-            );
+            this.cliProcess = execa(binaryPath, args, {
+                stdio: ["ignore", "pipe", "pipe"],
+                detached: false,
+                reject: false, // Don't reject promise on non-zero exit
+            });
 
             // Handle process events
             this.cliProcess.on("error", (error) => {
