@@ -192,13 +192,14 @@ export class NeptuneRpcService {
                                             "Cache-Control": "no-cache", // Prevent caching
                                         },
                                         timeout, // Configurable timeout
-                                        signal: this.abortController.signal, // Add abort signal
+                                        signal: this.abortController?.signal, // Add abort signal
                                         retry: {
                                             limit: 0, // Disable automatic retries to prevent duplicate requests
                                         },
                                     })
                                     .json<JsonRpcResponse<T>>(),
                                 timeout,
+                                "RPC call timeout",
                             ),
                         {
                             ...this.retryConfig,
@@ -756,7 +757,7 @@ export function getNeptuneRpcService(): NeptuneRpcService {
 export const neptuneRpcService = new Proxy({} as NeptuneRpcService, {
     get(_target, prop) {
         const instance = getNeptuneRpcService();
-        const value = (instance as any)[prop];
+        const value = (instance as Record<string, unknown>)[prop];
         return typeof value === "function" ? value.bind(instance) : value;
     },
 });
