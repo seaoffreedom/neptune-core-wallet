@@ -5,10 +5,7 @@
  * This screen appears before the main app UI loads.
  */
 
-import { CheckCircle, Loader2, Settings, Wallet, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { useNeptuneAPI } from "@/renderer/hooks/use-neptune-api";
 import {
     useCliStatus,
@@ -22,7 +19,6 @@ interface SplashScreenProps {
 }
 
 export function SplashScreen({ onReady }: SplashScreenProps) {
-    const [startupProgress, setStartupProgress] = useState(0);
     const [currentStep, setCurrentStep] = useState("Initializing Neptune...");
     const [isReady, setIsReady] = useState(false);
 
@@ -32,24 +28,35 @@ export function SplashScreen({ onReady }: SplashScreenProps) {
     const cookie = useCookie();
     const { setAppStep } = useNeptuneStore((state) => state.actions);
 
+    // Calculate progress based on status
+    const calculateProgress = () => {
+        let progress = 0;
+
+        if (coreStatus.status === "running") progress += 40;
+        if (cliStatus.status === "running") progress += 30;
+        if (cookie.isValid) progress += 20;
+        if (isReady) progress += 10;
+
+        return Math.min(progress, 100);
+    };
+
+    const progress = calculateProgress();
+
     // Initialize Neptune processes once on mount
     useEffect(() => {
         let isMounted = true;
 
         const initialize = async () => {
             try {
-                console.log("🚀 Initializing Neptune from splash screen...");
                 const success = await neptuneAPI.initialize();
 
                 if (!isMounted) return;
 
                 if (!success) {
-                    console.error("❌ Failed to start Neptune processes");
                     setAppStep("error", "Failed to start Neptune processes");
                 }
             } catch (error) {
                 if (!isMounted) return;
-                console.error("Initialization error:", error);
                 setAppStep("error", (error as Error).message);
             }
         };
@@ -100,240 +107,159 @@ export function SplashScreen({ onReady }: SplashScreenProps) {
 
                         // Fetch and store the actual cookie
                         try {
-                            console.log(
-                                "🔄 Fetching cookie from process manager...",
-                            );
                             const cookieResult = await neptuneAPI.getCookie();
-                            console.log(
-                                "📥 Cookie result:",
-                                cookieResult,
-                                typeof cookieResult,
-                            );
 
                             // Handle both string (direct cookie) and object response
                             if (typeof cookieResult === "string") {
                                 // Direct cookie string
                                 setCookie(cookieResult);
-                                console.log(
-                                    "✅ Cookie stored in Zustand:",
-                                    cookieResult,
-                                );
-
-                                // Send cookie to main process RPC service
-                                console.log(
-                                    "📤 Setting cookie in RPC service...",
-                                );
                                 await window.electronAPI.blockchain.setCookie(
                                     cookieResult,
                                 );
-                                console.log("✅ Cookie set in RPC service");
                             } else if (
-                                cookieResult?.success &&
-                                cookieResult.cookie
+                                cookieResult &&
+                                typeof cookieResult === "object" &&
+                                "success" in cookieResult &&
+                                "cookie" in cookieResult
                             ) {
-                                // Wrapped response
-                                setCookie(cookieResult.cookie);
-                                console.log(
-                                    "✅ Cookie stored in Zustand:",
-                                    cookieResult.cookie,
-                                );
-
-                                // Send cookie to main process RPC service
-                                console.log(
-                                    "📤 Setting cookie in RPC service...",
-                                );
-                                await window.electronAPI.blockchain.setCookie(
-                                    cookieResult.cookie,
-                                );
-                                console.log("✅ Cookie set in RPC service");
-                            } else {
-                                console.error(
-                                    "❌ Failed to fetch cookie:",
-                                    cookieResult?.error || "Unknown error",
-                                );
+                                const wrappedResult = cookieResult as {
+                                    success: boolean;
+                                    cookie: string;
+                                };
+                                if (
+                                    wrappedResult.success &&
+                                    wrappedResult.cookie
+                                ) {
+                                    // Wrapped response
+                                    setCookie(wrappedResult.cookie);
+                                    await window.electronAPI.blockchain.setCookie(
+                                        wrappedResult.cookie,
+                                    );
+                                }
                             }
-                        } catch (error) {
-                            console.error("❌ Error fetching cookie:", error);
+                        } catch {
+                            // Silently handle cookie fetch errors
                         }
 
                         setIsReady(true);
-                        console.log(
-                            "⏱️  Waiting 1 second before calling onReady()...",
-                        );
 
                         setTimeout(() => {
-                            console.log(
-                                "✅ Calling onReady() - transitioning to main app",
-                            );
                             onReady();
                         }, 1000);
                     }
                 }
-            } catch (error) {
-                console.error("Status check error:", error);
+            } catch {
+                // Silently handle status check errors
             }
         }, 500); // Check every 500ms
 
         return () => clearInterval(statusCheckInterval);
     }, [neptuneAPI, setAppStep, onReady, isReady]); // Include isReady to stop checking after ready
 
-    // Update progress and step messages based on process status
+    // Update step messages based on process status
     useEffect(() => {
-        let progress = 0;
         let step = "Initializing Neptune...";
 
         if (coreStatus.status === "running") {
-            progress = 50;
-            step = "Neptune Core is running";
+            step = "Starting Neptune Core";
         }
 
         if (cliStatus.status === "running") {
-            progress = 80;
-            step = "Neptune CLI is running";
+            step = "Connecting to CLI";
         }
 
         if (cookie.isValid) {
-            progress = 100;
-            step = "All systems ready!";
+            step = "Authenticating";
         }
 
-        setStartupProgress(progress);
+        if (isReady) {
+            step = "Ready";
+        }
+
         setCurrentStep(step);
-    }, [coreStatus.status, cliStatus.status, cookie.isValid]);
-
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case "running":
-                return <CheckCircle className="h-4 w-4 text-green-500" />;
-            case "starting":
-            case "stopping":
-                return (
-                    <Loader2 className="h-4 w-4 text-yellow-500 animate-spin" />
-                );
-            case "error":
-                return <XCircle className="h-4 w-4 text-red-500" />;
-            default:
-                return (
-                    <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
-                );
-        }
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "running":
-                return "bg-green-100 text-green-800 border-green-200";
-            case "starting":
-            case "stopping":
-                return "bg-yellow-100 text-yellow-800 border-yellow-200";
-            case "error":
-                return "bg-red-100 text-red-800 border-red-200";
-            default:
-                return "bg-gray-100 text-gray-800 border-gray-200";
-        }
-    };
+    }, [coreStatus.status, cliStatus.status, cookie.isValid, isReady]);
 
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-            <div className="w-full max-w-md space-y-8">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Animated Background Effects */}
+            <div className="absolute inset-0 overflow-hidden">
+                {/* Floating neon orbs */}
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute top-3/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+
+                {/* Moving gradient orbs */}
+                <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 rounded-full blur-2xl animate-spin-slow"></div>
+                <div className="absolute top-1/3 right-1/3 w-56 h-56 bg-gradient-to-r from-purple-400/20 to-pink-500/20 rounded-full blur-2xl animate-spin-slow-reverse"></div>
+            </div>
+
+            {/* Main Content */}
+            <div className="relative z-10 w-full max-w-lg space-y-12">
                 {/* Logo and Title */}
-                <div className="text-center space-y-4">
-                    <div className="flex items-center justify-center space-x-3">
-                        <Wallet className="h-12 w-12 text-primary" />
-                        <h1 className="text-4xl font-bold">Neptune</h1>
-                    </div>
-                    <p className="text-lg text-muted-foreground">Core Wallet</p>
-                </div>
-
-                {/* Startup Progress */}
-                <div className="space-y-6">
-                    {/* Progress Bar */}
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                            <span>Starting up...</span>
-                            <span>{startupProgress}%</span>
+                <div className="text-center space-y-6">
+                    <div className="flex items-center justify-center">
+                        <div className="relative">
+                            {/* Logo with glow effect */}
+                            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-cyan-500/25">
+                                <img
+                                    src="/assets/logos/neptune.svg"
+                                    alt="Neptune Logo"
+                                    className="w-16 h-16 filter brightness-0 invert"
+                                />
+                            </div>
+                            {/* Glow ring */}
+                            <div className="absolute inset-0 w-24 h-24 mx-auto bg-gradient-to-br from-cyan-400/30 to-blue-600/30 rounded-2xl blur-xl animate-pulse"></div>
                         </div>
-                        <Progress value={startupProgress} className="w-full" />
                     </div>
 
-                    {/* Current Step */}
-                    <div className="text-center">
-                        <p className="text-sm text-muted-foreground">
-                            {currentStep}
+                    <div className="space-y-2">
+                        <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 bg-clip-text text-transparent">
+                            Neptune
+                        </h1>
+                        <p className="text-xl text-slate-400 font-light">
+                            Core Wallet
                         </p>
                     </div>
+                </div>
 
-                    {/* Process Status */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                            <div className="flex items-center space-x-2">
-                                <Settings className="h-4 w-4" />
-                                <span className="text-sm font-medium">
-                                    Neptune Core
-                                </span>
-                            </div>
-                            <Badge
-                                variant="outline"
-                                className={getStatusColor(coreStatus.status)}
-                            >
-                                {getStatusIcon(coreStatus.status)}
-                                <span className="ml-1 capitalize">
-                                    {coreStatus.status}
-                                </span>
-                            </Badge>
+                {/* Progress Section */}
+                <div className="space-y-8">
+                    {/* Large Progress Bar */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between text-sm text-slate-400">
+                            <span>Loading</span>
+                            <span className="font-mono">{progress}%</span>
                         </div>
-
-                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                            <div className="flex items-center space-x-2">
-                                <Wallet className="h-4 w-4" />
-                                <span className="text-sm font-medium">
-                                    Neptune CLI
-                                </span>
+                        <div className="relative">
+                            <div className="w-full h-3 bg-slate-700/50 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full transition-all duration-1000 ease-out relative"
+                                    style={{ width: `${progress}%` }}
+                                >
+                                    {/* Shimmer effect */}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                                </div>
                             </div>
-                            <Badge
-                                variant="outline"
-                                className={getStatusColor(cliStatus.status)}
-                            >
-                                {getStatusIcon(cliStatus.status)}
-                                <span className="ml-1 capitalize">
-                                    {cliStatus.status}
-                                </span>
-                            </Badge>
+                            {/* Glow effect */}
+                            <div
+                                className="absolute top-0 h-3 bg-gradient-to-r from-cyan-500/50 to-blue-600/50 rounded-full blur-sm transition-all duration-1000 ease-out"
+                                style={{ width: `${progress}%` }}
+                            ></div>
                         </div>
                     </div>
 
-                    {/* Cookie Status */}
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <span className="text-sm font-medium">
-                            Authentication
-                        </span>
-                        <Badge
-                            variant="outline"
-                            className={
-                                cookie.isValid
-                                    ? "bg-green-100 text-green-800 border-green-200"
-                                    : "bg-gray-100 text-gray-800 border-gray-200"
-                            }
-                        >
-                            {cookie.isValid ? (
-                                <>
-                                    <CheckCircle className="h-3 w-3 mr-1" />
-                                    Ready
-                                </>
-                            ) : (
-                                <>
-                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                    Waiting
-                                </>
-                            )}
-                        </Badge>
+                    {/* Subtle Loading Step */}
+                    <div className="text-center">
+                        <p className="text-slate-500 text-sm font-light tracking-wide">
+                            {currentStep}
+                        </p>
                     </div>
                 </div>
 
                 {/* Loading Animation */}
                 {!isReady && (
                     <div className="flex justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        <div className="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
                     </div>
                 )}
             </div>

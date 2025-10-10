@@ -4,10 +4,13 @@
  * Centralized IPC handler registration and management.
  */
 
+import pino from "pino";
 import {
     registerAddressBookHandlers,
     unregisterAddressBookHandlers,
 } from "./handlers/address-book-handlers";
+
+const logger = pino({ level: "info" });
 import {
     registerAppHandlers,
     unregisterAppHandlers,
@@ -60,7 +63,7 @@ import {
  * Register all IPC handlers
  */
 export function registerAllHandlers() {
-    console.log("Registering IPC handlers...");
+    logger.info("Registering IPC handlers...");
 
     registerAppHandlers();
     registerWindowHandlers();
@@ -76,14 +79,14 @@ export function registerAllHandlers() {
     registerPeerHandlers();
     registerSystemHandlers();
 
-    console.log("All IPC handlers registered successfully");
+    logger.info("All IPC handlers registered successfully");
 }
 
 /**
  * Unregister all IPC handlers
  */
 export function unregisterAllHandlers() {
-    console.log("Unregistering IPC handlers...");
+    logger.info("Unregistering IPC handlers...");
 
     unregisterAppHandlers();
     unregisterWindowHandlers();
@@ -98,14 +101,14 @@ export function unregisterAllHandlers() {
     cleanupNeptuneCoreSettingsHandlers();
     unregisterSystemHandlers();
 
-    console.log("All IPC handlers unregistered successfully");
+    logger.info("All IPC handlers unregistered successfully");
 }
 
 /**
  * Cleanup resources
  */
 export async function cleanup() {
-    console.log("Cleaning up IPC resources...");
+    logger.info("Cleaning up IPC resources...");
     cleanupProcesses();
 
     // Shutdown Neptune processes
@@ -114,5 +117,5 @@ export async function cleanup() {
     );
     await neptuneProcessManager.shutdown();
 
-    console.log("IPC cleanup completed");
+    logger.info("IPC cleanup completed");
 }
