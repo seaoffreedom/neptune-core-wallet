@@ -9,7 +9,6 @@ import { app, BrowserWindow } from "electron";
 import started from "electron-squirrel-startup";
 import { cleanup, registerAllHandlers, unregisterAllHandlers } from "./ipc";
 import { settingsInitializerService } from "./services/settings-initializer.service";
-import { systemResourceService } from "./services/system-resource.service";
 import {
     createMainWindow,
     focusMainWindow,
@@ -46,7 +45,7 @@ app.whenReady().then(async () => {
             await settingsInitializerService.initializeSettings();
 
             // Initialize peer service (deferred)
-            const { peerService } = await import("./services/peer.service");
+            await import("./services/peer.service");
             console.log("Peer service initialized with default peers");
         } catch (error) {
             console.error("Error during deferred initialization:", error);

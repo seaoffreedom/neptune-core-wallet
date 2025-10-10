@@ -25,7 +25,13 @@ function PeerManager() {
       console.log("⚠️ No network setting found, using 'main' as fallback");
       loadPeers('main');
     }
-  }, [networkSettings?.network, loadPeers]);
+  }, [
+    networkSettings?.network,
+    loadPeers,
+    bannedPeers.length,
+    activePeers.length,
+    networkSettings,
+  ]);
 
   // Determine if we're in initial loading state (no data yet and currently loading)
   const isInitialLoading =

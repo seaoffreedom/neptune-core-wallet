@@ -158,13 +158,10 @@ export async function withRetry<T>(
                         attempts: retries + 1,
                     },
                 );
-                throw lastError;
+                throw lastError!;
             }
 
-            const currentDelay = Math.min(
-                delay * Math.pow(2, attempt),
-                maxDelay,
-            );
+            const currentDelay = Math.min(delay * 2 ** attempt, maxDelay);
             console.warn(
                 `⚠️ Attempt ${attempt + 1} failed, retrying in ${currentDelay}ms:`,
                 {
@@ -178,7 +175,7 @@ export async function withRetry<T>(
         }
     }
 
-    throw lastError;
+    throw lastError!;
 }
 
 /**
