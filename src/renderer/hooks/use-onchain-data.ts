@@ -14,6 +14,11 @@ import {
     type UTXO,
     useOnchainStore,
 } from "@/store/onchain.store";
+import {
+    dashboardDataFetcher,
+    balanceDataFetcher,
+    mempoolDataFetcher,
+} from "../utils/resilient-data-fetching";
 
 // ============================================================================
 // Transaction Types
@@ -52,20 +57,21 @@ export function useDashboardData() {
         setError(null);
 
         try {
-            const result =
-                await window.electronAPI.blockchain.getDashboardOverview();
-
-            console.log("📊 Dashboard data received:", result);
+            const result = await dashboardDataFetcher.fetch(
+                () => window.electronAPI.blockchain.getDashboardOverview(),
+                {
+                    retries: 3,
+                    timeout: 10000,
+                    deduplicateKey: "dashboard_overview",
+                },
+            );
 
             if (result.success && result.data) {
-                console.log("✅ Setting dashboard data:", result.data);
                 setDashboardData(result.data as DashboardOverviewData);
             } else {
-                console.error("❌ Dashboard fetch failed:", result.error);
                 setError(result.error || "Failed to fetch dashboard data");
             }
         } catch (error) {
-            console.error("❌ Dashboard fetch error:", error);
             setError((error as Error).message);
         } finally {
             setIsRefreshing(false);
@@ -106,25 +112,22 @@ export function useBalance() {
         setError(null);
 
         try {
-            const result = await window.electronAPI.blockchain.getBalance();
-
-            console.log("💰 Balance data received:", result);
+            const result = await balanceDataFetcher.fetch(
+                () => window.electronAPI.blockchain.getBalance(),
+                {
+                    retries: 3,
+                    timeout: 10000,
+                    deduplicateKey: "balance",
+                },
+            );
 
             if (result.success && result.confirmed && result.unconfirmed) {
-                console.log(
-                    "✅ Setting balance - Confirmed:",
-                    result.confirmed,
-                    "Unconfirmed:",
-                    result.unconfirmed,
-                );
                 setConfirmedBalance(result.confirmed);
                 setUnconfirmedBalance(result.unconfirmed);
             } else {
-                console.error("❌ Balance fetch failed:", result.error);
                 setError(result.error || "Failed to fetch balance");
             }
         } catch (error) {
-            console.error("❌ Balance fetch error:", error);
             setError((error as Error).message);
         } finally {
             setIsRefreshing(false);
@@ -164,20 +167,14 @@ export function useNetworkInfo() {
                 window.electronAPI.blockchain.getBlockHeight(),
             ]);
 
-            console.log("🌐 Network data received:", networkResult);
-            console.log("📏 Block height received:", heightResult);
-
             if (networkResult.success && networkResult.network) {
-                console.log("✅ Setting network:", networkResult.network);
                 setNetwork(networkResult.network);
             }
 
             if (heightResult.success && heightResult.height) {
-                console.log("✅ Setting block height:", heightResult.height);
                 setBlockHeight(heightResult.height);
             }
         } catch (error) {
-            console.error("❌ Network info fetch error:", error);
             setError((error as Error).message);
         } finally {
             setIsRefreshing(false);
@@ -216,30 +213,13 @@ export function useTransactionHistory() {
         try {
             const result = await window.electronAPI.blockchain.getHistory();
 
-            console.log("📜 Transaction history received:", result);
-
             if (result.success && result.history !== undefined) {
-                console.log(
-                    "✅ Setting transaction history:",
-                    Array.isArray(result.history) ? result.history.length : 0,
-                    "transactions",
-                );
                 setTransactionHistory(
                     result.history as TransactionHistoryItem[],
                 );
-            } else {
-                // History endpoint can be slow/timeout - don't show error, just log
-                console.warn(
-                    "⚠️  History fetch failed (will retry):",
-                    result.error,
-                );
-                // Don't set error state - let it silently fail and retry next poll
             }
-        } catch (error) {
-            console.warn(
-                "⚠️  History fetch error (will retry):",
-                (error as Error).message,
-            );
+            // History endpoint can be slow/timeout - silently retry on failure
+        } catch {
             // Don't set error state - let it silently fail and retry next poll
         } finally {
             setIsRefreshing(false);
@@ -428,18 +408,30 @@ export function useMempoolInfo() {
 
         try {
             const [countResult, sizeResult] = await Promise.all([
-                window.electronAPI.blockchain.getMempoolTxCount(),
-                window.electronAPI.blockchain.getMempoolSize(),
+                mempoolDataFetcher.fetch(
+                    () => window.electronAPI.blockchain.getMempoolTxCount(),
+                    {
+                        retries: 2,
+                        timeout: 8000,
+                        deduplicateKey: "mempool_tx_count",
+                    },
+                ),
+                mempoolDataFetcher.fetch(
+                    () => window.electronAPI.blockchain.getMempoolSize(),
+                    {
+                        retries: 2,
+                        timeout: 8000,
+                        deduplicateKey: "mempool_size",
+                    },
+                ),
             ]);
 
-            // Only log successful results (mempool endpoints may timeout)
+            // Only set successful results (mempool endpoints may timeout)
             if (countResult.success && countResult.count !== undefined) {
-                console.log("✅ Mempool tx count:", countResult.count);
                 setMempoolTxCount(countResult.count);
             }
 
             if (sizeResult.success && sizeResult.size !== undefined) {
-                console.log("✅ Mempool size:", sizeResult.size);
                 setMempoolSize(sizeResult.size);
             }
 
@@ -463,20 +455,12 @@ export function useMempoolInfo() {
                 const txCountResult =
                     await window.electronAPI.blockchain.getMempoolTxCount();
 
-                console.log(
-                    "fetchMempoolOverview: txCountResult:",
-                    txCountResult,
-                );
-
                 if (
                     !txCountResult.success ||
                     !txCountResult.count ||
                     txCountResult.count === 0
                 ) {
                     // No transactions, set empty overview
-                    console.log(
-                        "fetchMempoolOverview: No transactions, setting empty overview",
-                    );
                     setMempoolOverview({
                         transactions: [],
                         count: 0,
@@ -489,17 +473,12 @@ export function useMempoolInfo() {
                 const txIdsResult =
                     await window.electronAPI.blockchain.getMempoolTxIds();
 
-                console.log("fetchMempoolOverview: txIdsResult:", txIdsResult);
-
                 if (
                     !txIdsResult.success ||
                     !txIdsResult.txIds ||
                     txIdsResult.txIds.length === 0
                 ) {
                     // No transaction IDs, set empty overview
-                    console.log(
-                        "fetchMempoolOverview: No transaction IDs, setting empty overview",
-                    );
                     setMempoolOverview({
                         transactions: [],
                         count: 0,
@@ -509,9 +488,6 @@ export function useMempoolInfo() {
                 }
 
                 // Create overview with transaction IDs (mempool_overview endpoint doesn't exist)
-                console.log(
-                    "fetchMempoolOverview: Creating overview with transaction IDs",
-                );
                 const transactions = txIdsResult.txIds
                     .slice(startIndex, startIndex + count)
                     .map((txId) => ({
@@ -520,11 +496,6 @@ export function useMempoolInfo() {
                         size: 0, // We don't have size info from tx_ids
                         timestamp: new Date().toISOString(),
                     }));
-
-                console.log(
-                    "fetchMempoolOverview: Created transactions from IDs:",
-                    transactions,
-                );
 
                 setMempoolOverview({
                     transactions,
@@ -570,28 +541,11 @@ export function useUtxos() {
         try {
             const result = await window.electronAPI.blockchain.listOwnCoins();
 
-            console.log("🪙 UTXOs received:", result);
-
             if (result.success && result.coins !== undefined) {
-                console.log(
-                    "✅ Setting UTXOs:",
-                    Array.isArray(result.coins) ? result.coins.length : 0,
-                    "coins",
-                );
                 setUtxos(result.coins as UTXO[]);
-            } else {
-                // UTXO endpoint can be slow/timeout - don't show error, just log
-                console.warn(
-                    "⚠️  UTXO fetch failed (will retry):",
-                    result.error,
-                );
-                // Don't set error state - let it silently fail and retry next poll
             }
-        } catch (error) {
-            console.warn(
-                "⚠️  UTXO fetch error (will retry):",
-                (error as Error).message,
-            );
+            // UTXO endpoint can be slow/timeout - silently retry on failure
+        } catch {
             // Don't set error state - let it silently fail and retry next poll
         } finally {
             setIsRefreshing(false);
@@ -912,11 +866,7 @@ export function useAutoPolling(intervalMs = 10000) {
             // Try a simple, fast RPC call to check connection health
             const result = await window.electronAPI.blockchain.getBlockHeight();
             return result.success;
-        } catch (error) {
-            console.warn(
-                "🔍 Connection health check failed:",
-                (error as Error).message,
-            );
+        } catch {
             return false;
         }
     }, []);
@@ -955,7 +905,6 @@ export function useAutoPolling(intervalMs = 10000) {
         }
 
         if (issues.length > 0) {
-            console.warn("⚠️ Data consistency issues detected:", issues);
             return false;
         }
 
@@ -967,14 +916,12 @@ export function useAutoPolling(intervalMs = 10000) {
         async (isInitial = false) => {
             // Prevent overlapping fetch cycles
             if (isFetching) {
-                console.log("⏳ Fetch already in progress, skipping...");
                 return;
             }
 
             // Check if enough time has passed since last fetch (minimum 2 seconds)
             const now = Date.now();
             if (!isInitial && now - lastFetchTime < 2000) {
-                console.log("⏳ Too soon since last fetch, skipping...");
                 return;
             }
 
@@ -982,39 +929,20 @@ export function useAutoPolling(intervalMs = 10000) {
             setLastFetchTime(now);
 
             try {
-                console.log("📡 Starting coordinated blockchain data fetch...");
-
                 // Check connection health once at the start
                 if (!(await isConnectionHealthy())) {
-                    console.warn(
-                        "⚠️ Connection not healthy, skipping fetch cycle",
-                    );
                     return;
                 }
 
                 // Execute all fetches in parallel but with proper error handling
                 const fetchPromises = [
-                    fetchDashboard().catch((error) =>
-                        console.warn("Dashboard fetch failed:", error),
-                    ),
-                    fetchBalance().catch((error) =>
-                        console.warn("Balance fetch failed:", error),
-                    ),
-                    fetchNetworkInfo().catch((error) =>
-                        console.warn("Network info fetch failed:", error),
-                    ),
-                    fetchMempoolInfo().catch((error) =>
-                        console.warn("Mempool info fetch failed:", error),
-                    ),
-                    fetchHistory().catch((error) =>
-                        console.warn("History fetch failed:", error),
-                    ),
-                    fetchUtxos().catch((error) =>
-                        console.warn("UTXOs fetch failed:", error),
-                    ),
-                    fetchPeerInfo().catch((error) =>
-                        console.warn("Peer info fetch failed:", error),
-                    ),
+                    fetchDashboard().catch(() => {}),
+                    fetchBalance().catch(() => {}),
+                    fetchNetworkInfo().catch(() => {}),
+                    fetchMempoolInfo().catch(() => {}),
+                    fetchHistory().catch(() => {}),
+                    fetchUtxos().catch(() => {}),
+                    fetchPeerInfo().catch(() => {}),
                 ];
 
                 // Wait for all fetches to complete (or fail gracefully)
@@ -1024,10 +952,8 @@ export function useAutoPolling(intervalMs = 10000) {
                 setTimeout(() => {
                     validateDataConsistency();
                 }, 100);
-
-                console.log("✅ Coordinated fetch cycle completed");
-            } catch (error) {
-                console.error("❌ Coordinated fetch cycle failed:", error);
+            } catch {
+                // Silently handle fetch cycle errors
             } finally {
                 setIsFetching(false);
             }
@@ -1048,8 +974,6 @@ export function useAutoPolling(intervalMs = 10000) {
     );
 
     useEffect(() => {
-        console.log("🔄 Auto-polling initialized with interval:", intervalMs);
-
         // Wait a moment for RPC server to be fully ready before initial fetch
         const initialFetchTimeout = setTimeout(() => {
             performCoordinatedFetch(true);
@@ -1061,7 +985,6 @@ export function useAutoPolling(intervalMs = 10000) {
         }, intervalMs);
 
         return () => {
-            console.log("🛑 Auto-polling stopped");
             clearTimeout(initialFetchTimeout);
             clearInterval(interval);
         };

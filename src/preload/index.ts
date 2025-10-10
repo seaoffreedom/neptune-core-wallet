@@ -6,7 +6,10 @@
  */
 
 import { contextBridge } from "electron";
+import pino from "pino";
 import type { ElectronAPI } from "../shared/types/api-types";
+
+const logger = pino({ level: "info" });
 import {
     addressBookAPI,
     appAPI,
@@ -103,7 +106,7 @@ const electronAPI: ElectronAPI = {
         },
     ) => {
         // This would be implemented with proper notification handlers
-        console.log("Notification:", title, options);
+        logger.info({ title, options }, "Notification requested");
         return { success: true };
     },
 
@@ -147,4 +150,4 @@ const electronAPI: ElectronAPI = {
 contextBridge.exposeInMainWorld("electronAPI", electronAPI);
 
 // Log that the preload script has loaded
-console.log("Preload script loaded successfully");
+logger.info("Preload script loaded successfully");

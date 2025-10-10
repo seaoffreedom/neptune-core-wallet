@@ -7,15 +7,17 @@
 
 import { app, BrowserWindow } from "electron";
 import started from "electron-squirrel-startup";
+import pino from "pino";
 import { cleanup, registerAllHandlers, unregisterAllHandlers } from "./ipc";
 import { settingsInitializerService } from "./services/settings-initializer.service";
-import { systemResourceService } from "./services/system-resource.service";
 import {
     createMainWindow,
     focusMainWindow,
     getMainWindow,
     hasMainWindow,
 } from "./window/main-window";
+
+const logger = pino({ level: "info" });
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
 if (started) {
@@ -37,8 +39,8 @@ app.whenReady().then(async () => {
     await settingsInitializerService.initializeSettings();
 
     // Initialize peer service to ensure default peers are created
-    const { peerService } = await import("./services/peer.service");
-    console.log("Peer service initialized with default peers");
+    await import("./services/peer.service");
+    logger.info("Peer service initialized with default peers");
 
     // Register all IPC handlers
     registerAllHandlers();
@@ -73,7 +75,7 @@ app.on("before-quit", async (event) => {
     // Prevent default quit to allow async cleanup
     event.preventDefault();
 
-    console.log("App shutting down, cleaning up resources...");
+    logger.info("App shutting down, cleaning up resources...");
 
     // Cleanup resources
     await cleanup();

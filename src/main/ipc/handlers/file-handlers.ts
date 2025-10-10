@@ -6,7 +6,11 @@
 
 import path from "node:path";
 import { dialog, ipcMain } from "electron";
-import { readFileWithRetry, writeFileWithRetry, fileExistsWithRetry } from "../../utils/async-file-operations";
+import {
+    readFileWithRetry,
+    writeFileWithRetry,
+    fileExistsWithRetry,
+} from "../../utils/async-file-operations";
 import { IPC_CHANNELS } from "../../../shared/constants/ipc-channels";
 import type {
     FileDeleteRequest,
@@ -87,7 +91,7 @@ export async function handleFileRead(
         const data = await readFileWithRetry(request.path, {
             encoding: request.encoding || "utf8",
             retries: 2,
-            timeout: 3000
+            timeout: 3000,
         });
         return {
             success: true,
@@ -114,7 +118,7 @@ export async function handleFileWrite(
         await writeFileWithRetry(request.path, request.data, {
             encoding: request.encoding || "utf8",
             retries: 2,
-            timeout: 3000
+            timeout: 3000,
         });
         return {
             success: true,
@@ -136,7 +140,10 @@ export async function handleFileExists(
     request: FileExistsRequest,
 ): Promise<FileExistsResponse> {
     try {
-        const exists = await fileExistsWithRetry(request.path, { retries: 2, timeout: 2000 });
+        const exists = await fileExistsWithRetry(request.path, {
+            retries: 2,
+            timeout: 2000,
+        });
         return { exists };
     } catch {
         return { exists: false };

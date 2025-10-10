@@ -6,12 +6,15 @@
 
 import { ipcMain } from "electron";
 import { z } from "zod";
+import pino from "pino";
 import { neptuneRpcService } from "@/main/services/neptune-rpc.service";
 import { IPC_CHANNELS } from "@/shared/constants/ipc-channels";
 import {
     createValidatedHandler,
     ValidationSchemas,
 } from "@/main/security/input-validation";
+
+const logger = pino({ level: "info" });
 
 /**
  * Register blockchain data handlers
@@ -43,14 +46,14 @@ export function registerBlockchainHandlers(): void {
                     ValidationSchemas.cookie.safeParse(cookieString);
                 if (!validation.success) {
                     throw new Error(
-                        `Cookie validation failed: ${validation.error.errors[0]?.message || "Invalid cookie format"}`,
+                        `Cookie validation failed: ${validation.error.issues[0]?.message || "Invalid cookie format"}`,
                     );
                 }
 
                 neptuneRpcService.setCookie(cookieString);
                 return { success: true };
             } catch (error) {
-                console.error("Failed to set RPC cookie:", error);
+                logger.error({ error }, "Failed to set RPC cookie");
                 return {
                     success: false,
                     error: (error as Error).message,
@@ -68,7 +71,7 @@ export function registerBlockchainHandlers(): void {
                 data,
             };
         } catch (error) {
-            console.error("Failed to get dashboard data:", error);
+            logger.error({ error }, "Failed to get dashboard data");
             return {
                 success: false,
                 error: (error as Error).message,
@@ -85,7 +88,7 @@ export function registerBlockchainHandlers(): void {
                 height,
             };
         } catch (error) {
-            console.error("Failed to get block height:", error);
+            logger.error({ error }, "Failed to get block height");
             return {
                 success: false,
                 error: (error as Error).message,
@@ -102,7 +105,7 @@ export function registerBlockchainHandlers(): void {
                 network,
             };
         } catch (error) {
-            console.error("Failed to get network:", error);
+            logger.error({ error }, "Failed to get network");
             return {
                 success: false,
                 error: (error as Error).message,
@@ -119,7 +122,7 @@ export function registerBlockchainHandlers(): void {
                 status,
             };
         } catch (error) {
-            console.error("Failed to get wallet status:", error);
+            logger.error({ error }, "Failed to get wallet status");
             return {
                 success: false,
                 error: (error as Error).message,
@@ -136,7 +139,7 @@ export function registerBlockchainHandlers(): void {
                 address,
             };
         } catch (error) {
-            console.error("Failed to get next address:", error);
+            logger.error({ error }, "Failed to get next address");
             return {
                 success: false,
                 error: (error as Error).message,
@@ -153,7 +156,7 @@ export function registerBlockchainHandlers(): void {
                 history,
             };
         } catch (error) {
-            console.error("Failed to get history:", error);
+            logger.error({ error }, "Failed to get history");
             return {
                 success: false,
                 error: (error as Error).message,
@@ -758,7 +761,7 @@ export function registerBlockchainHandlers(): void {
         }
     });
 
-    console.log("✅ All blockchain data handlers registered (40 endpoints)");
+    logger.info("All blockchain data handlers registered (40 endpoints)");
 }
 
 /**
@@ -814,5 +817,5 @@ export function unregisterBlockchainHandlers(): void {
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_IMPORT_SEED);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_WHICH_WALLET);
 
-    console.log("✅ All blockchain data handlers unregistered (40 endpoints)");
+    logger.info("All blockchain data handlers unregistered (40 endpoints)");
 }

@@ -8,6 +8,12 @@
 import { Mutex } from "async-mutex";
 import ky from "ky";
 import pino from "pino";
+import { ResilientRpcOperation } from "../utils/async-rpc-operations";
+import {
+    withPerformanceMonitoring,
+    priorityRpcQueue,
+    rpcConnectionPool,
+} from "../utils/performance-optimizations";
 
 const logger = pino({ level: "info" });
 
@@ -61,9 +67,17 @@ export class NeptuneRpcService {
     private abortController?: AbortController;
     private pendingRequests = new Set<number>();
     private requestMutex = new Mutex();
+    private resilientRpc: ResilientRpcOperation;
 
     constructor(rpcPort: number = 9801) {
         this.rpcUrl = `http://localhost:${rpcPort}`;
+        this.resilientRpc = new ResilientRpcOperation({
+            failureThreshold: 5,
+            resetTimeout: 30000,
+            maxConsecutiveFailures: 3,
+            healthCheckInterval: 10000,
+            context: "neptune-rpc-service",
+        });
     }
 
     /**
@@ -97,6 +111,56 @@ export class NeptuneRpcService {
      */
     private isConnectionHealthy(): boolean {
         return this.isConnected && this.cookie !== null;
+    }
+
+    /**
+     * Make a resilient JSON-RPC call with retry logic, circuit breaker, and connection health monitoring
+     */
+    private async resilientCall<T>(
+        method: string,
+        params?: Record<string, unknown> | unknown[],
+        timeout: number = 10000,
+        options: {
+            retries?: number;
+            deduplicateKey?: string;
+            skipHealthCheck?: boolean;
+            priority?: "high" | "normal" | "low";
+        } = {},
+    ): Promise<T> {
+        const {
+            retries = 3,
+            deduplicateKey,
+            skipHealthCheck = false,
+            priority = "normal",
+        } = options;
+
+        // Create deduplication key if not provided
+        const key =
+            deduplicateKey || `${method}-${JSON.stringify(params || {})}`;
+
+        // Get connection from pool
+        const connection = rpcConnectionPool.getConnection(this.rpcUrl);
+        if (!connection) {
+            throw new Error("No available RPC connections");
+        }
+
+        // Create monitored operation
+        const monitoredOperation = withPerformanceMonitoring(
+            () => this.call(method, params, timeout),
+            `rpc_${method}`,
+        );
+
+        // Use priority queue for execution
+        return priorityRpcQueue.add(
+            () =>
+                this.resilientRpc.execute(monitoredOperation, {
+                    retries,
+                    timeout,
+                    deduplicateKey: key,
+                    skipHealthCheck,
+                }),
+            priority,
+        ) as Promise<T>;
     }
 
     /**
@@ -236,7 +300,16 @@ export class NeptuneRpcService {
      * Get comprehensive dashboard overview data
      */
     async getDashboardOverview(): Promise<DashboardOverviewData> {
-        return this.call<DashboardOverviewData>("dashboard_overview_data");
+        return this.resilientCall<DashboardOverviewData>(
+            "dashboard_overview_data",
+            undefined,
+            10000,
+            {
+                retries: 3,
+                deduplicateKey: "dashboard_overview_data",
+                priority: "high",
+            },
+        );
     }
 
     /**
@@ -359,7 +432,15 @@ export class NeptuneRpcService {
      * Get mempool transaction count
      */
     async getMempoolTxCount(): Promise<number> {
-        return this.call<number>("mempool_tx_count");
+        return this.resilientCall<number>(
+            "mempool_tx_count",
+            undefined,
+            10000,
+            {
+                retries: 3,
+                deduplicateKey: "mempool_tx_count",
+            },
+        );
     }
 
     /**
@@ -414,7 +495,15 @@ export class NeptuneRpcService {
      * Get all mempool transaction IDs
      */
     async getMempoolTxIds(): Promise<string[]> {
-        return this.call<string[]>("mempool_tx_ids");
+        return this.resilientCall<string[]>(
+            "mempool_tx_ids",
+            undefined,
+            10000,
+            {
+                retries: 3,
+                deduplicateKey: "mempool_tx_ids",
+            },
+        );
     }
 
     /**
@@ -606,7 +695,7 @@ export class NeptuneRpcService {
             lastSeen: number;
         }>;
     }> {
-        return this.call<{
+        return this.resilientCall<{
             connectedCount: number;
             lastUpdated: string;
             peers: Array<{
@@ -614,7 +703,10 @@ export class NeptuneRpcService {
                 connected: boolean;
                 lastSeen: number;
             }>;
-        }>("get_peer_info");
+        }>("get_peer_info", undefined, 10000, {
+            retries: 3,
+            deduplicateKey: "get_peer_info",
+        });
     }
 
     /**
@@ -625,11 +717,14 @@ export class NeptuneRpcService {
         lastUpdated: string;
         unconfirmed: string;
     }> {
-        return this.call<{
+        return this.resilientCall<{
             confirmed: string;
             lastUpdated: string;
             unconfirmed: string;
-        }>("get_balance");
+        }>("get_balance", undefined, 10000, {
+            retries: 3,
+            deduplicateKey: "get_balance",
+        });
     }
 
     /**
@@ -689,6 +784,31 @@ export class NeptuneRpcService {
     async getPowPuzzleInternalKey(): Promise<unknown> {
         return this.call<unknown>("pow_puzzle_internal_key");
     }
+
+    /**
+     * Get resilient RPC operation status
+     */
+    getResilientRpcStatus() {
+        return this.resilientRpc.getStatus();
+    }
+
+    /**
+     * Reset resilient RPC operations
+     */
+    resetResilientRpc() {
+        this.resilientRpc.reset();
+    }
+
+    /**
+     * Get performance optimization status
+     */
+    getPerformanceStatus() {
+        return {
+            resilientRpc: this.resilientRpc.getStatus(),
+            connectionPool: rpcConnectionPool.getStatus(),
+            priorityQueue: priorityRpcQueue.getStatus(),
+        };
+    }
 }
 
 // Export singleton instance
@@ -710,7 +830,9 @@ export function getNeptuneRpcService(): NeptuneRpcService {
 export const neptuneRpcService = new Proxy({} as NeptuneRpcService, {
     get(_target, prop) {
         const instance = getNeptuneRpcService();
-        const value = (instance as Record<string, unknown>)[prop];
+        const value = (instance as unknown as Record<string, unknown>)[
+            prop as string
+        ];
         return typeof value === "function" ? value.bind(instance) : value;
     },
 });
