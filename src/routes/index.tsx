@@ -1,9 +1,9 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from '@tanstack/react-router';
 
-export const Route = createFileRoute("/")({
-    component: IndexRedirect,
+export const Route = createFileRoute('/')({
+  component: IndexRedirect,
 });
 
 function IndexRedirect() {
-    return <Navigate to="/wallet" />;
+  return <Navigate to="/wallet" />;
 }

@@ -4,9 +4,9 @@
  * Handles file-related IPC communication between main and renderer processes.
  */
 
-import { dialog, ipcMain } from 'electron';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { dialog, ipcMain } from 'electron';
 import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
 import type {
   FileDeleteRequest,
