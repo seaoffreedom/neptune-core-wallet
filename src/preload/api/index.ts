@@ -15,4 +15,5 @@ export { processAPI } from "./process-api";
 export { settingsAPI } from "./settings-api";
 export { walletAPI } from "./wallet-api";
 export { windowAPI } from "./window-api";
+export { systemAPI } from "./system-api";
 // export { workerAPI } from './worker-api'; // Temporarily disabled

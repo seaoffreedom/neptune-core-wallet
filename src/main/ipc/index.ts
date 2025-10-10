@@ -24,7 +24,6 @@ import {
     cleanupNeptuneCoreSettingsHandlers,
     registerNeptuneCoreSettingsHandlers,
 } from "./handlers/neptune-core-settings-handlers";
-import { registerPeerHandlers } from "./handlers/peer-handlers";
 // Worker handlers temporarily disabled
 // import {
 //     registerWorkerHandlers,
@@ -34,6 +33,7 @@ import {
     registerNeptuneHandlers,
     unregisterNeptuneHandlers,
 } from "./handlers/neptune-handlers";
+import { registerPeerHandlers } from "./handlers/peer-handlers";
 import {
     cleanupProcesses,
     registerProcessHandlers,
@@ -51,6 +51,10 @@ import {
     registerWindowHandlers,
     unregisterWindowHandlers,
 } from "./handlers/window-handlers";
+import {
+    registerSystemHandlers,
+    unregisterSystemHandlers,
+} from "./handlers/system-handlers";
 
 /**
  * Register all IPC handlers
@@ -70,6 +74,7 @@ export function registerAllHandlers() {
     registerAddressBookHandlers();
     registerNeptuneCoreSettingsHandlers();
     registerPeerHandlers();
+    registerSystemHandlers();
 
     console.log("All IPC handlers registered successfully");
 }
@@ -91,6 +96,7 @@ export function unregisterAllHandlers() {
     unregisterBlockchainHandlers();
     unregisterAddressBookHandlers();
     cleanupNeptuneCoreSettingsHandlers();
+    unregisterSystemHandlers();
 
     console.log("All IPC handlers unregistered successfully");
 }

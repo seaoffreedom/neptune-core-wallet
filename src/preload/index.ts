@@ -17,6 +17,7 @@ import {
     peerAPI,
     processAPI,
     settingsAPI,
+    systemAPI,
     walletAPI,
     windowAPI,
     // workerAPI, // Temporarily disabled
@@ -88,6 +89,9 @@ const electronAPI: ElectronAPI = {
 
     // Peer management - expose as nested object
     peer: peerAPI,
+
+    // System resource monitoring - expose as nested object
+    system: systemAPI,
 
     // System integration (placeholder implementations)
     showNotification: async (

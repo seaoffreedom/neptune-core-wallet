@@ -1,56 +1,56 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { PageContainer } from "@/components/layout/PageContainer";
-import { NetworkSettingsForm } from "@/components/settings/network-settings-form";
-import { Skeleton } from "@/components/ui/skeleton";
+import { createFileRoute } from '@tanstack/react-router';
+import { useEffect } from 'react';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { NetworkSettingsForm } from '@/components/settings/network-settings-form';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
-    type NetworkSettingsFormData,
-    networkSettingsSchema,
-} from "@/lib/validation/settings-schemas";
-import { useSettingsForm } from "@/renderer/hooks/use-settings-form";
-import { useNetworkSettings } from "@/store/neptune-core-settings.store";
+  type NetworkSettingsFormData,
+  networkSettingsSchema,
+} from '@/lib/validation/settings-schemas';
+import { useSettingsForm } from '@/renderer/hooks/use-settings-form';
+import { useNetworkSettings } from '@/store/neptune-core-settings.store';
 
-export const Route = createFileRoute("/settings/network")({
-    component: NetworkSettings,
+export const Route = createFileRoute('/settings/network')({
+  component: NetworkSettings,
 });
 
 function NetworkSettings() {
-    const { form, isLoading } = useSettingsForm<NetworkSettingsFormData>({
-        category: "network",
-        schema: networkSettingsSchema,
-    });
+  const { form, isLoading } = useSettingsForm<NetworkSettingsFormData>({
+    category: 'network',
+    schema: networkSettingsSchema,
+  });
 
-    // Watch for Zustand store changes and reset form accordingly
-    const networkSettings = useNetworkSettings();
-    useEffect(() => {
-        if (networkSettings && !isLoading) {
-            form.reset(networkSettings);
-        }
-    }, [networkSettings, form, isLoading]);
+  // Watch for Zustand store changes and reset form accordingly
+  const networkSettings = useNetworkSettings();
+  useEffect(() => {
+    if (networkSettings && !isLoading) {
+      form.reset(networkSettings);
+    }
+  }, [networkSettings, form, isLoading]);
 
-    return (
-        <PageContainer>
-            <div className="space-y-6 pb-20">
-                {/* Header */}
-                <div className="space-y-2">
-                    <h1 className="text-3xl font-bold">Network Settings</h1>
-                    <p className="text-muted-foreground">
-                        Configure peer connections, ports, and network
-                        parameters for Neptune Core.
-                    </p>
-                </div>
+  return (
+    <PageContainer>
+      <div className="space-y-6 pb-20">
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Network Settings</h1>
+          <p className="text-muted-foreground">
+            Configure peer connections, ports, and network parameters for
+            Neptune Core.
+          </p>
+        </div>
 
-                {/* Network Settings Form */}
-                {isLoading ? (
-                    <div className="space-y-6">
-                        <Skeleton className="h-32 w-full" />
-                        <Skeleton className="h-32 w-full" />
-                        <Skeleton className="h-32 w-full" />
-                    </div>
-                ) : (
-                    <NetworkSettingsForm form={form} />
-                )}
-            </div>
-        </PageContainer>
-    );
+        {/* Network Settings Form */}
+        {isLoading ? (
+          <div className="space-y-6">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        ) : (
+          <NetworkSettingsForm form={form} />
+        )}
+      </div>
+    </PageContainer>
+  );
 }
