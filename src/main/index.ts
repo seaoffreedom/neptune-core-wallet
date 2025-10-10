@@ -35,6 +35,10 @@ app.whenReady().then(async () => {
   // Initialize settings on first run (must happen before IPC handlers)
   await settingsInitializerService.initializeSettings();
 
+  // Initialize peer service to ensure default peers are created
+  const { peerService } = await import('./services/peer.service');
+  console.log('Peer service initialized with default peers');
+
   // Register all IPC handlers
   registerAllHandlers();
 
