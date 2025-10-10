@@ -8,9 +8,7 @@
 import { Mutex } from "async-mutex";
 import ky from "ky";
 import pino from "pino";
-import pRetry from "p-retry";
-import pTimeout from "p-timeout";
-import pLimit from "p-limit";
+import { getCacheService } from "./cache.service";
 
 const logger = pino({ level: "info" });
 
@@ -64,25 +62,7 @@ export class NeptuneRpcService {
     private abortController?: AbortController;
     private pendingRequests = new Set<number>();
     private requestMutex = new Mutex();
-
-    // Concurrency control for RPC calls
-    private rpcLimit = pLimit(5); // Max 5 concurrent RPC calls
-    private retryConfig = {
-        retries: 3,
-        factor: 2,
-        minTimeout: 1000,
-        maxTimeout: 5000,
-        onFailedAttempt: (error: any) => {
-            logger.warn(
-                {
-                    attempt: error.attemptNumber,
-                    error: error.message,
-                    method: error.options?.method || "unknown",
-                },
-                "RPC call retry attempt failed",
-            );
-        },
-    };
+    private cache = getCacheService();
 
     constructor(rpcPort: number = 9801) {
         this.rpcUrl = `http://localhost:${rpcPort}`;
@@ -94,9 +74,13 @@ export class NeptuneRpcService {
     setCookie(cookie: string): void {
         this.cookie = cookie;
         this.isConnected = true;
+
+        // Clear cache when cookie changes to ensure fresh data
+        this.cache.flush();
+
         logger.info(
             { cookiePreview: `${cookie.substring(0, 16)}...` },
-            "RPC cookie set and connection established",
+            "RPC cookie set, connection established, and cache cleared",
         );
     }
 
@@ -124,166 +108,177 @@ export class NeptuneRpcService {
     /**
      * Make a JSON-RPC call with connection health checks, abort support, and request serialization
      */
+    /**
+     * Make a cached JSON-RPC call to neptune-cli
+     */
+    private async cachedCall<T>(
+        method: string,
+        params?: Record<string, unknown> | unknown[],
+        timeout: number = 10000,
+        cacheKey?: string,
+        cacheTTL: number = 30, // 30 seconds default
+    ): Promise<T> {
+        // Generate cache key if not provided
+        const key = cacheKey || `rpc:${method}:${JSON.stringify(params || {})}`;
+
+        // Try to get from cache first
+        const cached = this.cache.get<T>(key);
+        if (cached !== undefined) {
+            logger.debug({ method, key }, "RPC cache hit");
+            return cached;
+        }
+
+        // Make the actual RPC call
+        const result = await this.call<T>(method, params, timeout);
+
+        // Cache the result
+        this.cache.set(key, result, cacheTTL);
+        logger.debug({ method, key, ttl: cacheTTL }, "RPC cache set");
+
+        return result;
+    }
+
     private async call<T>(
         method: string,
         params?: Record<string, unknown> | unknown[],
         timeout: number = 10000,
     ): Promise<T> {
-        // Use concurrency limit to prevent overwhelming the RPC server
-        return this.rpcLimit(async () => {
-            // Use mutex to serialize all RPC requests
-            return this.requestMutex.runExclusive(async () => {
-                // Check connection health before making request
-                if (!this.isConnectionHealthy()) {
-                    throw new Error(
-                        "RPC connection not available - neptune-cli may be shutting down",
-                    );
-                }
+        // Use mutex to serialize all RPC requests
+        return this.requestMutex.runExclusive(async () => {
+            // Check connection health before making request
+            if (!this.isConnectionHealthy()) {
+                throw new Error(
+                    "RPC connection not available - neptune-cli may be shutting down",
+                );
+            }
 
-                this.requestId += 1;
-                const currentRequestId = this.requestId;
+            this.requestId += 1;
+            const currentRequestId = this.requestId;
 
-                // Track pending request
-                this.pendingRequests.add(currentRequestId);
+            // Track pending request
+            this.pendingRequests.add(currentRequestId);
 
-                const request: JsonRpcRequest = {
-                    jsonrpc: "2.0",
-                    method,
-                    params: params || {}, // Use empty object if params not provided
-                    id: currentRequestId,
+            const request: JsonRpcRequest = {
+                jsonrpc: "2.0",
+                method,
+                params: params || {}, // Use empty object if params not provided
+                id: currentRequestId,
+            };
+
+            // Create abort controller for this request
+            this.abortController = new AbortController();
+
+            try {
+                const headers: Record<string, string> = {
+                    "Content-Type": "application/json",
                 };
 
-                // Create abort controller for this request
-                this.abortController = new AbortController();
-
-                try {
-                    const headers: Record<string, string> = {
-                        "Content-Type": "application/json",
-                    };
-
-                    // Add cookie if available
-                    if (this.cookie) {
-                        headers.Cookie = `neptune-cli=${this.cookie}`;
-                    }
-
-                    logger.info(
-                        {
-                            method,
-                            id: currentRequestId,
-                            cookie: this.cookie
-                                ? `${this.cookie.substring(0, 16)}...`
-                                : "none",
-                            requestBody: request,
-                            headers,
-                        },
-                        "Making RPC call",
-                    );
-
-                    // Enhanced RPC call with retry and timeout
-                    const response = await pRetry(
-                        () =>
-                            pTimeout(
-                                ky
-                                    .post(this.rpcUrl, {
-                                        json: request,
-                                        headers: {
-                                            ...headers,
-                                            Connection: "close", // Force new connection each time
-                                            "Cache-Control": "no-cache", // Prevent caching
-                                        },
-                                        timeout, // Configurable timeout
-                                        signal: this.abortController?.signal, // Add abort signal
-                                        retry: {
-                                            limit: 0, // Disable automatic retries to prevent duplicate requests
-                                        },
-                                    })
-                                    .json<JsonRpcResponse<T>>(),
-                                timeout,
-                                "RPC call timeout",
-                            ),
-                        {
-                            ...this.retryConfig,
-                            onFailedAttempt: (error) => {
-                                logger.warn(
-                                    {
-                                        attempt: error.attemptNumber,
-                                        error: error.message || "Unknown error",
-                                        method,
-                                        id: currentRequestId,
-                                    },
-                                    "RPC call retry attempt failed",
-                                );
-                            },
-                        },
-                    );
-
-                    logger.info(
-                        { method, id: currentRequestId },
-                        "RPC call successful",
-                    );
-
-                    if (response.error) {
-                        throw new Error(
-                            `RPC error ${response.error.code}: ${response.error.message}`,
-                        );
-                    }
-
-                    if (response.result === undefined) {
-                        throw new Error("RPC response missing result");
-                    }
-
-                    logger.debug(
-                        { method, id: currentRequestId },
-                        "RPC call successful",
-                    );
-
-                    return response.result;
-                } catch (error) {
-                    // Handle abort errors gracefully
-                    if (error instanceof Error && error.name === "AbortError") {
-                        logger.info(
-                            { method, id: currentRequestId },
-                            "RPC call aborted",
-                        );
-                        throw new Error(
-                            "RPC call aborted - neptune-cli may be shutting down",
-                        );
-                    }
-
-                    // Check if connection is still healthy after error
-                    if (!this.isConnectionHealthy()) {
-                        logger.warn(
-                            { method, id: currentRequestId },
-                            "RPC call failed - connection lost",
-                        );
-                        throw new Error(
-                            "RPC connection lost - neptune-cli may be shutting down",
-                        );
-                    }
-
-                    logger.error(
-                        {
-                            error: (error as Error).message,
-                            method,
-                            id: currentRequestId,
-                        },
-                        "RPC call failed",
-                    );
-                    throw error;
-                } finally {
-                    // Clean up abort controller and remove from pending requests
-                    this.abortController = undefined;
-                    this.pendingRequests.delete(currentRequestId);
+                // Add cookie if available
+                if (this.cookie) {
+                    headers.Cookie = `neptune-cli=${this.cookie}`;
                 }
-            });
+
+                logger.info(
+                    {
+                        method,
+                        id: currentRequestId,
+                        cookie: this.cookie
+                            ? `${this.cookie.substring(0, 16)}...`
+                            : "none",
+                        requestBody: request,
+                        headers,
+                    },
+                    "Making RPC call",
+                );
+
+                const response = await ky
+                    .post(this.rpcUrl, {
+                        json: request,
+                        headers: {
+                            ...headers,
+                            Connection: "close", // Force new connection each time
+                            "Cache-Control": "no-cache", // Prevent caching
+                        },
+                        timeout, // Configurable timeout
+                        signal: this.abortController.signal, // Add abort signal
+                        retry: {
+                            limit: 0, // Disable automatic retries to prevent duplicate requests
+                        },
+                    })
+                    .json<JsonRpcResponse<T>>();
+
+                logger.info(
+                    { method, id: currentRequestId },
+                    "RPC call successful",
+                );
+
+                if (response.error) {
+                    throw new Error(
+                        `RPC error ${response.error.code}: ${response.error.message}`,
+                    );
+                }
+
+                if (response.result === undefined) {
+                    throw new Error("RPC response missing result");
+                }
+
+                logger.debug(
+                    { method, id: currentRequestId },
+                    "RPC call successful",
+                );
+
+                return response.result;
+            } catch (error) {
+                // Handle abort errors gracefully
+                if (error instanceof Error && error.name === "AbortError") {
+                    logger.info(
+                        { method, id: currentRequestId },
+                        "RPC call aborted",
+                    );
+                    throw new Error(
+                        "RPC call aborted - neptune-cli may be shutting down",
+                    );
+                }
+
+                // Check if connection is still healthy after error
+                if (!this.isConnectionHealthy()) {
+                    logger.warn(
+                        { method, id: currentRequestId },
+                        "RPC call failed - connection lost",
+                    );
+                    throw new Error(
+                        "RPC connection lost - neptune-cli may be shutting down",
+                    );
+                }
+
+                logger.error(
+                    {
+                        error: (error as Error).message,
+                        method,
+                        id: currentRequestId,
+                    },
+                    "RPC call failed",
+                );
+                throw error;
+            } finally {
+                // Clean up abort controller and remove from pending requests
+                this.abortController = undefined;
+                this.pendingRequests.delete(currentRequestId);
+            }
         });
     }
 
     /**
-     * Get comprehensive dashboard overview data
+     * Get comprehensive dashboard overview data (cached for 10 seconds)
      */
     async getDashboardOverview(): Promise<DashboardOverviewData> {
-        return this.call<DashboardOverviewData>("dashboard_overview_data");
+        return this.cachedCall<DashboardOverviewData>(
+            "dashboard_overview_data",
+            undefined,
+            10000,
+            "dashboard_overview",
+            10, // 10 seconds cache
+        );
     }
 
     /**
@@ -294,10 +289,16 @@ export class NeptuneRpcService {
     }
 
     /**
-     * Get network type
+     * Get network type (cached for 60 seconds)
      */
     async getNetwork(): Promise<string> {
-        return this.call<string>("network");
+        return this.cachedCall<string>(
+            "network",
+            undefined,
+            10000,
+            "network",
+            60, // 60 seconds cache - network rarely changes
+        );
     }
 
     /**
@@ -597,10 +598,16 @@ export class NeptuneRpcService {
     }
 
     /**
-     * Get CPU temperature
+     * Get CPU temperature (cached for 5 seconds)
      */
     async getCpuTemp(): Promise<number | null> {
-        return this.call<number | null>("cpu_temp");
+        return this.cachedCall<number | null>(
+            "cpu_temp",
+            undefined,
+            10000,
+            "cpu_temp",
+            5, // 5 seconds cache - temperature changes frequently
+        );
     }
 
     /**
@@ -736,6 +743,21 @@ export class NeptuneRpcService {
     async getPowPuzzleInternalKey(): Promise<unknown> {
         return this.call<unknown>("pow_puzzle_internal_key");
     }
+
+    /**
+     * Get cache statistics for monitoring
+     */
+    getCacheStats() {
+        return this.cache.getStats();
+    }
+
+    /**
+     * Clear RPC cache manually
+     */
+    clearCache(): void {
+        this.cache.flush();
+        logger.info("RPC cache manually cleared");
+    }
 }
 
 // Export singleton instance
@@ -755,9 +777,9 @@ export function getNeptuneRpcService(): NeptuneRpcService {
 
 // Backward compatibility - keep the old export for existing code
 export const neptuneRpcService = new Proxy({} as NeptuneRpcService, {
-    get(_target, prop) {
+    get(_target, prop: string | symbol) {
         const instance = getNeptuneRpcService();
-        const value = (instance as Record<string, unknown>)[prop];
+        const value = (instance as any)[prop];
         return typeof value === "function" ? value.bind(instance) : value;
     },
 });
