@@ -4,12 +4,15 @@ import { DEFAULT_BOOTSTRAP_PEERS } from "../config/default-peers";
 
 export class PeerService {
     constructor() {
+        console.log("🔧 PeerService constructor called - initializing defaults");
         this.initializeDefaults();
     }
 
     private initializeDefaults(): void {
         const peers = peerStore.get("peers");
+        console.log("🔍 Checking existing peers:", peers.length);
         if (peers.length === 0) {
+            console.log("📦 No peers found, initializing with defaults");
             // Initialize with defaults for all networks
             const allDefaults: PeerEntry[] = [];
             for (const [_network, networkPeers] of Object.entries(
@@ -24,6 +27,9 @@ export class PeerService {
                 }
             }
             peerStore.set("peers", allDefaults);
+            console.log("✅ Default peers initialized:", allDefaults.length, "peers");
+        } else {
+            console.log("✅ Peers already exist:", peers.length, "peers");
         }
     }
 
