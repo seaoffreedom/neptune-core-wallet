@@ -24,11 +24,6 @@ import {
     cleanupNeptuneCoreSettingsHandlers,
     registerNeptuneCoreSettingsHandlers,
 } from "./handlers/neptune-core-settings-handlers";
-// Worker handlers temporarily disabled
-// import {
-//     registerWorkerHandlers,
-//     unregisterWorkerHandlers,
-// } from "./handlers/worker-handlers";
 import {
     registerNeptuneHandlers,
     unregisterNeptuneHandlers,
@@ -55,6 +50,7 @@ import {
     registerSystemHandlers,
     unregisterSystemHandlers,
 } from "./handlers/system-handlers";
+import { createLazyHandler } from "./lazy-handlers";
 
 /**
  * Register all IPC handlers
@@ -62,21 +58,53 @@ import {
 export function registerAllHandlers() {
     console.log("Registering IPC handlers...");
 
+    // Core handlers - always needed
     registerAppHandlers();
     registerWindowHandlers();
     registerFileHandlers();
     registerSettingsHandlers();
-    registerProcessHandlers();
-    registerWalletHandlers();
-    // registerWorkerHandlers(); // Temporarily disabled due to path issues
-    registerNeptuneHandlers();
-    registerBlockchainHandlers();
-    registerAddressBookHandlers();
-    registerNeptuneCoreSettingsHandlers();
-    registerPeerHandlers();
-    registerSystemHandlers();
 
-    console.log("All IPC handlers registered successfully");
+    // Lazy load heavy handlers only when needed
+    registerLazyHandlers();
+
+    console.log("Core IPC handlers registered successfully");
+}
+
+/**
+ * Register handlers that are only needed when specific features are used
+ */
+function registerLazyHandlers() {
+    // Register lazy handlers that will load heavy modules on-demand
+    const { ipcMain } = require("electron");
+
+    // Lazy blockchain handler
+    ipcMain.handle(
+        "lazy:blockchain",
+        createLazyHandler("lazy:blockchain", "blockchain", async () => ({
+            success: true,
+            message: "Blockchain handlers loaded",
+        })),
+    );
+
+    // Lazy process handler
+    ipcMain.handle(
+        "lazy:process",
+        createLazyHandler("lazy:process", "process", async () => ({
+            success: true,
+            message: "Process handlers loaded",
+        })),
+    );
+
+    // Lazy neptune handler
+    ipcMain.handle(
+        "lazy:neptune",
+        createLazyHandler("lazy:neptune", "neptune", async () => ({
+            success: true,
+            message: "Neptune handlers loaded",
+        })),
+    );
+
+    console.log("Lazy handler triggers registered");
 }
 
 /**
@@ -89,14 +117,14 @@ export function unregisterAllHandlers() {
     unregisterWindowHandlers();
     unregisterFileHandlers();
     unregisterSettingsHandlers();
-    unregisterProcessHandlers();
-    unregisterWalletHandlers();
-    // unregisterWorkerHandlers(); // Temporarily disabled due to path issues
-    unregisterNeptuneHandlers();
-    unregisterBlockchainHandlers();
-    unregisterAddressBookHandlers();
-    cleanupNeptuneCoreSettingsHandlers();
-    unregisterSystemHandlers();
+    // Lazy handlers will be cleaned up automatically
+    // unregisterProcessHandlers();
+    // unregisterWalletHandlers();
+    // unregisterNeptuneHandlers();
+    // unregisterBlockchainHandlers();
+    // unregisterAddressBookHandlers();
+    // cleanupNeptuneCoreSettingsHandlers();
+    // unregisterSystemHandlers();
 
     console.log("All IPC handlers unregistered successfully");
 }

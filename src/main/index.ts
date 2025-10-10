@@ -33,18 +33,25 @@ function createWindow() {
  * Handle app ready event
  */
 app.whenReady().then(async () => {
-    // Initialize settings on first run (must happen before IPC handlers)
-    await settingsInitializerService.initializeSettings();
+    // Create the main window first for faster perceived startup
+    createWindow();
 
-    // Initialize peer service to ensure default peers are created
-    const { peerService } = await import("./services/peer.service");
-    console.log("Peer service initialized with default peers");
-
-    // Register all IPC handlers
+    // Register core IPC handlers (lightweight)
     registerAllHandlers();
 
-    // Create the main window
-    createWindow();
+    // Defer heavy initialization operations
+    setTimeout(async () => {
+        try {
+            // Initialize settings on first run (deferred)
+            await settingsInitializerService.initializeSettings();
+
+            // Initialize peer service (deferred)
+            const { peerService } = await import("./services/peer.service");
+            console.log("Peer service initialized with default peers");
+        } catch (error) {
+            console.error("Error during deferred initialization:", error);
+        }
+    }, 100); // Small delay to let UI render first
 
     // Handle app activation (macOS)
     app.on("activate", () => {
