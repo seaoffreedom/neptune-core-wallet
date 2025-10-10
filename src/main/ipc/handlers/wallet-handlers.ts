@@ -24,8 +24,17 @@ import type {
     WalletSaveResponse,
 } from "../../../shared/types/ipc-channels";
 
+interface WalletData {
+    id: string;
+    name: string;
+    encrypted: boolean;
+    encryptedAt?: string;
+    decryptedAt?: string;
+    [key: string]: unknown;
+}
+
 // In-memory wallet storage (in production, this would be more secure)
-const walletStorage = new Map<string, unknown>();
+const walletStorage = new Map<string, WalletData>();
 
 /**
  * Get wallets directory path

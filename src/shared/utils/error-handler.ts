@@ -140,7 +140,7 @@ export async function withRetry<T>(
 ): Promise<T> {
     const { retries = 3, delay = 1000, maxDelay = 10000, context } = options;
 
-    let lastError: Error;
+    let lastError: Error | undefined;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
@@ -158,7 +158,7 @@ export async function withRetry<T>(
                         attempts: retries + 1,
                     },
                 );
-                throw lastError!;
+                throw lastError;
             }
 
             const currentDelay = Math.min(delay * 2 ** attempt, maxDelay);
@@ -175,7 +175,8 @@ export async function withRetry<T>(
         }
     }
 
-    throw lastError!;
+    // This should never be reached, but TypeScript needs it
+    throw lastError || new Error("Operation failed");
 }
 
 /**
