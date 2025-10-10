@@ -61,7 +61,6 @@ export class NeptuneCoreArgsBuilder {
         );
 
         // Add peer flags from peer store
-        console.log(`🌐 Using network: ${settings.network.network}`);
         await this.addPeerFlags(args, settings.network.network);
 
         // Add computed flags
@@ -152,18 +151,8 @@ export class NeptuneCoreArgsBuilder {
      */
     private async addPeerFlags(args: string[], network: string): Promise<void> {
         try {
-            console.log(`🔍 Loading peers for network: ${network}`);
             const enabledPeers =
                 await this.peerService.getEnabledPeers(network);
-
-            console.log(
-                `📋 Found ${enabledPeers.length} enabled peers:`,
-                enabledPeers.map((p) => ({
-                    address: p.address,
-                    label: p.label,
-                    enabled: p.enabled,
-                })),
-            );
 
             for (const peer of enabledPeers) {
                 args.push("--peer", peer.address);
@@ -171,10 +160,6 @@ export class NeptuneCoreArgsBuilder {
 
             if (enabledPeers.length > 0) {
                 console.log(`📡 Added ${enabledPeers.length} peer flags`);
-            } else {
-                console.log(
-                    `⚠️ No enabled peers found for network: ${network}`,
-                );
             }
         } catch (error) {
             console.error("❌ Failed to load peers for CLI args:", error);
