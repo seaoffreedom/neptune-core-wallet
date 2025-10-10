@@ -5,8 +5,8 @@
  */
 
 import { app, ipcMain } from 'electron';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { APP_CONSTANTS } from '../../../shared/constants/app-constants';
 import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
 import type {
@@ -45,7 +45,7 @@ async function loadSettings(): Promise<void> {
       ...JSON.parse(data),
     };
     settingsLoaded = true;
-  } catch (error) {
+  } catch (_error) {
     // If file doesn't exist or is invalid, use defaults
     settingsCache = { ...APP_CONSTANTS.DEFAULT_SETTINGS };
     settingsLoaded = true;
@@ -74,7 +74,7 @@ async function saveSettings(): Promise<void> {
  * Handle get setting request
  */
 export async function handleSettingsGet<T = any>(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: SettingsGetRequest
 ): Promise<SettingsGetResponse<T>> {
   try {
@@ -100,7 +100,7 @@ export async function handleSettingsGet<T = any>(
  * Handle set setting request
  */
 export async function handleSettingsSet<T = any>(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: SettingsSetRequest<T>
 ): Promise<SettingsSetResponse> {
   try {
@@ -127,7 +127,7 @@ export async function handleSettingsSet<T = any>(
  * Handle reset setting request
  */
 export async function handleSettingsReset(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: SettingsResetRequest
 ): Promise<SettingsResetResponse> {
   try {
@@ -168,7 +168,7 @@ export async function handleSettingsReset(
  * Handle export settings request
  */
 export async function handleSettingsExport(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: SettingsExportRequest
 ): Promise<SettingsExportResponse> {
   try {
@@ -202,7 +202,7 @@ export async function handleSettingsExport(
  * Handle import settings request
  */
 export async function handleSettingsImport(
-  event: Electron.IpcMainInvokeEvent,
+  _event: Electron.IpcMainInvokeEvent,
   request: SettingsImportRequest
 ): Promise<SettingsImportResponse> {
   try {

@@ -44,7 +44,7 @@ export const transactionColumns: ColumnDef<Transaction>[] = [
         cell: ({ row }) => {
             const timestamp = row.getValue("timestamp") as string;
             // Timestamp is in seconds as a string, convert to milliseconds
-            const date = new Date(parseInt(timestamp) * 1000);
+            const date = new Date(parseInt(timestamp, 10) * 1000);
             return (
                 <div className="font-medium">
                     {date.toLocaleDateString()} {date.toLocaleTimeString()}

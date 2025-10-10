@@ -43,7 +43,7 @@ function WalletOverview() {
     const isSynced =
         dashboardData?.syncing === false &&
         blockHeight !== null &&
-        parseInt(blockHeight) > 0;
+        parseInt(blockHeight, 10) > 0;
 
     return (
         <PageContainer>

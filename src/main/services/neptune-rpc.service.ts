@@ -96,7 +96,7 @@ export class NeptuneRpcService {
 
             // Add cookie if available
             if (this.cookie) {
-                headers["Cookie"] = `neptune-cli=${this.cookie}`;
+                headers.Cookie = `neptune-cli=${this.cookie}`;
             }
 
             logger.info(

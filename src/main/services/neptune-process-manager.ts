@@ -510,7 +510,7 @@ export class NeptuneProcessManager {
         // Extract the cookie hash from the output
         // Format: "Cookie: neptune-cli=<hash>"
         const match = output.match(/neptune-cli=([a-f0-9]{64})/);
-        if (match && match[1]) {
+        if (match?.[1]) {
             return match[1];
         }
         return null;

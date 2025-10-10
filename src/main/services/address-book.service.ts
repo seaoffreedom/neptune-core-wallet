@@ -6,7 +6,7 @@
  */
 
 import Store from "electron-store";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import pino from "pino";
 
 const logger = pino({ level: "info" });

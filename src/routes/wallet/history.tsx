@@ -30,11 +30,11 @@ function TransactionHistory() {
         // If height exists and we have current block height, calculate confirmations
         let status: "confirmed" | "pending" | "failed" = "pending";
         if (blockHeight && item.height) {
-            const txHeight = parseInt(item.height);
-            const currentHeight = parseInt(blockHeight);
+            const txHeight = parseInt(item.height, 10);
+            const currentHeight = parseInt(blockHeight, 10);
             const txConfirmations = currentHeight - txHeight;
             const requiredConfirmations = confirmations
-                ? parseInt(confirmations)
+                ? parseInt(confirmations, 10)
                 : 6;
 
             status =

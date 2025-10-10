@@ -233,7 +233,7 @@ export function MiningSettingsForm({ form }: MiningSettingsFormProps) {
                                             {...field}
                                             onChange={(e) => {
                                                 const value = Number.parseInt(
-                                                    e.target.value,
+                                                    e.target.value, 10
                                                 );
                                                 field.onChange(value);
                                                 handleFieldChange(
@@ -372,7 +372,7 @@ export function MiningSettingsForm({ form }: MiningSettingsFormProps) {
                                             onChange={(e) => {
                                                 const value = e.target.value
                                                     ? Number.parseInt(
-                                                          e.target.value,
+                                                          e.target.value, 10
                                                       )
                                                     : undefined;
                                                 field.onChange(value);

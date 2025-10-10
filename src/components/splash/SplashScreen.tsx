@@ -60,7 +60,7 @@ export function SplashScreen({ onReady }: SplashScreenProps) {
         return () => {
             isMounted = false;
         };
-    }, []); // Empty dependencies - run once on mount
+    }, [neptuneAPI.initialize, setAppStep]); // Empty dependencies - run once on mount
 
     // Monitor process status
     useEffect(() => {

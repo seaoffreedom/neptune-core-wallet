@@ -221,7 +221,7 @@ export function SecuritySettingsForm({ form }: SecuritySettingsFormProps) {
                                             onChange={(e) => {
                                                 const value = e.target.value
                                                     ? Number.parseInt(
-                                                          e.target.value,
+                                                          e.target.value, 10
                                                       )
                                                     : undefined;
                                                 field.onChange(value);

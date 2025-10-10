@@ -57,7 +57,7 @@ export const utxoColumns: ColumnDef<UTXO>[] = [
 
             // Check if time-locked
             if (releaseDate) {
-                const releaseTime = parseInt(releaseDate);
+                const releaseTime = parseInt(releaseDate, 10);
                 const now = Date.now();
                 if (releaseTime > now) {
                     const daysUntilRelease = Math.ceil(
@@ -93,7 +93,7 @@ export const utxoColumns: ColumnDef<UTXO>[] = [
                 return <span className="text-muted-foreground">—</span>;
             }
 
-            const confirmedTime = parseInt(confirmed);
+            const confirmedTime = parseInt(confirmed, 10);
             const now = Date.now();
             const ageMs = now - confirmedTime;
 
@@ -127,7 +127,7 @@ export const utxoColumns: ColumnDef<UTXO>[] = [
                 return <span className="text-green-500 text-sm">Now</span>;
             }
 
-            const releaseTime = parseInt(releaseDate);
+            const releaseTime = parseInt(releaseDate, 10);
             const now = Date.now();
 
             if (releaseTime <= now) {
