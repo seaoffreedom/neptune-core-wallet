@@ -6,7 +6,7 @@
 
 export const CSP_POLICY = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline';
+  script-src 'self';
   style-src 'self' 'unsafe-inline';
   img-src 'self' data: https:;
   font-src 'self' data:;
@@ -20,6 +20,8 @@ export const CSP_POLICY = `
   form-action 'self';
   base-uri 'self';
   upgrade-insecure-requests;
+  block-all-mixed-content;
+  referrer no-referrer;
 `
   .replace(/\s+/g, ' ')
   .trim();
