@@ -81,6 +81,15 @@ const electronAPI: ElectronAPI = {
   // Blockchain data fetching - expose as nested object
   blockchain: blockchainAPI,
 
+  // Blockchain data fetching - direct access (for compatibility)
+  setBlockchainCookie: blockchainAPI.setCookie,
+  getDashboardOverview: blockchainAPI.getDashboardOverview,
+  getBlockHeight: blockchainAPI.getBlockHeight,
+  getNetwork: blockchainAPI.getNetwork,
+  getWalletStatus: blockchainAPI.getWalletStatus,
+  getNextReceivingAddress: blockchainAPI.getNextReceivingAddress,
+  getTransactionHistory: blockchainAPI.getHistory,
+
   // Address book management - expose as nested object
   addressBook: addressBookAPI,
 
