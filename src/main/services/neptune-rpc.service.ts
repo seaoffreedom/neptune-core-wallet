@@ -241,6 +241,11 @@ export class NeptuneRpcService {
             fee: params.fee || "0", // Optional, defaults to "0" if not provided
         };
 
+        logger.info(
+            { rpcParams, inputParams: params },
+            "Sending transaction with params",
+        );
+
         return this.call<{ tx_id: string; lastUpdated: string }>(
             "send",
             rpcParams,
