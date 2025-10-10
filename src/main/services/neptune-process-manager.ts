@@ -12,6 +12,9 @@ import { execa } from 'execa';
 import pRetry from 'p-retry';
 import pTimeout from 'p-timeout';
 import pino from 'pino';
+import { NeptuneCoreArgsBuilder } from './neptune-core-args-builder';
+import { neptuneCoreSettingsService } from './neptune-core-settings.service';
+import { peerService } from './peer.service';
 
 // Get the project root directory
 const PROJECT_ROOT = path.resolve(__dirname, '../../../');
@@ -67,9 +70,11 @@ export class NeptuneProcessManager {
   private initializing = false;
   private dataPollingInterval?: NodeJS.Timeout;
   private cookie?: string;
+  private argsBuilder: NeptuneCoreArgsBuilder;
 
   constructor(config: Partial<ProcessConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
+    this.argsBuilder = new NeptuneCoreArgsBuilder(peerService);
     logger.info({ config: this.config }, 'NeptuneProcessManager initialized');
   }
 
@@ -218,20 +223,11 @@ export class NeptuneProcessManager {
       PROJECT_ROOT,
       'resources/binaries/neptune-core'
     );
-    const args = [
-      '--network',
-      this.config.core.network,
-      '--rpc-port',
-      this.config.core.rpcPort.toString(),
-      '--peer-port',
-      this.config.core.peerPort.toString(),
-      // Add peer connections
-      '--peer',
-      '51.15.139.238:9798',
-      '--peer',
-      '139.162.193.206:9798',
-      // Note: Not using --data-dir to let neptune-core use default location
-    ];
+    // Build CLI args from settings
+    const settings = neptuneCoreSettingsService.getAll();
+    const args = await this.argsBuilder.buildArgs(settings);
+
+    logger.info({ args: args.join(' ') }, 'Starting neptune-core with generated args');
 
     try {
       this.coreProcess = execa(binaryPath, args, {
