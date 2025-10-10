@@ -4,9 +4,9 @@
  * Handles settings-related IPC communication between main and renderer processes.
  */
 
-import { app, ipcMain } from 'electron';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { app, ipcMain } from 'electron';
 import { APP_CONSTANTS } from '../../../shared/constants/app-constants';
 import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
 import type {

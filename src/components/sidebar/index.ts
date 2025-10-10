@@ -4,6 +4,6 @@
  * Route-specific sidebar content
  */
 
-export { WalletSidebar } from "./WalletSidebar";
-export { SettingsSidebar } from "./SettingsSidebar";
-export { ExtensionSidebar } from "./ExtensionSidebar";
+export { ExtensionSidebar } from './ExtensionSidebar';
+export { SettingsSidebar } from './SettingsSidebar';
+export { WalletSidebar } from './WalletSidebar';
