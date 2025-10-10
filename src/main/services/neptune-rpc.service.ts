@@ -225,7 +225,29 @@ export class NeptuneRpcService {
     change_policy?: string;
     fee?: string;
   }): Promise<{ tx_id: string; lastUpdated: string }> {
-    return this.call<{ tx_id: string; lastUpdated: string }>('send', params);
+    // neptune-cli expects all parameters as JSON-stringified strings
+    // See: neptune-core-cli/src/rpc/handlers.rs lines 360-373
+
+    // Default change policy: RecoverToNextUnusedKey with Generation key and OnChain medium
+    const defaultChangePolicy = {
+      RecoverToNextUnusedKey: {
+        key_type: 'Generation',
+        medium: 'OnChain',
+      },
+    };
+
+    // Default fee: 0 (Neptune uses NativeCurrencyAmount which is just a string number)
+    const defaultFee = '0';
+
+    const rpcParams = {
+      outputs: JSON.stringify(params.outputs),
+      change_policy: JSON.stringify(
+        params.change_policy ? params.change_policy : defaultChangePolicy
+      ),
+      fee: JSON.stringify(params.fee || defaultFee),
+    };
+
+    return this.call<{ tx_id: string; lastUpdated: string }>('send', rpcParams);
   }
 
   /**
