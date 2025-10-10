@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { MiningSettingsForm } from '@/components/settings/mining-settings-form';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,6 +8,7 @@ import {
   miningSettingsSchema,
 } from '@/lib/validation/settings-schemas';
 import { useSettingsForm } from '@/renderer/hooks/use-settings-form';
+import { useMiningSettings } from '@/store/neptune-core-settings.store';
 
 export const Route = createFileRoute('/settings/mining')({
   component: MiningSettings,
@@ -17,6 +19,14 @@ function MiningSettings() {
     category: 'mining',
     schema: miningSettingsSchema,
   });
+
+  // Watch for Zustand store changes and reset form accordingly
+  const miningSettings = useMiningSettings();
+  useEffect(() => {
+    if (miningSettings && !isLoading) {
+      form.reset(miningSettings);
+    }
+  }, [miningSettings, form, isLoading]);
 
   return (
     <PageContainer>

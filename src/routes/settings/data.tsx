@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { DataSettingsForm } from '@/components/settings/data-settings-form';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,6 +8,7 @@ import {
   dataSettingsSchema,
 } from '@/lib/validation/settings-schemas';
 import { useSettingsForm } from '@/renderer/hooks/use-settings-form';
+import { useDataSettings } from '@/store/neptune-core-settings.store';
 
 export const Route = createFileRoute('/settings/data')({
   component: DataSettings,
@@ -17,6 +19,14 @@ function DataSettings() {
     category: 'data',
     schema: dataSettingsSchema,
   });
+
+  // Watch for Zustand store changes and reset form accordingly
+  const dataSettings = useDataSettings();
+  useEffect(() => {
+    if (dataSettings && !isLoading) {
+      form.reset(dataSettings);
+    }
+  }, [dataSettings, form, isLoading]);
 
   return (
     <PageContainer>

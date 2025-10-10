@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { AdvancedSettingsForm } from '@/components/settings/advanced-settings-form';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,6 +8,7 @@ import {
   advancedSettingsSchema,
 } from '@/lib/validation/settings-schemas';
 import { useSettingsForm } from '@/renderer/hooks/use-settings-form';
+import { useAdvancedSettings } from '@/store/neptune-core-settings.store';
 
 export const Route = createFileRoute('/settings/advanced')({
   component: AdvancedSettings,
@@ -17,6 +19,14 @@ function AdvancedSettings() {
     category: 'advanced',
     schema: advancedSettingsSchema,
   });
+
+  // Watch for Zustand store changes and reset form accordingly
+  const advancedSettings = useAdvancedSettings();
+  useEffect(() => {
+    if (advancedSettings && !isLoading) {
+      form.reset(advancedSettings);
+    }
+  }, [advancedSettings, form, isLoading]);
 
   return (
     <PageContainer>

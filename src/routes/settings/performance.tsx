@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PerformanceSettingsForm } from '@/components/settings/performance-settings-form';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,6 +8,7 @@ import {
   performanceSettingsSchema,
 } from '@/lib/validation/settings-schemas';
 import { useSettingsForm } from '@/renderer/hooks/use-settings-form';
+import { usePerformanceSettings } from '@/store/neptune-core-settings.store';
 
 export const Route = createFileRoute('/settings/performance')({
   component: PerformanceSettings,
@@ -17,6 +19,14 @@ function PerformanceSettings() {
     category: 'performance',
     schema: performanceSettingsSchema,
   });
+
+  // Watch for Zustand store changes and reset form accordingly
+  const performanceSettings = usePerformanceSettings();
+  useEffect(() => {
+    if (performanceSettings && !isLoading) {
+      form.reset(performanceSettings);
+    }
+  }, [performanceSettings, form, isLoading]);
 
   return (
     <PageContainer>
