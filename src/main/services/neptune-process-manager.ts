@@ -616,5 +616,27 @@ export class NeptuneProcessManager {
     }
 }
 
-// Export singleton instance
-export const neptuneProcessManager = new NeptuneProcessManager();
+// Lazy singleton instance
+let _neptuneProcessManagerInstance: NeptuneProcessManager | null = null;
+
+/**
+ * Get the singleton NeptuneProcessManager instance (lazy initialization)
+ */
+export function getNeptuneProcessManager(): NeptuneProcessManager {
+    if (!_neptuneProcessManagerInstance) {
+        _neptuneProcessManagerInstance = new NeptuneProcessManager();
+        logger.info(
+            "NeptuneProcessManager instance created (lazy initialization)",
+        );
+    }
+    return _neptuneProcessManagerInstance;
+}
+
+// Backward compatibility - keep the old export for existing code
+export const neptuneProcessManager = new Proxy({} as NeptuneProcessManager, {
+    get(_target, prop) {
+        const instance = getNeptuneProcessManager();
+        const value = (instance as Record<string, unknown>)[prop];
+        return typeof value === "function" ? value.bind(instance) : value;
+    },
+});

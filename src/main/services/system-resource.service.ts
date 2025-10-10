@@ -300,5 +300,27 @@ export class SystemResourceService {
     }
 }
 
-// Export singleton instance
-export const systemResourceService = new SystemResourceService();
+// Lazy singleton instance
+let _systemResourceServiceInstance: SystemResourceService | null = null;
+
+/**
+ * Get the singleton SystemResourceService instance (lazy initialization)
+ */
+export function getSystemResourceService(): SystemResourceService {
+    if (!_systemResourceServiceInstance) {
+        _systemResourceServiceInstance = new SystemResourceService();
+        logger.info(
+            "SystemResourceService instance created (lazy initialization)",
+        );
+    }
+    return _systemResourceServiceInstance;
+}
+
+// Backward compatibility - keep the old export for existing code
+export const systemResourceService = new Proxy({} as SystemResourceService, {
+    get(_target, prop) {
+        const instance = getSystemResourceService();
+        const value = (instance as Record<string, unknown>)[prop];
+        return typeof value === "function" ? value.bind(instance) : value;
+    },
+});
