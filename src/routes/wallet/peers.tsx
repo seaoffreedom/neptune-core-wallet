@@ -5,7 +5,7 @@ import { ActivePeersSection } from "@/components/peers/active-peers-section";
 import { BannedPeersSection } from "@/components/peers/banned-peers-section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePeerStore } from "@/renderer/stores/peer-store";
-import { useNetworkSettings } from "@/renderer/stores/neptune-core-settings-store";
+import { useNetworkSettings } from "@/store/neptune-core-settings.store";
 
 function PeerManager() {
     const { activePeers, bannedPeers, isLoading, loadPeers } = usePeerStore();
@@ -53,7 +53,10 @@ function PeerManager() {
                             peers={activePeers}
                             network={networkSettings?.network || "main"}
                         />
-                        <BannedPeersSection peers={bannedPeers} />
+                        <BannedPeersSection
+                            peers={bannedPeers}
+                            network={networkSettings?.network || "main"}
+                        />
                     </>
                 )}
             </div>
