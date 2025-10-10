@@ -228,6 +228,17 @@ export class NeptuneRpcService {
     // neptune-cli expects all parameters as JSON-stringified strings
     // See: neptune-core-cli/src/rpc/handlers.rs lines 360-373
 
+    // Neptune Core uses OutputFormat enum with variants:
+    // - AddressAndAmount(ReceivingAddress, NativeCurrencyAmount)
+    // - AddressAndAmountAndMedium(ReceivingAddress, NativeCurrencyAmount, UtxoNotificationMedium)
+    // - etc.
+    // See: neptune-core/src/api/tx_initiation/builder/tx_output_list_builder.rs:28
+
+    // Format outputs as Rust enum variants (Serde serializes as {"VariantName": [field1, field2]})
+    const formattedOutputs = params.outputs.map((output) => ({
+      AddressAndAmount: [output.address, output.amount],
+    }));
+
     // Default change policy: RecoverToNextUnusedKey with Generation key and OnChain medium
     const defaultChangePolicy = {
       RecoverToNextUnusedKey: {
@@ -240,7 +251,7 @@ export class NeptuneRpcService {
     const defaultFee = '0';
 
     const rpcParams = {
-      outputs: JSON.stringify(params.outputs),
+      outputs: JSON.stringify(formattedOutputs),
       change_policy: JSON.stringify(
         params.change_policy ? params.change_policy : defaultChangePolicy
       ),
