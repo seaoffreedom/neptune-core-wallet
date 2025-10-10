@@ -38,6 +38,7 @@ export function registerBlockchainHandlers(): void {
                     );
                 }
 
+
                 // Validate the cookie string
                 const validation =
                     ValidationSchemas.cookie.safeParse(cookieString);
