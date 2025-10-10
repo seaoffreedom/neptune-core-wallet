@@ -4,12 +4,16 @@ import { DEFAULT_BOOTSTRAP_PEERS } from "../config/default-peers";
 
 export class PeerService {
     constructor() {
+        console.log("🏗️ PeerService constructor called");
         this.initializeDefaults();
     }
 
     private initializeDefaults(): void {
+        console.log("🔧 PeerService.initializeDefaults called");
         const peers = peerStore.get("peers");
+        console.log(`📋 Current peers in store: ${peers.length}`);
         if (peers.length === 0) {
+            console.log("🚀 Initializing default peers...");
             // Initialize with defaults for all networks
             const allDefaults: PeerEntry[] = [];
             for (const [_network, networkPeers] of Object.entries(
@@ -24,6 +28,9 @@ export class PeerService {
                 }
             }
             peerStore.set("peers", allDefaults);
+            console.log(`✅ Initialized ${allDefaults.length} default peers`);
+        } else {
+            console.log("✅ Default peers already exist");
         }
     }
 
@@ -96,8 +103,27 @@ export class PeerService {
     }
 
     async getEnabledPeers(network: string): Promise<PeerEntry[]> {
-        const peers = await this.getActivePeers(network);
-        return peers.filter((p) => p.enabled);
+        console.log(
+            `🔍 PeerService.getEnabledPeers called for network: ${network}`,
+        );
+        const allPeers = await this.getAllPeers(network);
+        console.log(`📋 All peers for network ${network}:`, allPeers.length);
+        const activePeers = await this.getActivePeers(network);
+        console.log(
+            `📋 Active peers for network ${network}:`,
+            activePeers.length,
+        );
+        const enabledPeers = activePeers.filter((p) => p.enabled);
+        console.log(
+            `📋 Enabled peers for network ${network}:`,
+            enabledPeers.length,
+            enabledPeers.map((p) => ({
+                address: p.address,
+                label: p.label,
+                enabled: p.enabled,
+            })),
+        );
+        return enabledPeers;
     }
 
     // Ban Operation
