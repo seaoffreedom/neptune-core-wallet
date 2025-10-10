@@ -1,0 +1,16 @@
+{
+  "timestamp": 1760068986879,
+  "config": {
+    "core": {
+      "network": "main",
+      "rpcPort": 9799,
+      "peerPort": 9798,
+      "dataDir": "/home/anon/Documents/GitHub_alt/neptune-core-wallet/data"
+    },
+    "cli": {
+      "port": 9799,
+      "rpcPort": 9801
+    }
+  },
+  "isInitialized": true
+}

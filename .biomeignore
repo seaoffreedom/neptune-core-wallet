@@ -1,0 +1,13 @@
+# Auto-generated files
+src/routeTree.gen.ts
+**/*.gen.ts
+**/*.generated.*
+
+# Build outputs
+dist/
+out/
+.vite/
+node_modules/
+
+# Logs
+*.log
