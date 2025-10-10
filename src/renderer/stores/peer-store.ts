@@ -23,14 +23,22 @@ export const usePeerStore = create<PeerState>((set, get) => ({
     error: null,
 
     loadPeers: async (network: string) => {
+        console.log("🔍 loadPeers called for network:", network);
         set({ isLoading: true, error: null });
         try {
             const [active, banned] = await Promise.all([
                 window.electronAPI.peer.getActive(network),
                 window.electronAPI.peer.getBanned(network),
             ]);
+            console.log("✅ Peers loaded:", {
+                active: active.length,
+                banned: banned.length,
+                activeDetails: active,
+                bannedDetails: banned,
+            });
             set({ activePeers: active, bannedPeers: banned, isLoading: false });
         } catch (error) {
+            console.error("❌ Failed to load peers:", error);
             set({
                 error: (error as Error).message,
                 isLoading: false,

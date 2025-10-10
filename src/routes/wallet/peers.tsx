@@ -12,7 +12,16 @@ function PeerManager() {
     const networkSettings = useNetworkSettings();
 
     useEffect(() => {
+        console.log("🔄 PeerManager useEffect triggered", {
+            network: networkSettings?.network,
+            activePeers: activePeers.length,
+            bannedPeers: bannedPeers.length,
+        });
         if (networkSettings?.network) {
+            console.log(
+                "📡 Loading peers for network:",
+                networkSettings.network,
+            );
             loadPeers(networkSettings.network);
         }
     }, [networkSettings?.network, loadPeers]);
