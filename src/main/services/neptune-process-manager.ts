@@ -256,7 +256,7 @@ export class NeptuneProcessManager {
 
         try {
             // Enhanced process spawning with retry
-            const coreResult = await this.processQueue.add(() =>
+            this.coreProcess = await this.processQueue.add(() =>
                 this.processLimit(() =>
                     pRetry(
                         () =>
@@ -284,8 +284,6 @@ export class NeptuneProcessManager {
                     ),
                 ),
             );
-
-            this.coreProcess = coreResult.child;
 
             // Handle process events
             this.coreProcess.on("error", (error) => {
@@ -444,7 +442,7 @@ export class NeptuneProcessManager {
 
         try {
             // Enhanced process spawning with retry
-            const cliResult = await this.processQueue.add(() =>
+            this.cliProcess = await this.processQueue.add(() =>
                 this.processLimit(() =>
                     pRetry(
                         () =>
@@ -472,8 +470,6 @@ export class NeptuneProcessManager {
                     ),
                 ),
             );
-
-            this.cliProcess = cliResult.child;
 
             // Handle process events
             this.cliProcess.on("error", (error) => {
