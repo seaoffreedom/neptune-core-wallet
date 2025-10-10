@@ -36,7 +36,7 @@ app.whenReady().then(async () => {
   createWindow();
 
   // Register core IPC handlers (lightweight)
-  registerAllHandlers();
+  await registerAllHandlers();
 
   // Defer heavy initialization operations
   setTimeout(async () => {

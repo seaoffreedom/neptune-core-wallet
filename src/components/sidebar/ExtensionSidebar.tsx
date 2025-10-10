@@ -19,7 +19,7 @@ import { Separator } from '@/components/ui/separator';
 export function ExtensionSidebar() {
   // Mock data - will be replaced with real state later
   const isExtensionConnected = false;
-  const allowedHostsCount = 0;
+  const allowedHostsCount: number = 0;
 
   return (
     <div className="h-full flex flex-col">

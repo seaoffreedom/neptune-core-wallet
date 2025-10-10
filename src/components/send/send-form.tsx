@@ -167,7 +167,7 @@ export function SendForm() {
   };
 
   const handleViewHistory = () => {
-    navigate({ to: '/history' });
+    navigate({ to: '/wallet/history' });
   };
 
   // Success state

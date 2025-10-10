@@ -12,35 +12,12 @@ import { neptuneProcessManager } from '../../services/neptune-process-manager';
  * Register IPC handlers for Neptune process management.
  */
 export function registerNeptuneHandlers(): void {
-  ipcMain.handle(
-    IPC_CHANNELS.NEPTUNE_INITIALIZE || 'neptune:initialize',
-    handleInitialize
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.NEPTUNE_STATUS || 'neptune:status',
-    handleGetStatus
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.NEPTUNE_SHUTDOWN || 'neptune:shutdown',
-    handleShutdown
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.NEPTUNE_RESTART || 'neptune:restart',
-    handleRestart
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.NEPTUNE_GET_COOKIE || 'neptune:get-cookie',
-    handleGetCookie
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.NEPTUNE_WALLET_DATA || 'neptune:wallet-data',
-    handleGetWalletData
-  );
+  ipcMain.handle(IPC_CHANNELS.NEPTUNE_INITIALIZE, handleInitialize);
+  ipcMain.handle(IPC_CHANNELS.NEPTUNE_STATUS, handleGetStatus);
+  ipcMain.handle(IPC_CHANNELS.NEPTUNE_SHUTDOWN, handleShutdown);
+  ipcMain.handle(IPC_CHANNELS.NEPTUNE_RESTART, handleRestart);
+  ipcMain.handle(IPC_CHANNELS.NEPTUNE_GET_COOKIE, handleGetCookie);
+  ipcMain.handle(IPC_CHANNELS.NEPTUNE_WALLET_DATA, handleGetWalletData);
 }
 
 /**
@@ -210,16 +187,10 @@ export async function handleGetWalletData(
  * Unregister IPC handlers for Neptune process management.
  */
 export function unregisterNeptuneHandlers(): void {
-  ipcMain.removeHandler(
-    IPC_CHANNELS.NEPTUNE_INITIALIZE || 'neptune:initialize'
-  );
-  ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_STATUS || 'neptune:status');
-  ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_SHUTDOWN || 'neptune:shutdown');
-  ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_RESTART || 'neptune:restart');
-  ipcMain.removeHandler(
-    IPC_CHANNELS.NEPTUNE_GET_COOKIE || 'neptune:get-cookie'
-  );
-  ipcMain.removeHandler(
-    IPC_CHANNELS.NEPTUNE_WALLET_DATA || 'neptune:wallet-data'
-  );
+  ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_INITIALIZE);
+  ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_STATUS);
+  ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_SHUTDOWN);
+  ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_RESTART);
+  ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_GET_COOKIE);
+  ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_WALLET_DATA);
 }

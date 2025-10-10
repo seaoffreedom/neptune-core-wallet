@@ -24,9 +24,25 @@ import {
 import { createLazyHandler } from './lazy-handlers';
 
 /**
+ * Register Neptune handlers immediately (needed for splash screen)
+ */
+async function registerNeptuneHandlersImmediately() {
+  try {
+    console.log('Registering Neptune handlers immediately...');
+    const { registerNeptuneHandlers } = await import(
+      './handlers/neptune-handlers'
+    );
+    registerNeptuneHandlers();
+    console.log('Neptune handlers registered successfully');
+  } catch (error) {
+    console.error('Failed to register Neptune handlers:', error);
+  }
+}
+
+/**
  * Register all IPC handlers
  */
-export function registerAllHandlers() {
+export async function registerAllHandlers() {
   console.log('Registering IPC handlers...');
 
   // Core handlers - always needed
@@ -34,6 +50,9 @@ export function registerAllHandlers() {
   registerWindowHandlers();
   registerFileHandlers();
   registerSettingsHandlers();
+
+  // Register Neptune handlers immediately (needed for splash screen)
+  await registerNeptuneHandlersImmediately();
 
   // Lazy load heavy handlers only when needed
   registerLazyHandlers();

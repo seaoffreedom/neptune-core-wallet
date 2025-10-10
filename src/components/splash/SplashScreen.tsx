@@ -108,8 +108,8 @@ export function SplashScreen({ onReady }: SplashScreenProps) {
                 typeof cookieResult
               );
 
-              // Handle both string (direct cookie) and object response
-              if (typeof cookieResult === 'string') {
+              // Handle cookie result (string | null)
+              if (cookieResult) {
                 // Direct cookie string
                 setCookie(cookieResult);
                 console.log('✅ Cookie stored in Zustand:', cookieResult);
@@ -118,25 +118,8 @@ export function SplashScreen({ onReady }: SplashScreenProps) {
                 console.log('📤 Setting cookie in RPC service...');
                 await window.electronAPI.blockchain.setCookie(cookieResult);
                 console.log('✅ Cookie set in RPC service');
-              } else if (cookieResult?.success && cookieResult.cookie) {
-                // Wrapped response
-                setCookie(cookieResult.cookie);
-                console.log(
-                  '✅ Cookie stored in Zustand:',
-                  cookieResult.cookie
-                );
-
-                // Send cookie to main process RPC service
-                console.log('📤 Setting cookie in RPC service...');
-                await window.electronAPI.blockchain.setCookie(
-                  cookieResult.cookie
-                );
-                console.log('✅ Cookie set in RPC service');
               } else {
-                console.error(
-                  '❌ Failed to fetch cookie:',
-                  cookieResult?.error || 'Unknown error'
-                );
+                console.error('❌ Failed to fetch cookie: No cookie returned');
               }
             } catch (error) {
               console.error('❌ Error fetching cookie:', error);

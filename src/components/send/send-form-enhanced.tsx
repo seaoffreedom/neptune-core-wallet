@@ -196,7 +196,7 @@ export function SendFormEnhanced() {
   };
 
   const handleViewHistory = () => {
-    navigate({ to: '/history' });
+    navigate({ to: '/wallet/history' });
   };
 
   const handleAddRecipient = () => {
