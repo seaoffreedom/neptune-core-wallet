@@ -235,8 +235,8 @@ export class NeptuneCoreArgsBuilder {
         i += value ? 2 : 1;
       } else {
         // Positional argument
-        if (!categorized['Positional']) categorized['Positional'] = [];
-        categorized['Positional'].push(arg);
+        if (!categorized.Positional) categorized.Positional = [];
+        categorized.Positional.push(arg);
         i++;
       }
     }

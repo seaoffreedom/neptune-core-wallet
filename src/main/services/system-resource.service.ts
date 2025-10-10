@@ -4,300 +4,287 @@
  * Monitors CPU and RAM usage for the application and system processes.
  */
 
-import { app } from "electron";
-import os from "os";
-import pino from "pino";
+import os from 'node:os';
+import { app } from 'electron';
+import pino from 'pino';
 
-const logger = pino({ level: "info" });
+const logger = pino({ level: 'info' });
 
 export interface SystemResourceStats {
-    cpu: number; // CPU usage percentage
-    memory: number; // Memory usage in bytes
-    timestamp: number; // Timestamp of the measurement
+  cpu: number; // CPU usage percentage
+  memory: number; // Memory usage in bytes
+  timestamp: number; // Timestamp of the measurement
 }
 
 export interface ProcessResourceStats {
-    pid: number;
-    cpu: number; // CPU usage percentage
-    memory: number; // Memory usage in bytes
-    timestamp: number;
+  pid: number;
+  cpu: number; // CPU usage percentage
+  memory: number; // Memory usage in bytes
+  timestamp: number;
 }
 
 export class SystemResourceService {
-    private appPid: number;
-    private neptuneCorePid?: number;
-    private neptuneCliPid?: number;
-    private isMonitoring = false;
-    private monitoringInterval?: NodeJS.Timeout;
-    private lastCpuStats: {
-        idle: number;
-        total: number;
-        timestamp: number;
-    } | null = null;
+  private appPid: number;
+  private neptuneCorePid?: number;
+  private neptuneCliPid?: number;
+  private isMonitoring = false;
+  private monitoringInterval?: NodeJS.Timeout;
 
-    constructor() {
-        this.appPid = process.pid;
-        logger.info(
-            { appPid: this.appPid },
-            "SystemResourceService initialized",
+  constructor() {
+    this.appPid = process.pid;
+    logger.info({ appPid: this.appPid }, 'SystemResourceService initialized');
+  }
+
+  /**
+   * Set Neptune process PIDs for monitoring
+   */
+  setNeptuneProcessPids(corePid?: number, cliPid?: number): void {
+    this.neptuneCorePid = corePid;
+    this.neptuneCliPid = cliPid;
+    logger.info(
+      { corePid: this.neptuneCorePid, cliPid: this.neptuneCliPid },
+      'Neptune process PIDs set for monitoring'
+    );
+  }
+
+  /**
+   * Get current system resource usage (system-wide stats)
+   */
+  async getSystemStats(): Promise<SystemResourceStats | null> {
+    try {
+      // Get system memory info using Node.js os module
+      const totalMem = os.totalmem();
+      const freeMem = os.freemem();
+      const usedMem = totalMem - freeMem;
+
+      // For now, let's use a simple approach that shows some basic system info
+      // We'll use a mock CPU percentage that changes over time to show it's working
+      const now = Date.now();
+      const cpuPercentage = Math.abs(Math.sin(now / 10000)) * 50 + 25; // Oscillates between 25-75%
+
+      const result = {
+        cpu: Math.round(cpuPercentage * 100) / 100, // Round to 2 decimal places
+        memory: usedMem, // Used memory in bytes
+        timestamp: now,
+      };
+
+      logger.debug({ result }, 'System stats retrieved');
+      return result;
+    } catch (error) {
+      logger.error(
+        { error, appPid: this.appPid },
+        'Failed to get system stats'
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Get Neptune Core process resource usage
+   */
+  async getNeptuneCoreStats(): Promise<ProcessResourceStats | null> {
+    if (!this.neptuneCorePid) {
+      return null;
+    }
+
+    try {
+      // Get app metrics using Electron's built-in method
+      const metrics = app.getAppMetrics();
+
+      // Find the Neptune Core process metrics by PID
+      const processMetrics = metrics.find(
+        (metric) => metric.pid === this.neptuneCorePid
+      );
+
+      if (!processMetrics) {
+        logger.warn(
+          `Neptune Core process with PID ${this.neptuneCorePid} not found in app metrics`
         );
+        return null;
+      }
+
+      return {
+        pid: this.neptuneCorePid,
+        cpu: Math.round(processMetrics.cpu.percentCPUUsage * 100) / 100,
+        memory: processMetrics.memory.workingSetSize,
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      logger.error(
+        { error, pid: this.neptuneCorePid },
+        'Failed to get Neptune Core stats'
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Get Neptune CLI process resource usage
+   */
+  async getNeptuneCliStats(): Promise<ProcessResourceStats | null> {
+    if (!this.neptuneCliPid) {
+      return null;
     }
 
-    /**
-     * Set Neptune process PIDs for monitoring
-     */
-    setNeptuneProcessPids(corePid?: number, cliPid?: number): void {
-        this.neptuneCorePid = corePid;
-        this.neptuneCliPid = cliPid;
-        logger.info(
-            { corePid: this.neptuneCorePid, cliPid: this.neptuneCliPid },
-            "Neptune process PIDs set for monitoring",
+    try {
+      // Get app metrics using Electron's built-in method
+      const metrics = app.getAppMetrics();
+
+      // Find the Neptune CLI process metrics by PID
+      const processMetrics = metrics.find(
+        (metric) => metric.pid === this.neptuneCliPid
+      );
+
+      if (!processMetrics) {
+        logger.warn(
+          `Neptune CLI process with PID ${this.neptuneCliPid} not found in app metrics`
         );
+        return null;
+      }
+
+      return {
+        pid: this.neptuneCliPid,
+        cpu: Math.round(processMetrics.cpu.percentCPUUsage * 100) / 100,
+        memory: processMetrics.memory.workingSetSize,
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      logger.error(
+        { error, pid: this.neptuneCliPid },
+        'Failed to get Neptune CLI stats'
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Get combined resource usage (system + Neptune processes)
+   */
+  async getCombinedStats(): Promise<{
+    system: SystemResourceStats | null;
+    neptuneCore: ProcessResourceStats | null;
+    neptuneCli: ProcessResourceStats | null;
+    totalCpu: number;
+    totalMemory: number;
+  }> {
+    const [systemStats, coreStats, cliStats] = await Promise.all([
+      this.getSystemStats(),
+      this.getNeptuneCoreStats(),
+      this.getNeptuneCliStats(),
+    ]);
+
+    // Calculate total CPU and memory usage
+    let totalCpu = systemStats?.cpu || 0;
+    let totalMemory = systemStats?.memory || 0;
+
+    if (coreStats) {
+      totalCpu += coreStats.cpu;
+      totalMemory += coreStats.memory;
     }
 
-    /**
-     * Get current system resource usage (system-wide stats)
-     */
-    async getSystemStats(): Promise<SystemResourceStats | null> {
-        try {
-            // Get system memory info using Node.js os module
-            const totalMem = os.totalmem();
-            const freeMem = os.freemem();
-            const usedMem = totalMem - freeMem;
-
-            // For now, let's use a simple approach that shows some basic system info
-            // We'll use a mock CPU percentage that changes over time to show it's working
-            const now = Date.now();
-            const cpuPercentage = Math.abs(Math.sin(now / 10000)) * 50 + 25; // Oscillates between 25-75%
-
-            const result = {
-                cpu: Math.round(cpuPercentage * 100) / 100, // Round to 2 decimal places
-                memory: usedMem, // Used memory in bytes
-                timestamp: now,
-            };
-
-            logger.debug({ result }, "System stats retrieved");
-            return result;
-        } catch (error) {
-            logger.error(
-                { error, appPid: this.appPid },
-                "Failed to get system stats",
-            );
-            return null;
-        }
+    if (cliStats) {
+      totalCpu += cliStats.cpu;
+      totalMemory += cliStats.memory;
     }
 
-    /**
-     * Get Neptune Core process resource usage
-     */
-    async getNeptuneCoreStats(): Promise<ProcessResourceStats | null> {
-        if (!this.neptuneCorePid) {
-            return null;
-        }
+    return {
+      system: systemStats,
+      neptuneCore: coreStats,
+      neptuneCli: cliStats,
+      totalCpu: Math.round(totalCpu * 100) / 100,
+      totalMemory,
+    };
+  }
 
-        try {
-            // Get app metrics using Electron's built-in method
-            const metrics = app.getAppMetrics();
-
-            // Find the Neptune Core process metrics by PID
-            const processMetrics = metrics.find(
-                (metric) => metric.pid === this.neptuneCorePid,
-            );
-
-            if (!processMetrics) {
-                logger.warn(
-                    `Neptune Core process with PID ${this.neptuneCorePid} not found in app metrics`,
-                );
-                return null;
-            }
-
-            return {
-                pid: this.neptuneCorePid,
-                cpu: Math.round(processMetrics.cpu.percentCPUUsage * 100) / 100,
-                memory: processMetrics.memory.workingSetSize,
-                timestamp: Date.now(),
-            };
-        } catch (error) {
-            logger.error(
-                { error, pid: this.neptuneCorePid },
-                "Failed to get Neptune Core stats",
-            );
-            return null;
-        }
+  /**
+   * Start continuous monitoring
+   */
+  startMonitoring(intervalMs: number = 5000): void {
+    if (this.isMonitoring) {
+      logger.warn('System resource monitoring already started');
+      return;
     }
 
-    /**
-     * Get Neptune CLI process resource usage
-     */
-    async getNeptuneCliStats(): Promise<ProcessResourceStats | null> {
-        if (!this.neptuneCliPid) {
-            return null;
-        }
+    this.isMonitoring = true;
+    logger.info({ intervalMs }, 'Starting system resource monitoring');
 
-        try {
-            // Get app metrics using Electron's built-in method
-            const metrics = app.getAppMetrics();
+    this.monitoringInterval = setInterval(async () => {
+      try {
+        const stats = await this.getCombinedStats();
+        logger.debug({ stats }, 'System resource stats updated');
+      } catch (error) {
+        logger.error({ error }, 'Error during system resource monitoring');
+      }
+    }, intervalMs);
+  }
 
-            // Find the Neptune CLI process metrics by PID
-            const processMetrics = metrics.find(
-                (metric) => metric.pid === this.neptuneCliPid,
-            );
-
-            if (!processMetrics) {
-                logger.warn(
-                    `Neptune CLI process with PID ${this.neptuneCliPid} not found in app metrics`,
-                );
-                return null;
-            }
-
-            return {
-                pid: this.neptuneCliPid,
-                cpu: Math.round(processMetrics.cpu.percentCPUUsage * 100) / 100,
-                memory: processMetrics.memory.workingSetSize,
-                timestamp: Date.now(),
-            };
-        } catch (error) {
-            logger.error(
-                { error, pid: this.neptuneCliPid },
-                "Failed to get Neptune CLI stats",
-            );
-            return null;
-        }
+  /**
+   * Stop continuous monitoring
+   */
+  stopMonitoring(): void {
+    if (!this.isMonitoring) {
+      return;
     }
 
-    /**
-     * Get combined resource usage (system + Neptune processes)
-     */
-    async getCombinedStats(): Promise<{
-        system: SystemResourceStats | null;
-        neptuneCore: ProcessResourceStats | null;
-        neptuneCli: ProcessResourceStats | null;
-        totalCpu: number;
-        totalMemory: number;
-    }> {
-        const [systemStats, coreStats, cliStats] = await Promise.all([
-            this.getSystemStats(),
-            this.getNeptuneCoreStats(),
-            this.getNeptuneCliStats(),
-        ]);
+    this.isMonitoring = false;
 
-        // Calculate total CPU and memory usage
-        let totalCpu = systemStats?.cpu || 0;
-        let totalMemory = systemStats?.memory || 0;
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = undefined;
+    }
 
-        if (coreStats) {
-            totalCpu += coreStats.cpu;
-            totalMemory += coreStats.memory;
-        }
+    logger.info('System resource monitoring stopped');
+  }
 
-        if (cliStats) {
-            totalCpu += cliStats.cpu;
-            totalMemory += cliStats.memory;
-        }
+  /**
+   * Get process stats by PID (similar to trident-wallet's approach)
+   */
+  async getProcessStats(pid: number): Promise<{
+    isRunning: boolean;
+    stats?: {
+      cpu: number;
+      memory: number;
+      elapsed: number;
+    };
+    error?: string;
+  }> {
+    try {
+      // Get app metrics using Electron's built-in method
+      const metrics = app.getAppMetrics();
 
+      // Find the process metrics by PID
+      const processMetrics = metrics.find((metric) => metric.pid === pid);
+
+      if (!processMetrics) {
         return {
-            system: systemStats,
-            neptuneCore: coreStats,
-            neptuneCli: cliStats,
-            totalCpu: Math.round(totalCpu * 100) / 100,
-            totalMemory,
+          isRunning: false,
+          error: `Process with PID ${pid} not found in app metrics`,
         };
+      }
+
+      return {
+        isRunning: true,
+        stats: {
+          cpu: Math.round(processMetrics.cpu.percentCPUUsage * 100) / 100,
+          memory: processMetrics.memory.workingSetSize,
+          elapsed: 0, // Electron doesn't provide elapsed time directly
+        },
+      };
+    } catch (error) {
+      logger.error({ error, pid }, 'Failed to get process stats');
+      return {
+        isRunning: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
     }
+  }
 
-    /**
-     * Start continuous monitoring
-     */
-    startMonitoring(intervalMs: number = 5000): void {
-        if (this.isMonitoring) {
-            logger.warn("System resource monitoring already started");
-            return;
-        }
-
-        this.isMonitoring = true;
-        logger.info({ intervalMs }, "Starting system resource monitoring");
-
-        this.monitoringInterval = setInterval(async () => {
-            try {
-                const stats = await this.getCombinedStats();
-                logger.debug({ stats }, "System resource stats updated");
-            } catch (error) {
-                logger.error(
-                    { error },
-                    "Error during system resource monitoring",
-                );
-            }
-        }, intervalMs);
-    }
-
-    /**
-     * Stop continuous monitoring
-     */
-    stopMonitoring(): void {
-        if (!this.isMonitoring) {
-            return;
-        }
-
-        this.isMonitoring = false;
-
-        if (this.monitoringInterval) {
-            clearInterval(this.monitoringInterval);
-            this.monitoringInterval = undefined;
-        }
-
-        logger.info("System resource monitoring stopped");
-    }
-
-    /**
-     * Get process stats by PID (similar to trident-wallet's approach)
-     */
-    async getProcessStats(pid: number): Promise<{
-        isRunning: boolean;
-        stats?: {
-            cpu: number;
-            memory: number;
-            elapsed: number;
-        };
-        error?: string;
-    }> {
-        try {
-            // Get app metrics using Electron's built-in method
-            const metrics = app.getAppMetrics();
-
-            // Find the process metrics by PID
-            const processMetrics = metrics.find((metric) => metric.pid === pid);
-
-            if (!processMetrics) {
-                return {
-                    isRunning: false,
-                    error: `Process with PID ${pid} not found in app metrics`,
-                };
-            }
-
-            return {
-                isRunning: true,
-                stats: {
-                    cpu:
-                        Math.round(processMetrics.cpu.percentCPUUsage * 100) /
-                        100,
-                    memory: processMetrics.memory.workingSetSize,
-                    elapsed: 0, // Electron doesn't provide elapsed time directly
-                },
-            };
-        } catch (error) {
-            logger.error({ error, pid }, "Failed to get process stats");
-            return {
-                isRunning: false,
-                error: error instanceof Error ? error.message : String(error),
-            };
-        }
-    }
-
-    /**
-     * Check if monitoring is active
-     */
-    isActive(): boolean {
-        return this.isMonitoring;
-    }
+  /**
+   * Check if monitoring is active
+   */
+  isActive(): boolean {
+    return this.isMonitoring;
+  }
 }
 
 // Export singleton instance
