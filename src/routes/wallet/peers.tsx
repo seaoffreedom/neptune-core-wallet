@@ -30,6 +30,13 @@ function PeerManager() {
     const isInitialLoading =
         isLoading && activePeers.length === 0 && bannedPeers.length === 0;
 
+    console.log("🎨 Rendering PeerManager", {
+        activePeers: activePeers.length,
+        bannedPeers: bannedPeers.length,
+        isLoading,
+        isInitialLoading,
+    });
+
     return (
         <PageContainer>
             <div className="space-y-6">
@@ -37,7 +44,8 @@ function PeerManager() {
                     <h3 className="text-2xl font-bold">Peer Manager</h3>
                     <p className="text-muted-foreground">
                         Manage your Neptune Core peer connections and banned
-                        peers.
+                        peers. (Active: {activePeers.length}, Banned:{" "}
+                        {bannedPeers.length})
                     </p>
                 </div>
 
