@@ -1,11 +1,13 @@
 # Peer Manager Route Implementation Plan
 
 ## Overview
+
 Create a new wallet sub-route `/wallet/peers` for managing Neptune Core peer connections, with separate sections for active and banned peers.
 
 ## Route Structure
 
 ### Path: `/wallet/peers`
+
 - Follows existing wallet route pattern (like `/wallet/send`, `/wallet/receive`)
 - Appears in wallet sidebar navigation
 - Icon: `Users` or `Network` from lucide-react
@@ -15,19 +17,20 @@ Create a new wallet sub-route `/wallet/peers` for managing Neptune Core peer con
 ### Phase 1: Backend Infrastructure
 
 #### 1.1 Peer Store (`src/main/stores/peer-store.ts`)
+
 ```typescript
-import Store from 'electron-store';
-import { v4 as uuidv4 } from 'uuid';
+import Store from "electron-store";
+import { v4 as uuidv4 } from "uuid";
 
 export interface PeerEntry {
   id: string;
   address: string;
   label?: string;
-  type: 'bootstrap' | 'manual' | 'discovered';
+  type: "bootstrap" | "manual" | "discovered";
   lastSeen?: number;
   addedAt: number;
   enabled: boolean;
-  network: 'main' | 'testnet' | 'regtest';
+  network: "main" | "testnet" | "regtest";
   notes?: string;
   isDefault: boolean;
   isBanned: boolean;
@@ -41,39 +44,43 @@ export interface PeerStoreSchema {
 
 const schema: Store.Schema<PeerStoreSchema> = {
   peers: {
-    type: 'array',
+    type: "array",
     default: [],
   },
 };
 
 export const peerStore = new Store<PeerStoreSchema>({
-  name: 'peers',
+  name: "peers",
   schema,
   watch: true,
 });
 ```
 
 #### 1.2 Default Peers (`src/main/config/default-peers.ts`)
-```typescript
-import { PeerEntry } from '../stores/peer-store';
 
-export const DEFAULT_BOOTSTRAP_PEERS: Record<string, Omit<PeerEntry, 'id' | 'addedAt'>[]> = {
+```typescript
+import { PeerEntry } from "../stores/peer-store";
+
+export const DEFAULT_BOOTSTRAP_PEERS: Record<
+  string,
+  Omit<PeerEntry, "id" | "addedAt">[]
+> = {
   main: [
     {
-      address: '51.15.139.238:9798',
-      label: 'Official Bootstrap Node 1',
-      type: 'bootstrap',
+      address: "51.15.139.238:9798",
+      label: "Official Bootstrap Node 1",
+      type: "bootstrap",
       enabled: true,
-      network: 'main',
+      network: "main",
       isDefault: true,
       isBanned: false,
     },
     {
-      address: '139.162.193.206:9798',
-      label: 'Official Bootstrap Node 2',
-      type: 'bootstrap',
+      address: "139.162.193.206:9798",
+      label: "Official Bootstrap Node 2",
+      type: "bootstrap",
       enabled: true,
-      network: 'main',
+      network: "main",
       isDefault: true,
       isBanned: false,
     },
@@ -84,10 +91,11 @@ export const DEFAULT_BOOTSTRAP_PEERS: Record<string, Omit<PeerEntry, 'id' | 'add
 ```
 
 #### 1.3 Peer Service (`src/main/services/peer.service.ts`)
+
 ```typescript
-import { peerStore, PeerEntry } from '../stores/peer-store';
-import { DEFAULT_BOOTSTRAP_PEERS } from '../config/default-peers';
-import { v4 as uuidv4 } from 'uuid';
+import { peerStore, PeerEntry } from "../stores/peer-store";
+import { DEFAULT_BOOTSTRAP_PEERS } from "../config/default-peers";
+import { v4 as uuidv4 } from "uuid";
 
 export class PeerService {
   constructor() {
@@ -95,11 +103,13 @@ export class PeerService {
   }
 
   private initializeDefaults(): void {
-    const peers = peerStore.get('peers');
+    const peers = peerStore.get("peers");
     if (peers.length === 0) {
       // Initialize with defaults for all networks
       const allDefaults: PeerEntry[] = [];
-      for (const [network, networkPeers] of Object.entries(DEFAULT_BOOTSTRAP_PEERS)) {
+      for (const [network, networkPeers] of Object.entries(
+        DEFAULT_BOOTSTRAP_PEERS,
+      )) {
         for (const peer of networkPeers) {
           allDefaults.push({
             ...peer,
@@ -108,27 +118,30 @@ export class PeerService {
           });
         }
       }
-      peerStore.set('peers', allDefaults);
+      peerStore.set("peers", allDefaults);
     }
   }
 
   // CRUD Operations
-  async addPeer(peer: Omit<PeerEntry, 'id' | 'addedAt'>): Promise<PeerEntry> {
+  async addPeer(peer: Omit<PeerEntry, "id" | "addedAt">): Promise<PeerEntry> {
     const newPeer: PeerEntry = {
       ...peer,
       id: uuidv4(),
       addedAt: Date.now(),
     };
 
-    const peers = peerStore.get('peers');
+    const peers = peerStore.get("peers");
     peers.push(newPeer);
-    peerStore.set('peers', peers);
+    peerStore.set("peers", peers);
 
     return newPeer;
   }
 
-  async updatePeer(id: string, updates: Partial<PeerEntry>): Promise<PeerEntry> {
-    const peers = peerStore.get('peers');
+  async updatePeer(
+    id: string,
+    updates: Partial<PeerEntry>,
+  ): Promise<PeerEntry> {
+    const peers = peerStore.get("peers");
     const index = peers.findIndex((p) => p.id === id);
 
     if (index === -1) {
@@ -136,30 +149,30 @@ export class PeerService {
     }
 
     peers[index] = { ...peers[index], ...updates };
-    peerStore.set('peers', peers);
+    peerStore.set("peers", peers);
 
     return peers[index];
   }
 
   async deletePeer(id: string): Promise<void> {
-    const peers = peerStore.get('peers');
+    const peers = peerStore.get("peers");
     const peer = peers.find((p) => p.id === id);
 
     if (peer?.isDefault) {
-      throw new Error('Cannot delete default bootstrap peer');
+      throw new Error("Cannot delete default bootstrap peer");
     }
 
     const filtered = peers.filter((p) => p.id !== id);
-    peerStore.set('peers', filtered);
+    peerStore.set("peers", filtered);
   }
 
   async getPeer(id: string): Promise<PeerEntry | null> {
-    const peers = peerStore.get('peers');
+    const peers = peerStore.get("peers");
     return peers.find((p) => p.id === id) || null;
   }
 
   async getAllPeers(network?: string): Promise<PeerEntry[]> {
-    const peers = peerStore.get('peers');
+    const peers = peerStore.get("peers");
     if (network) {
       return peers.filter((p) => p.network === network);
     }
@@ -203,7 +216,7 @@ export class PeerService {
     const regex = /^(\[?[a-zA-Z0-9\-\.:]+\]?):(\d{1,5})$/;
     if (!regex.test(address)) return false;
 
-    const port = parseInt(address.split(':').pop()!);
+    const port = parseInt(address.split(":").pop()!);
     return port > 0 && port <= 65535;
   }
 }
@@ -212,50 +225,51 @@ export const peerService = new PeerService();
 ```
 
 #### 1.4 IPC Handlers (`src/main/ipc/handlers/peer-handlers.ts`)
+
 ```typescript
-import { ipcMain } from 'electron';
-import { peerService } from '../../services/peer.service';
+import { ipcMain } from "electron";
+import { peerService } from "../../services/peer.service";
 
 export function registerPeerHandlers() {
-  ipcMain.handle('peer:add', async (_, peer) => {
+  ipcMain.handle("peer:add", async (_, peer) => {
     return peerService.addPeer(peer);
   });
 
-  ipcMain.handle('peer:update', async (_, id, updates) => {
+  ipcMain.handle("peer:update", async (_, id, updates) => {
     return peerService.updatePeer(id, updates);
   });
 
-  ipcMain.handle('peer:delete', async (_, id) => {
+  ipcMain.handle("peer:delete", async (_, id) => {
     return peerService.deletePeer(id);
   });
 
-  ipcMain.handle('peer:get', async (_, id) => {
+  ipcMain.handle("peer:get", async (_, id) => {
     return peerService.getPeer(id);
   });
 
-  ipcMain.handle('peer:getAll', async (_, network) => {
+  ipcMain.handle("peer:getAll", async (_, network) => {
     return peerService.getAllPeers(network);
   });
 
-  ipcMain.handle('peer:getActive', async (_, network) => {
+  ipcMain.handle("peer:getActive", async (_, network) => {
     return peerService.getActivePeers(network);
   });
 
-  ipcMain.handle('peer:getBanned', async (_, network) => {
+  ipcMain.handle("peer:getBanned", async (_, network) => {
     return peerService.getBannedPeers(network);
   });
 
-  ipcMain.handle('peer:toggle', async (_, id, enabled) => {
+  ipcMain.handle("peer:toggle", async (_, id, enabled) => {
     return peerService.togglePeer(id, enabled);
   });
 
-  ipcMain.handle('peer:ban', async (_, id, reason) => {
+  ipcMain.handle("peer:ban", async (_, id, reason) => {
     return peerService.banPeer(id, reason);
   });
 
   // Note: No unban handler needed - just use delete
 
-  ipcMain.handle('peer:validate', async (_, address) => {
+  ipcMain.handle("peer:validate", async (_, address) => {
     return peerService.validatePeerAddress(address);
   });
 }
@@ -264,49 +278,47 @@ export function registerPeerHandlers() {
 ### Phase 2: Frontend Infrastructure
 
 #### 2.1 Preload API (`src/preload/api/peer-api.ts`)
+
 ```typescript
-import { ipcRenderer } from 'electron';
-import type { PeerEntry } from '../../main/stores/peer-store';
+import { ipcRenderer } from "electron";
+import type { PeerEntry } from "../../main/stores/peer-store";
 
 export const peerApi = {
-  add: (peer: Omit<PeerEntry, 'id' | 'addedAt'>) =>
-    ipcRenderer.invoke('peer:add', peer),
+  add: (peer: Omit<PeerEntry, "id" | "addedAt">) =>
+    ipcRenderer.invoke("peer:add", peer),
 
   update: (id: string, updates: Partial<PeerEntry>) =>
-    ipcRenderer.invoke('peer:update', id, updates),
+    ipcRenderer.invoke("peer:update", id, updates),
 
-  delete: (id: string) =>
-    ipcRenderer.invoke('peer:delete', id),
+  delete: (id: string) => ipcRenderer.invoke("peer:delete", id),
 
-  get: (id: string) =>
-    ipcRenderer.invoke('peer:get', id),
+  get: (id: string) => ipcRenderer.invoke("peer:get", id),
 
-  getAll: (network?: string) =>
-    ipcRenderer.invoke('peer:getAll', network),
+  getAll: (network?: string) => ipcRenderer.invoke("peer:getAll", network),
 
   getActive: (network?: string) =>
-    ipcRenderer.invoke('peer:getActive', network),
+    ipcRenderer.invoke("peer:getActive", network),
 
   getBanned: (network?: string) =>
-    ipcRenderer.invoke('peer:getBanned', network),
+    ipcRenderer.invoke("peer:getBanned", network),
 
   toggle: (id: string, enabled: boolean) =>
-    ipcRenderer.invoke('peer:toggle', id, enabled),
+    ipcRenderer.invoke("peer:toggle", id, enabled),
 
   ban: (id: string, reason?: string) =>
-    ipcRenderer.invoke('peer:ban', id, reason),
+    ipcRenderer.invoke("peer:ban", id, reason),
 
   // Note: No unban method needed - just use delete
 
-  validate: (address: string) =>
-    ipcRenderer.invoke('peer:validate', address),
+  validate: (address: string) => ipcRenderer.invoke("peer:validate", address),
 };
 ```
 
 #### 2.2 Zustand Store (`src/renderer/stores/peer-store.ts`)
+
 ```typescript
-import { create } from 'zustand';
-import type { PeerEntry } from '../../main/stores/peer-store';
+import { create } from "zustand";
+import type { PeerEntry } from "../../main/stores/peer-store";
 
 interface PeerState {
   activePeers: PeerEntry[];
@@ -316,7 +328,7 @@ interface PeerState {
 
   // Actions
   loadPeers: (network: string) => Promise<void>;
-  addPeer: (peer: Omit<PeerEntry, 'id' | 'addedAt'>) => Promise<void>;
+  addPeer: (peer: Omit<PeerEntry, "id" | "addedAt">) => Promise<void>;
   updatePeer: (id: string, updates: Partial<PeerEntry>) => Promise<void>;
   deletePeer: (id: string) => Promise<void>; // Also serves as "unban" for banned peers
   togglePeer: (id: string, enabled: boolean) => Promise<void>;
@@ -357,8 +369,9 @@ export const usePeerStore = create<PeerState>((set, get) => ({
     try {
       await window.api.peer.update(id, updates);
       // Reload based on current network
-      const currentPeer = get().activePeers.find(p => p.id === id) ||
-                          get().bannedPeers.find(p => p.id === id);
+      const currentPeer =
+        get().activePeers.find((p) => p.id === id) ||
+        get().bannedPeers.find((p) => p.id === id);
       if (currentPeer) {
         await get().loadPeers(currentPeer.network);
       }
@@ -371,8 +384,9 @@ export const usePeerStore = create<PeerState>((set, get) => ({
   deletePeer: async (id) => {
     try {
       await window.api.peer.delete(id);
-      const currentPeer = get().activePeers.find(p => p.id === id) ||
-                          get().bannedPeers.find(p => p.id === id);
+      const currentPeer =
+        get().activePeers.find((p) => p.id === id) ||
+        get().bannedPeers.find((p) => p.id === id);
       if (currentPeer) {
         await get().loadPeers(currentPeer.network);
       }
@@ -385,7 +399,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
   togglePeer: async (id, enabled) => {
     try {
       await window.api.peer.toggle(id, enabled);
-      const currentPeer = get().activePeers.find(p => p.id === id);
+      const currentPeer = get().activePeers.find((p) => p.id === id);
       if (currentPeer) {
         await get().loadPeers(currentPeer.network);
       }
@@ -398,7 +412,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
   banPeer: async (id, reason) => {
     try {
       await window.api.peer.ban(id, reason);
-      const currentPeer = get().activePeers.find(p => p.id === id);
+      const currentPeer = get().activePeers.find((p) => p.id === id);
       if (currentPeer) {
         await get().loadPeers(currentPeer.network);
       }
@@ -415,6 +429,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
 ### Phase 3: UI Components
 
 #### 3.1 Route File (`src/routes/wallet/peers.tsx`)
+
 ```typescript
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect } from 'react';
@@ -457,6 +472,7 @@ function PeerManagerRoute() {
 ```
 
 #### 3.2 Active Peers Section (`src/components/peers/active-peers-section.tsx`)
+
 - Header with "Add Peer" button
 - Table/Card list of active peers
 - Columns: Label, Address, Type, Status (enabled/disabled), Last Seen, Actions
@@ -464,6 +480,7 @@ function PeerManagerRoute() {
 - Empty state if no active peers
 
 #### 3.3 Banned Peers Section (`src/components/peers/banned-peers-section.tsx`)
+
 - Header with count
 - Table/Card list of banned peers
 - Columns: Label, Address, Banned At, Reason, Actions
@@ -471,6 +488,7 @@ function PeerManagerRoute() {
 - Empty state if no banned peers
 
 #### 3.4 Dialogs
+
 - **Add Peer Dialog**: Form with address, label, notes, network selection
 - **Edit Peer Dialog**: Form to update label, notes
 - **Ban Peer Dialog**: Form with optional reason textarea
@@ -478,7 +496,9 @@ function PeerManagerRoute() {
 ### Phase 4: Sidebar Navigation
 
 #### Update `src/components/layout/WalletSidebar.tsx`
+
 Add "Peer Manager" link after "Address Book":
+
 ```typescript
 {
   to: '/wallet/peers',
