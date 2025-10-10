@@ -35,6 +35,9 @@ export interface PeerEntry {
   network: 'main' | 'testnet' | 'regtest'; // Which network this peer is for
   notes?: string;                // User notes
   isDefault: boolean;            // Hardcoded default peers (can't be deleted)
+  isBanned: boolean;             // Whether this peer is banned
+  bannedAt?: number;             // Timestamp when banned
+  bannedReason?: string;         // Reason for banning
 }
 
 export interface PeerStore {
@@ -119,9 +122,13 @@ export class PeerService {
   async getEnabledPeers(network: string): Promise<PeerEntry[]>;
   async getBootstrapPeers(network: string): Promise<PeerEntry[]>;
   async getManualPeers(network: string): Promise<PeerEntry[]>;
+  async getBannedPeers(network?: string): Promise<PeerEntry[]>;
+  async getActivePeers(network?: string): Promise<PeerEntry[]>; // Non-banned peers
   
   // Bulk Operations
   async togglePeer(id: string, enabled: boolean): Promise<void>;
+  async banPeer(id: string, reason?: string): Promise<void>;
+  async unbanPeer(id: string): Promise<void>;
   async resetToDefaults(network: string): Promise<void>;
   
   // Validation
@@ -203,23 +210,25 @@ export const usePeerStore = create<PeerState>((set, get) => ({
 }));
 ```
 
-### 6. **UI Component** (`src/components/settings/peer-manager.tsx`)
+### 6. **UI Route** (`src/routes/wallet/peers.tsx`)
 
 ```typescript
 /**
- * Peer Management UI Component
+ * Peer Management Route (Wallet Sub-Route)
  * 
  * Features:
- * - List of peers with enable/disable toggle
+ * - Two sections: Active Peers and Banned Peers
+ * - Active Peers: List with enable/disable, edit, delete, ban actions
+ * - Banned Peers: List with unban, delete actions
  * - Add new peer dialog
- * - Edit peer details
- * - Delete peer (except defaults)
- * - Filter by network
+ * - Edit peer dialog
+ * - Ban peer dialog (with reason)
+ * - Filter by network (automatic based on current network setting)
  * - Visual distinction between bootstrap/manual/discovered peers
- * - Default peers marked and protected
+ * - Default peers marked and protected from deletion
  */
-export function PeerManager() {
-  const { peers, loadPeers, addPeer, togglePeer, deletePeer } = usePeerStore();
+export function PeerManagerRoute() {
+  const { peers, bannedPeers, loadPeers, banPeer, unbanPeer } = usePeerStore();
   const { network } = useNetworkSettings();
   
   useEffect(() => {
@@ -227,10 +236,18 @@ export function PeerManager() {
   }, [network]);
   
   return (
-    <div>
-      {/* Peer list with shadcn Table or custom list */}
-      {/* Add peer button -> Dialog */}
-      {/* Inline edit/delete actions */}
+    <div className="flex flex-col gap-6">
+      {/* Active Peers Section */}
+      <section>
+        <h2>Active Peers</h2>
+        {/* Peer table/list with actions */}
+      </section>
+      
+      {/* Banned Peers Section */}
+      <section>
+        <h2>Banned Peers</h2>
+        {/* Banned peer table/list with unban actions */}
+      </section>
     </div>
   );
 }
