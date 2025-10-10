@@ -146,8 +146,15 @@ function SettingsLayout() {
   const handleReset = () => {
     if (!originalSettings) return;
 
-    // Reset Zustand store to original settings
-    useNeptuneCoreSettingsStore.getState().setSettings(originalSettings);
+    // Reset Zustand store to original settings (deep clone to ensure new reference)
+    useNeptuneCoreSettingsStore.getState().setSettings({
+      network: { ...originalSettings.network },
+      mining: { ...originalSettings.mining },
+      performance: { ...originalSettings.performance },
+      security: { ...originalSettings.security },
+      data: { ...originalSettings.data },
+      advanced: { ...originalSettings.advanced },
+    });
     setHasChanges(false);
     setChangeCount(0);
 
