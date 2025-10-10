@@ -143,22 +143,23 @@ function SettingsLayout() {
   };
 
   // Handle reset
-  const handleReset = () => {
+  const handleReset = async () => {
     if (!originalSettings) return;
 
-    // Reset Zustand store to original settings (deep clone to ensure new reference)
-    useNeptuneCoreSettingsStore.getState().setSettings({
-      network: { ...originalSettings.network },
-      mining: { ...originalSettings.mining },
-      performance: { ...originalSettings.performance },
-      security: { ...originalSettings.security },
-      data: { ...originalSettings.data },
-      advanced: { ...originalSettings.advanced },
-    });
+    console.log('🔄 Reloading settings from storage...');
+
+    // Reload settings from IPC/storage to get the true saved state
+    await loadSettings();
+
+    // Get the freshly loaded settings from the store
+    const freshSettings = useNeptuneCoreSettingsStore.getState().settings;
+
+    // Update our baseline to the freshly loaded settings
+    setOriginalSettings(freshSettings);
     setHasChanges(false);
     setChangeCount(0);
 
-    console.log('🔄 Settings reset to last saved state');
+    console.log('✅ Settings reset to last saved state');
   };
 
   console.log('💾 SaveChangesBar state:', {
