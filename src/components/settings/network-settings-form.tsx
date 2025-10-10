@@ -65,7 +65,7 @@ export function NetworkSettingsForm({ form }: NetworkSettingsFormProps) {
                       field.onChange(value);
                       handleFieldChange('network', value);
                     }}
-                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>

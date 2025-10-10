@@ -123,7 +123,7 @@ export function SecuritySettingsForm({ form }: SecuritySettingsFormProps) {
                       field.onChange(value);
                       handleFieldChange('feeNotification', value);
                     }}
-                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
