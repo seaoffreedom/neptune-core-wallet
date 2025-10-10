@@ -255,19 +255,16 @@ export class NeptuneProcessManager {
         );
 
         try {
-            // Enhanced process spawning with retry and timeout
-            this.coreProcess = await this.processQueue.add(() =>
+            // Enhanced process spawning with retry
+            const coreResult = await this.processQueue.add(() =>
                 this.processLimit(() =>
                     pRetry(
                         () =>
-                            pTimeout(
-                                execa(binaryPath, args, {
-                                    stdio: ["ignore", "pipe", "pipe"],
-                                    detached: false,
-                                    reject: false, // Don't reject promise on non-zero exit
-                                }),
-                                30000, // 30 second timeout
-                            ),
+                            execa(binaryPath, args, {
+                                stdio: ["ignore", "pipe", "pipe"],
+                                detached: false,
+                                reject: false, // Don't reject promise on non-zero exit
+                            }),
                         {
                             retries: 2,
                             factor: 2,
@@ -277,7 +274,7 @@ export class NeptuneProcessManager {
                                 logger.warn(
                                     {
                                         attempt: error.attemptNumber,
-                                        error: error.message || 'Unknown error',
+                                        error: error.message || "Unknown error",
                                         binary: binaryPath,
                                     },
                                     "neptune-core spawn retry attempt failed",
@@ -287,6 +284,8 @@ export class NeptuneProcessManager {
                     ),
                 ),
             );
+
+            this.coreProcess = coreResult.child;
 
             // Handle process events
             this.coreProcess.on("error", (error) => {
@@ -444,19 +443,16 @@ export class NeptuneProcessManager {
         ];
 
         try {
-            // Enhanced process spawning with retry and timeout
-            this.cliProcess = await this.processQueue.add(() =>
+            // Enhanced process spawning with retry
+            const cliResult = await this.processQueue.add(() =>
                 this.processLimit(() =>
                     pRetry(
                         () =>
-                            pTimeout(
-                                execa(binaryPath, args, {
-                                    stdio: ["ignore", "pipe", "pipe"],
-                                    detached: false,
-                                    reject: false, // Don't reject promise on non-zero exit
-                                }),
-                            30000 // 30 second timeout
-                            ),
+                            execa(binaryPath, args, {
+                                stdio: ["ignore", "pipe", "pipe"],
+                                detached: false,
+                                reject: false, // Don't reject promise on non-zero exit
+                            }),
                         {
                             retries: 2,
                             factor: 2,
@@ -466,7 +462,7 @@ export class NeptuneProcessManager {
                                 logger.warn(
                                     {
                                         attempt: error.attemptNumber,
-                                        error: error.message || 'Unknown error',
+                                        error: error.message || "Unknown error",
                                         binary: binaryPath,
                                     },
                                     "neptune-cli spawn retry attempt failed",
@@ -476,6 +472,8 @@ export class NeptuneProcessManager {
                     ),
                 ),
             );
+
+            this.cliProcess = cliResult.child;
 
             // Handle process events
             this.cliProcess.on("error", (error) => {
@@ -700,7 +698,7 @@ export function getNeptuneProcessManager(): NeptuneProcessManager {
 export const neptuneProcessManager = new Proxy({} as NeptuneProcessManager, {
     get(_target, prop) {
         const instance = getNeptuneProcessManager();
-        const value = (instance as any)[prop];
+        const value = (instance as Record<string, unknown>)[prop];
         return typeof value === "function" ? value.bind(instance) : value;
     },
 });
