@@ -119,36 +119,36 @@ export class PeerService {
       id: uuidv4(),
       addedAt: Date.now(),
     };
-    
+
     const peers = peerStore.get('peers');
     peers.push(newPeer);
     peerStore.set('peers', peers);
-    
+
     return newPeer;
   }
 
   async updatePeer(id: string, updates: Partial<PeerEntry>): Promise<PeerEntry> {
     const peers = peerStore.get('peers');
     const index = peers.findIndex((p) => p.id === id);
-    
+
     if (index === -1) {
       throw new Error(`Peer with id ${id} not found`);
     }
-    
+
     peers[index] = { ...peers[index], ...updates };
     peerStore.set('peers', peers);
-    
+
     return peers[index];
   }
 
   async deletePeer(id: string): Promise<void> {
     const peers = peerStore.get('peers');
     const peer = peers.find((p) => p.id === id);
-    
+
     if (peer?.isDefault) {
       throw new Error('Cannot delete default bootstrap peer');
     }
-    
+
     const filtered = peers.filter((p) => p.id !== id);
     peerStore.set('peers', filtered);
   }
@@ -182,7 +182,7 @@ export class PeerService {
     return peers.filter((p) => p.enabled);
   }
 
-  // Ban/Unban Operations
+  // Ban Operation
   async banPeer(id: string, reason?: string): Promise<void> {
     await this.updatePeer(id, {
       isBanned: true,
@@ -192,14 +192,7 @@ export class PeerService {
     });
   }
 
-  async unbanPeer(id: string): Promise<void> {
-    await this.updatePeer(id, {
-      isBanned: false,
-      bannedAt: undefined,
-      bannedReason: undefined,
-      enabled: true, // Re-enable when unbanned
-    });
-  }
+  // Note: Unban is just delete - no separate unban operation needed
 
   async togglePeer(id: string, enabled: boolean): Promise<void> {
     await this.updatePeer(id, { enabled });
@@ -209,7 +202,7 @@ export class PeerService {
   validatePeerAddress(address: string): boolean {
     const regex = /^(\[?[a-zA-Z0-9\-\.:]+\]?):(\d{1,5})$/;
     if (!regex.test(address)) return false;
-    
+
     const port = parseInt(address.split(':').pop()!);
     return port > 0 && port <= 65535;
   }
@@ -260,9 +253,7 @@ export function registerPeerHandlers() {
     return peerService.banPeer(id, reason);
   });
 
-  ipcMain.handle('peer:unban', async (_, id) => {
-    return peerService.unbanPeer(id);
-  });
+  // Note: No unban handler needed - just use delete
 
   ipcMain.handle('peer:validate', async (_, address) => {
     return peerService.validatePeerAddress(address);
@@ -280,34 +271,33 @@ import type { PeerEntry } from '../../main/stores/peer-store';
 export const peerApi = {
   add: (peer: Omit<PeerEntry, 'id' | 'addedAt'>) =>
     ipcRenderer.invoke('peer:add', peer),
-  
+
   update: (id: string, updates: Partial<PeerEntry>) =>
     ipcRenderer.invoke('peer:update', id, updates),
-  
+
   delete: (id: string) =>
     ipcRenderer.invoke('peer:delete', id),
-  
+
   get: (id: string) =>
     ipcRenderer.invoke('peer:get', id),
-  
+
   getAll: (network?: string) =>
     ipcRenderer.invoke('peer:getAll', network),
-  
+
   getActive: (network?: string) =>
     ipcRenderer.invoke('peer:getActive', network),
-  
+
   getBanned: (network?: string) =>
     ipcRenderer.invoke('peer:getBanned', network),
-  
+
   toggle: (id: string, enabled: boolean) =>
     ipcRenderer.invoke('peer:toggle', id, enabled),
-  
+
   ban: (id: string, reason?: string) =>
     ipcRenderer.invoke('peer:ban', id, reason),
-  
-  unban: (id: string) =>
-    ipcRenderer.invoke('peer:unban', id),
-  
+
+  // Note: No unban method needed - just use delete
+
   validate: (address: string) =>
     ipcRenderer.invoke('peer:validate', address),
 };
@@ -323,15 +313,14 @@ interface PeerState {
   bannedPeers: PeerEntry[];
   isLoading: boolean;
   error: string | null;
-  
+
   // Actions
   loadPeers: (network: string) => Promise<void>;
   addPeer: (peer: Omit<PeerEntry, 'id' | 'addedAt'>) => Promise<void>;
   updatePeer: (id: string, updates: Partial<PeerEntry>) => Promise<void>;
-  deletePeer: (id: string) => Promise<void>;
+  deletePeer: (id: string) => Promise<void>; // Also serves as "unban" for banned peers
   togglePeer: (id: string, enabled: boolean) => Promise<void>;
   banPeer: (id: string, reason?: string) => Promise<void>;
-  unbanPeer: (id: string) => Promise<void>;
 }
 
 export const usePeerStore = create<PeerState>((set, get) => ({
@@ -339,7 +328,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
   bannedPeers: [],
   isLoading: false,
   error: null,
-  
+
   loadPeers: async (network: string) => {
     set({ isLoading: true, error: null });
     try {
@@ -352,7 +341,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
       set({ error: (error as Error).message, isLoading: false });
     }
   },
-  
+
   addPeer: async (peer) => {
     try {
       await window.api.peer.add(peer);
@@ -363,7 +352,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
       throw error;
     }
   },
-  
+
   updatePeer: async (id, updates) => {
     try {
       await window.api.peer.update(id, updates);
@@ -378,7 +367,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
       throw error;
     }
   },
-  
+
   deletePeer: async (id) => {
     try {
       await window.api.peer.delete(id);
@@ -392,7 +381,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
       throw error;
     }
   },
-  
+
   togglePeer: async (id, enabled) => {
     try {
       await window.api.peer.toggle(id, enabled);
@@ -405,7 +394,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
       throw error;
     }
   },
-  
+
   banPeer: async (id, reason) => {
     try {
       await window.api.peer.ban(id, reason);
@@ -418,19 +407,8 @@ export const usePeerStore = create<PeerState>((set, get) => ({
       throw error;
     }
   },
-  
-  unbanPeer: async (id) => {
-    try {
-      await window.api.peer.unban(id);
-      const currentPeer = get().bannedPeers.find(p => p.id === id);
-      if (currentPeer) {
-        await get().loadPeers(currentPeer.network);
-      }
-    } catch (error) {
-      set({ error: (error as Error).message });
-      throw error;
-    }
-  },
+
+  // Note: No unbanPeer method - just use deletePeer on banned peers
 }));
 ```
 
@@ -451,15 +429,15 @@ export const Route = createFileRoute('/wallet/peers')({
 });
 
 function PeerManagerRoute() {
-  const { activePeers, bannedPeers, isLoading, loadPeers } = usePeerStore();
+  const { activePeers, bannedPeers, isLoading, loadPeers, deletePeer } = usePeerStore();
   const networkSettings = useNetworkSettings();
-  
+
   useEffect(() => {
     if (networkSettings?.network) {
       loadPeers(networkSettings.network);
     }
   }, [networkSettings?.network, loadPeers]);
-  
+
   if (isLoading && activePeers.length === 0 && bannedPeers.length === 0) {
     return (
       <div className="flex flex-col gap-6 p-6">
@@ -468,7 +446,7 @@ function PeerManagerRoute() {
       </div>
     );
   }
-  
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <ActivePeersSection peers={activePeers} />
@@ -489,7 +467,7 @@ function PeerManagerRoute() {
 - Header with count
 - Table/Card list of banned peers
 - Columns: Label, Address, Banned At, Reason, Actions
-- Actions: Unban, Delete
+- Actions: Delete (with confirmation: "This will remove the peer from your banned list")
 - Empty state if no banned peers
 
 #### 3.4 Dialogs

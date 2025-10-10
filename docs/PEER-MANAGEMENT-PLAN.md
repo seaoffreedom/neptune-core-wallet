@@ -1,11 +1,13 @@
 # Peer Management System Design
 
 ## Overview
+
 System for managing Neptune Core peer addresses with persistence, UI management, and integration with CLI args builder.
 
 ## Current State Analysis
 
 ### Existing Peer-Related Code
+
 1. **Settings Store** (`src/renderer/stores/neptune-core-settings-store.ts`)
    - Has `bootstrapPeers: string[]` in network settings
    - Currently empty array by default
@@ -25,19 +27,19 @@ System for managing Neptune Core peer addresses with persistence, UI management,
 
 ```typescript
 export interface PeerEntry {
-  id: string;                    // UUID
-  address: string;               // IP:PORT or domain:port
-  label?: string;                // User-friendly name
-  type: 'bootstrap' | 'manual' | 'discovered'; // Source of peer
-  lastSeen?: number;             // Timestamp when last connected
-  addedAt: number;               // Timestamp when added
-  enabled: boolean;              // Whether to use this peer
-  network: 'main' | 'testnet' | 'regtest'; // Which network this peer is for
-  notes?: string;                // User notes
-  isDefault: boolean;            // Hardcoded default peers (can't be deleted)
-  isBanned: boolean;             // Whether this peer is banned
-  bannedAt?: number;             // Timestamp when banned
-  bannedReason?: string;         // Reason for banning
+  id: string; // UUID
+  address: string; // IP:PORT or domain:port
+  label?: string; // User-friendly name
+  type: "bootstrap" | "manual" | "discovered"; // Source of peer
+  lastSeen?: number; // Timestamp when last connected
+  addedAt: number; // Timestamp when added
+  enabled: boolean; // Whether to use this peer
+  network: "main" | "testnet" | "regtest"; // Which network this peer is for
+  notes?: string; // User notes
+  isDefault: boolean; // Hardcoded default peers (can't be deleted)
+  isBanned: boolean; // Whether this peer is banned
+  bannedAt?: number; // Timestamp when banned
+  bannedReason?: string; // Reason for banning
 }
 
 export interface PeerStore {
@@ -47,13 +49,14 @@ export interface PeerStore {
 // Schema
 const peerStoreSchema = {
   peers: {
-    type: 'array',
+    type: "array",
     default: [],
   },
 };
 ```
 
 **Features**:
+
 - Persistent storage via electron-store
 - Network-aware (peers are specific to main/testnet/regtest)
 - Track peer source (bootstrap vs manually added vs discovered from network)
@@ -66,23 +69,23 @@ const peerStoreSchema = {
 export const DEFAULT_BOOTSTRAP_PEERS: Record<string, PeerEntry[]> = {
   main: [
     {
-      id: 'default-main-1',
-      address: '51.15.139.238:9798',
-      label: 'Official Bootstrap Node 1',
-      type: 'bootstrap',
+      id: "default-main-1",
+      address: "51.15.139.238:9798",
+      label: "Official Bootstrap Node 1",
+      type: "bootstrap",
       addedAt: Date.now(),
       enabled: true,
-      network: 'main',
+      network: "main",
       isDefault: true,
     },
     {
-      id: 'default-main-2',
-      address: '139.162.193.206:9798',
-      label: 'Official Bootstrap Node 2',
-      type: 'bootstrap',
+      id: "default-main-2",
+      address: "139.162.193.206:9798",
+      label: "Official Bootstrap Node 2",
+      type: "bootstrap",
       addedAt: Date.now(),
       enabled: true,
-      network: 'main',
+      network: "main",
       isDefault: true,
     },
   ],
@@ -98,39 +101,40 @@ export const DEFAULT_BOOTSTRAP_PEERS: Record<string, PeerEntry[]> = {
 ```typescript
 export class PeerService {
   private store: Store<PeerStore>;
-  
+
   constructor() {
     this.store = new Store<PeerStore>({
-      name: 'peers',
+      name: "peers",
       schema: peerStoreSchema,
       watch: true,
     });
     this.initializeDefaults();
   }
-  
+
   // Initialize default peers on first run
   private initializeDefaults(): void;
-  
+
   // CRUD Operations
-  async addPeer(peer: Omit<PeerEntry, 'id' | 'addedAt'>): Promise<PeerEntry>;
+  async addPeer(peer: Omit<PeerEntry, "id" | "addedAt">): Promise<PeerEntry>;
   async updatePeer(id: string, updates: Partial<PeerEntry>): Promise<PeerEntry>;
   async deletePeer(id: string): Promise<void>; // Prevent deleting isDefault peers
   async getPeer(id: string): Promise<PeerEntry | null>;
   async getAllPeers(network?: string): Promise<PeerEntry[]>;
-  
+
   // Filter Operations
   async getEnabledPeers(network: string): Promise<PeerEntry[]>;
   async getBootstrapPeers(network: string): Promise<PeerEntry[]>;
   async getManualPeers(network: string): Promise<PeerEntry[]>;
   async getBannedPeers(network?: string): Promise<PeerEntry[]>;
   async getActivePeers(network?: string): Promise<PeerEntry[]>; // Non-banned peers
-  
+
   // Bulk Operations
   async togglePeer(id: string, enabled: boolean): Promise<void>;
   async banPeer(id: string, reason?: string): Promise<void>;
-  async unbanPeer(id: string): Promise<void>;
   async resetToDefaults(network: string): Promise<void>;
-  
+
+  // Note: Unban is accomplished via deletePeer() - no separate unban method needed
+
   // Validation
   validatePeerAddress(address: string): boolean; // IP:PORT or domain:port format
 }
@@ -140,37 +144,43 @@ export class PeerService {
 
 ```typescript
 export function registerPeerHandlers() {
-  ipcMain.handle('peer:add', async (_, peer) => {
+  ipcMain.handle("peer:add", async (_, peer) => {
     return peerService.addPeer(peer);
   });
-  
-  ipcMain.handle('peer:update', async (_, id, updates) => {
+
+  ipcMain.handle("peer:update", async (_, id, updates) => {
     return peerService.updatePeer(id, updates);
   });
-  
-  ipcMain.handle('peer:delete', async (_, id) => {
+
+  ipcMain.handle("peer:delete", async (_, id) => {
     return peerService.deletePeer(id);
   });
-  
-  ipcMain.handle('peer:getAll', async (_, network) => {
+
+  ipcMain.handle("peer:getAll", async (_, network) => {
     return peerService.getAllPeers(network);
   });
-  
-  ipcMain.handle('peer:getEnabled', async (_, network) => {
+
+  ipcMain.handle("peer:getEnabled", async (_, network) => {
     return peerService.getEnabledPeers(network);
   });
-  
-  ipcMain.handle('peer:toggle', async (_, id, enabled) => {
+
+  ipcMain.handle("peer:toggle", async (_, id, enabled) => {
     return peerService.togglePeer(id, enabled);
   });
-  
-  ipcMain.handle('peer:resetToDefaults', async (_, network) => {
+
+  ipcMain.handle("peer:ban", async (_, id, reason) => {
+    return peerService.banPeer(id, reason);
+  });
+
+  ipcMain.handle("peer:resetToDefaults", async (_, network) => {
     return peerService.resetToDefaults(network);
   });
-  
-  ipcMain.handle('peer:validate', async (_, address) => {
+
+  ipcMain.handle("peer:validate", async (_, address) => {
     return peerService.validatePeerAddress(address);
   });
+
+  // Note: No unban handler - just use delete to remove banned peers
 }
 ```
 
@@ -181,13 +191,14 @@ interface PeerState {
   peers: PeerEntry[];
   isLoading: boolean;
   error: string | null;
-  
+
   // Actions
   loadPeers: (network: string) => Promise<void>;
-  addPeer: (peer: Omit<PeerEntry, 'id' | 'addedAt'>) => Promise<void>;
+  addPeer: (peer: Omit<PeerEntry, "id" | "addedAt">) => Promise<void>;
   updatePeer: (id: string, updates: Partial<PeerEntry>) => Promise<void>;
-  deletePeer: (id: string) => Promise<void>;
+  deletePeer: (id: string) => Promise<void>; // Also serves as "unban" for banned peers
   togglePeer: (id: string, enabled: boolean) => Promise<void>;
+  banPeer: (id: string, reason?: string) => Promise<void>;
   resetToDefaults: (network: string) => Promise<void>;
 }
 
@@ -195,7 +206,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
   peers: [],
   isLoading: false,
   error: null,
-  
+
   loadPeers: async (network) => {
     set({ isLoading: true, error: null });
     try {
@@ -205,7 +216,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
       set({ error: error.message, isLoading: false });
     }
   },
-  
+
   // ... other actions
 }));
 ```
@@ -215,7 +226,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
 ```typescript
 /**
  * Peer Management Route (Wallet Sub-Route)
- * 
+ *
  * Features:
  * - Two sections: Active Peers and Banned Peers
  * - Active Peers: List with enable/disable, edit, delete, ban actions
@@ -230,11 +241,11 @@ export const usePeerStore = create<PeerState>((set, get) => ({
 export function PeerManagerRoute() {
   const { peers, bannedPeers, loadPeers, banPeer, unbanPeer } = usePeerStore();
   const { network } = useNetworkSettings();
-  
+
   useEffect(() => {
     loadPeers(network);
   }, [network]);
-  
+
   return (
     <div className="flex flex-col gap-6">
       {/* Active Peers Section */}
@@ -242,7 +253,7 @@ export function PeerManagerRoute() {
         <h2>Active Peers</h2>
         {/* Peer table/list with actions */}
       </section>
-      
+
       {/* Banned Peers Section */}
       <section>
         <h2>Banned Peers</h2>
@@ -261,29 +272,30 @@ export function PeerManagerRoute() {
 // In NeptuneCoreArgsBuilder
 buildArgs(settings: NeptuneCoreSettings): string[] {
   const args: string[] = [];
-  
+
   // ... other args
-  
+
   // Get enabled bootstrap peers for current network
   const enabledPeers = await peerService.getEnabledPeers(settings.network.network);
-  
+
   // Add each peer as --peer flag
   for (const peer of enabledPeers) {
     args.push('--peer', peer.address);
   }
-  
+
   // ... rest of args
-  
+
   return args;
 }
 ```
 
 ### Decoupling Settings from Peers
 
-**Current**: `settings.network.bootstrapPeers: string[]`  
+**Current**: `settings.network.bootstrapPeers: string[]`
 **Proposed**: Remove from settings, use dedicated peer store
 
 **Benefits**:
+
 1. **Separation of Concerns**: Settings are config, peers are managed entities
 2. **Richer Metadata**: Can store labels, notes, last seen, etc.
 3. **Network-Specific**: Peers automatically filtered by network
@@ -293,6 +305,7 @@ buildArgs(settings: NeptuneCoreSettings): string[] {
 ## Migration Strategy
 
 ### Phase 1: Create Peer Store (This Phase)
+
 1. Create peer store schema and service
 2. Create IPC handlers
 3. Create Zustand store
@@ -300,17 +313,20 @@ buildArgs(settings: NeptuneCoreSettings): string[] {
 5. Migrate any existing `bootstrapPeers` from settings to peer store
 
 ### Phase 2: Peer Management UI
+
 1. Create peer manager component
 2. Add to Network settings tab
 3. Implement CRUD operations
 4. Add validation (IP:PORT format)
 
 ### Phase 3: Integration with CLI Args Builder
+
 1. Query enabled peers from peer store
 2. Build `--peer` flags
 3. Remove `bootstrapPeers` from settings schema (deprecated)
 
 ### Phase 4: Advanced Features (Future)
+
 1. Peer discovery from network
 2. Peer health tracking (last seen, latency)
 3. Auto-disable unreachable peers
@@ -320,6 +336,7 @@ buildArgs(settings: NeptuneCoreSettings): string[] {
 ## Data Validation
 
 ### Peer Address Format
+
 ```typescript
 // Valid formats:
 // - IPv4:PORT -> "192.168.1.1:9798"
@@ -330,8 +347,8 @@ const PEER_ADDRESS_REGEX = /^(\[?[a-zA-Z0-9\-\.:]+\]?):(\d{1,5})$/;
 
 function validatePeerAddress(address: string): boolean {
   if (!PEER_ADDRESS_REGEX.test(address)) return false;
-  
-  const port = parseInt(address.split(':').pop()!);
+
+  const port = parseInt(address.split(":").pop()!);
   return port > 0 && port <= 65535;
 }
 ```
