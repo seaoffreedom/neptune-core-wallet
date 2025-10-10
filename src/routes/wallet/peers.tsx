@@ -14,6 +14,7 @@ function PeerManager() {
     useEffect(() => {
         console.log("🔄 PeerManager useEffect triggered", {
             network: networkSettings?.network,
+            networkSettings: networkSettings,
             activePeers: activePeers.length,
             bannedPeers: bannedPeers.length,
         });
@@ -23,6 +24,11 @@ function PeerManager() {
                 networkSettings.network,
             );
             loadPeers(networkSettings.network);
+        } else {
+            console.log(
+                "⚠️ No network setting found, using 'main' as fallback",
+            );
+            loadPeers("main");
         }
     }, [networkSettings?.network, loadPeers]);
 
