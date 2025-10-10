@@ -25,8 +25,8 @@ import {
   showPromiseToast,
   dismissToast,
   dismissAllToasts,
-  toast // Raw sonner toast for advanced usage
-} from '@/lib/toast';
+  toast, // Raw sonner toast for advanced usage
+} from "@/lib/toast";
 ```
 
 ## Basic Usage
@@ -34,24 +34,24 @@ import {
 ### Success Toast
 
 ```typescript
-showSuccessToast('Settings saved successfully!');
+showSuccessToast("Settings saved successfully!");
 
 // With description
-showSuccessToast('Settings saved!', {
-  description: 'Your changes have been applied to Neptune Core.',
+showSuccessToast("Settings saved!", {
+  description: "Your changes have been applied to Neptune Core.",
 });
 
 // With action button
-showSuccessToast('Transaction sent!', {
-  description: 'Your transaction has been broadcast to the network.',
+showSuccessToast("Transaction sent!", {
+  description: "Your transaction has been broadcast to the network.",
   action: {
-    label: 'View',
-    onClick: () => console.log('View transaction'),
+    label: "View",
+    onClick: () => console.log("View transaction"),
   },
 });
 
 // Custom duration (in milliseconds)
-showSuccessToast('Copied to clipboard', {
+showSuccessToast("Copied to clipboard", {
   duration: 2000,
 });
 ```
@@ -59,19 +59,20 @@ showSuccessToast('Copied to clipboard', {
 ### Error Toast
 
 ```typescript
-showErrorToast('Failed to save settings');
+showErrorToast("Failed to save settings");
 
 // With description
-showErrorToast('Connection failed', {
-  description: 'Unable to connect to Neptune Core. Please check if it\'s running.',
+showErrorToast("Connection failed", {
+  description:
+    "Unable to connect to Neptune Core. Please check if it's running.",
 });
 
 // With retry action
-showErrorToast('Transaction failed', {
-  description: 'Insufficient funds for transaction.',
+showErrorToast("Transaction failed", {
+  description: "Insufficient funds for transaction.",
   action: {
-    label: 'Retry',
-    onClick: () => console.log('Retry transaction'),
+    label: "Retry",
+    onClick: () => console.log("Retry transaction"),
   },
 });
 ```
@@ -79,23 +80,23 @@ showErrorToast('Transaction failed', {
 ### Warning Toast
 
 ```typescript
-showWarningToast('Unsaved changes');
+showWarningToast("Unsaved changes");
 
-showWarningToast('Low balance', {
-  description: 'Your balance is running low. Consider receiving funds.',
+showWarningToast("Low balance", {
+  description: "Your balance is running low. Consider receiving funds.",
 });
 ```
 
 ### Info Toast
 
 ```typescript
-showInfoToast('Syncing blockchain data...');
+showInfoToast("Syncing blockchain data...");
 
-showInfoToast('New version available', {
-  description: 'Version 2.0.0 is ready to install.',
+showInfoToast("New version available", {
+  description: "Version 2.0.0 is ready to install.",
   action: {
-    label: 'Update',
-    onClick: () => console.log('Update app'),
+    label: "Update",
+    onClick: () => console.log("Update app"),
   },
 });
 ```
@@ -103,10 +104,10 @@ showInfoToast('New version available', {
 ### Default Toast
 
 ```typescript
-showToast('Event occurred');
+showToast("Event occurred");
 
-showToast('Event has been created', {
-  description: 'Sunday, December 03, 2023 at 9:00 AM',
+showToast("Event has been created", {
+  description: "Sunday, December 03, 2023 at 9:00 AM",
 });
 ```
 
@@ -118,13 +119,13 @@ For long-running operations, show a loading toast:
 
 ```typescript
 // Show loading toast
-const toastId = showLoadingToast('Processing transaction...');
+const toastId = showLoadingToast("Processing transaction...");
 
 // Later, dismiss it
 dismissToast(toastId);
 
 // Or update it to success
-showSuccessToast('Transaction completed!');
+showSuccessToast("Transaction completed!");
 ```
 
 ### Promise Toast
@@ -134,33 +135,31 @@ Automatically show loading, success, or error states:
 ```typescript
 showPromiseToast(
   async () => {
-    const result = await window.electronAPI.neptuneCoreSettings.updateAll(settings);
+    const result =
+      await window.electronAPI.neptuneCoreSettings.updateAll(settings);
     if (!result.success) throw new Error(result.error);
     return result.settings;
   },
   {
-    loading: 'Saving settings...',
-    success: 'Settings saved successfully!',
+    loading: "Saving settings...",
+    success: "Settings saved successfully!",
     error: (err) => `Failed to save: ${err.message}`,
-  }
+  },
 );
 
 // With data transformation
-showPromiseToast(
-  fetchUserData(),
-  {
-    loading: 'Loading user data...',
-    success: (data) => `Welcome back, ${data.name}!`,
-    error: 'Failed to load user data',
-  }
-);
+showPromiseToast(fetchUserData(), {
+  loading: "Loading user data...",
+  success: (data) => `Welcome back, ${data.name}!`,
+  error: "Failed to load user data",
+});
 ```
 
 ### Dismissing Toasts
 
 ```typescript
 // Dismiss a specific toast
-const toastId = showSuccessToast('Operation started');
+const toastId = showSuccessToast("Operation started");
 setTimeout(() => dismissToast(toastId), 3000);
 
 // Dismiss all toasts
@@ -173,17 +172,17 @@ dismissAllToasts();
 
 ```typescript
 const handleSave = async () => {
-  const toastId = showLoadingToast('Saving settings...');
-  
+  const toastId = showLoadingToast("Saving settings...");
+
   try {
     await saveSettings();
     dismissToast(toastId);
-    showSuccessToast('Settings saved!', {
-      description: 'Restart the app to apply changes.',
+    showSuccessToast("Settings saved!", {
+      description: "Restart the app to apply changes.",
     });
   } catch (error) {
     dismissToast(toastId);
-    showErrorToast('Failed to save settings', {
+    showErrorToast("Failed to save settings", {
       description: error.message,
     });
   }
@@ -194,14 +193,11 @@ const handleSave = async () => {
 
 ```typescript
 const handleSendTransaction = async (params) => {
-  showPromiseToast(
-    window.electronAPI.send(params),
-    {
-      loading: 'Broadcasting transaction...',
-      success: (result) => `Transaction sent! ID: ${result.txId.slice(0, 8)}...`,
-      error: 'Transaction failed. Please try again.',
-    }
-  );
+  showPromiseToast(window.electronAPI.send(params), {
+    loading: "Broadcasting transaction...",
+    success: (result) => `Transaction sent! ID: ${result.txId.slice(0, 8)}...`,
+    error: "Transaction failed. Please try again.",
+  });
 };
 ```
 
@@ -211,11 +207,11 @@ const handleSendTransaction = async (params) => {
 const handleCopyAddress = async (address: string) => {
   try {
     await navigator.clipboard.writeText(address);
-    showSuccessToast('Address copied!', {
+    showSuccessToast("Address copied!", {
       duration: 2000,
     });
   } catch (error) {
-    showErrorToast('Failed to copy address');
+    showErrorToast("Failed to copy address");
   }
 };
 ```
@@ -226,19 +222,19 @@ const handleCopyAddress = async (address: string) => {
 const handleSelectFolder = async () => {
   try {
     const result = await window.electronAPI.openDialog({
-      properties: ['openDirectory'],
+      properties: ["openDirectory"],
     });
-    
+
     if (result.canceled) {
-      showInfoToast('Folder selection cancelled');
+      showInfoToast("Folder selection cancelled");
       return;
     }
-    
-    showSuccessToast('Folder selected', {
+
+    showSuccessToast("Folder selected", {
       description: result.filePaths[0],
     });
   } catch (error) {
-    showErrorToast('Failed to open folder dialog');
+    showErrorToast("Failed to open folder dialog");
   }
 };
 ```
@@ -248,26 +244,20 @@ const handleSelectFolder = async () => {
 ```typescript
 // Create entry
 const handleCreateEntry = async (entry) => {
-  showPromiseToast(
-    window.electronAPI.addressBook.create(entry),
-    {
-      loading: 'Adding address...',
-      success: 'Address added to address book!',
-      error: 'Failed to add address',
-    }
-  );
+  showPromiseToast(window.electronAPI.addressBook.create(entry), {
+    loading: "Adding address...",
+    success: "Address added to address book!",
+    error: "Failed to add address",
+  });
 };
 
 // Delete entry
 const handleDeleteEntry = async (id: string) => {
-  showPromiseToast(
-    window.electronAPI.addressBook.delete(id),
-    {
-      loading: 'Deleting address...',
-      success: 'Address removed from address book',
-      error: 'Failed to delete address',
-    }
-  );
+  showPromiseToast(window.electronAPI.addressBook.delete(id), {
+    loading: "Deleting address...",
+    success: "Address removed from address book",
+    error: "Failed to delete address",
+  });
 };
 ```
 
@@ -292,6 +282,7 @@ const handleDeleteEntry = async (id: string) => {
 ## Configuration
 
 The Toaster component is configured in `src/routes/__root.tsx` and automatically:
+
 - Adapts to the current theme (light/dark)
 - Stacks toasts vertically
 - Queues toasts when multiple are shown
@@ -300,6 +291,7 @@ The Toaster component is configured in `src/routes/__root.tsx` and automatically
 ## Styling
 
 Toasts inherit the application theme automatically. Custom styling can be applied via:
+
 - CSS variables in `src/components/ui/sonner.tsx`
 - Tailwind classes in individual toast calls
 - Global styles in `src/globals.css`
@@ -309,4 +301,3 @@ Toasts inherit the application theme automatically. Custom styling can be applie
 - [Sonner Documentation](https://sonner.emilkowal.ski/)
 - [shadcn/ui Sonner Component](https://ui.shadcn.com/docs/components/sonner)
 - [Source Code](https://github.com/emilkowalski/sonner)
-

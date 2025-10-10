@@ -8,111 +8,111 @@
  * @see https://sonner.emilkowal.ski/
  */
 
-import { toast as sonnerToast } from 'sonner';
+import { toast as sonnerToast } from "sonner";
 
 /**
  * Show a success toast
  */
 export const showSuccessToast = (
-  message: string,
-  options?: {
-    description?: string;
-    action?: {
-      label: string;
-      onClick: () => void;
-    };
-    duration?: number;
-  }
+    message: string,
+    options?: {
+        description?: string;
+        action?: {
+            label: string;
+            onClick: () => void;
+        };
+        duration?: number;
+    },
 ) => {
-  return sonnerToast.success(message, {
-    description: options?.description,
-    action: options?.action,
-    duration: options?.duration,
-  });
+    return sonnerToast.success(message, {
+        description: options?.description,
+        action: options?.action,
+        duration: options?.duration,
+    });
 };
 
 /**
  * Show an error toast
  */
 export const showErrorToast = (
-  message: string,
-  options?: {
-    description?: string;
-    action?: {
-      label: string;
-      onClick: () => void;
-    };
-    duration?: number;
-  }
+    message: string,
+    options?: {
+        description?: string;
+        action?: {
+            label: string;
+            onClick: () => void;
+        };
+        duration?: number;
+    },
 ) => {
-  return sonnerToast.error(message, {
-    description: options?.description,
-    action: options?.action,
-    duration: options?.duration,
-  });
+    return sonnerToast.error(message, {
+        description: options?.description,
+        action: options?.action,
+        duration: options?.duration,
+    });
 };
 
 /**
  * Show a warning toast
  */
 export const showWarningToast = (
-  message: string,
-  options?: {
-    description?: string;
-    action?: {
-      label: string;
-      onClick: () => void;
-    };
-    duration?: number;
-  }
+    message: string,
+    options?: {
+        description?: string;
+        action?: {
+            label: string;
+            onClick: () => void;
+        };
+        duration?: number;
+    },
 ) => {
-  return sonnerToast.warning(message, {
-    description: options?.description,
-    action: options?.action,
-    duration: options?.duration,
-  });
+    return sonnerToast.warning(message, {
+        description: options?.description,
+        action: options?.action,
+        duration: options?.duration,
+    });
 };
 
 /**
  * Show an info toast
  */
 export const showInfoToast = (
-  message: string,
-  options?: {
-    description?: string;
-    action?: {
-      label: string;
-      onClick: () => void;
-    };
-    duration?: number;
-  }
+    message: string,
+    options?: {
+        description?: string;
+        action?: {
+            label: string;
+            onClick: () => void;
+        };
+        duration?: number;
+    },
 ) => {
-  return sonnerToast.info(message, {
-    description: options?.description,
-    action: options?.action,
-    duration: options?.duration,
-  });
+    return sonnerToast.info(message, {
+        description: options?.description,
+        action: options?.action,
+        duration: options?.duration,
+    });
 };
 
 /**
  * Show a default toast
  */
 export const showToast = (
-  message: string,
-  options?: {
-    description?: string;
-    action?: {
-      label: string;
-      onClick: () => void;
-    };
-    duration?: number;
-  }
+    message: string,
+    options?: {
+        description?: string;
+        action?: {
+            label: string;
+            onClick: () => void;
+        };
+        duration?: number;
+    },
 ) => {
-  return sonnerToast(message, {
-    description: options?.description,
-    action: options?.action,
-    duration: options?.duration,
-  });
+    return sonnerToast(message, {
+        description: options?.description,
+        action: options?.action,
+        duration: options?.duration,
+    });
 };
 
 /**
@@ -120,16 +120,16 @@ export const showToast = (
  * Returns a toast ID that can be used to update or dismiss the toast
  */
 export const showLoadingToast = (
-  message: string,
-  options?: {
-    description?: string;
-    duration?: number;
-  }
+    message: string,
+    options?: {
+        description?: string;
+        duration?: number;
+    },
 ) => {
-  return sonnerToast.loading(message, {
-    description: options?.description,
-    duration: options?.duration,
-  });
+    return sonnerToast.loading(message, {
+        description: options?.description,
+        duration: options?.duration,
+    });
 };
 
 /**
@@ -137,34 +137,34 @@ export const showLoadingToast = (
  * Automatically shows loading, success, or error states
  */
 export const showPromiseToast = <T>(
-  promise: Promise<T> | (() => Promise<T>),
-  options: {
-    loading: string;
-    success: string | ((data: T) => string);
-    error: string | ((error: unknown) => string);
-    description?: string;
-  }
+    promise: Promise<T> | (() => Promise<T>),
+    options: {
+        loading: string;
+        success: string | ((data: T) => string);
+        error: string | ((error: unknown) => string);
+        description?: string;
+    },
 ) => {
-  return sonnerToast.promise(promise, {
-    loading: options.loading,
-    success: options.success,
-    error: options.error,
-    description: options.description,
-  });
+    return sonnerToast.promise(promise, {
+        loading: options.loading,
+        success: options.success,
+        error: options.error,
+        description: options.description,
+    });
 };
 
 /**
  * Dismiss a specific toast by ID
  */
 export const dismissToast = (toastId: string | number) => {
-  sonnerToast.dismiss(toastId);
+    sonnerToast.dismiss(toastId);
 };
 
 /**
  * Dismiss all toasts
  */
 export const dismissAllToasts = () => {
-  sonnerToast.dismiss();
+    sonnerToast.dismiss();
 };
 
 /**
