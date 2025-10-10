@@ -82,7 +82,7 @@ export async function handleSettingsGet<T = unknown>(
             await loadSettings();
         }
 
-        const value = settingsCache[request.key];
+        const value = settingsCache[request.key] as T | undefined;
         return {
             success: true,
             value,
