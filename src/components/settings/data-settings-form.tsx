@@ -5,7 +5,10 @@
  * data directory, block import, and validation options.
  */
 
+import { FolderOpen } from 'lucide-react';
+import { useState } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -17,6 +20,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import type { DataSettingsFormData } from '@/lib/validation/settings-schemas';
@@ -28,11 +36,42 @@ interface DataSettingsFormProps {
 
 export function DataSettingsForm({ form }: DataSettingsFormProps) {
   const updateDataSettings = useUpdateDataSettings();
+  const [isSelectingDataDir, setIsSelectingDataDir] = useState(false);
+  const [isSelectingImportDir, setIsSelectingImportDir] = useState(false);
 
   const handleFieldChange = (field: string, value: unknown) => {
     updateDataSettings({
       [field]: value,
     } as Partial<DataSettingsFormData>);
+  };
+
+  const handleSelectFolder = async (
+    fieldName: 'dataDir' | 'importBlocksFromDirectory'
+  ) => {
+    const isDataDir = fieldName === 'dataDir';
+    const setLoading = isDataDir
+      ? setIsSelectingDataDir
+      : setIsSelectingImportDir;
+
+    setLoading(true);
+    try {
+      const result = await window.electronAPI.openDialog({
+        title: isDataDir
+          ? 'Select Data Directory'
+          : 'Select Import Blocks Directory',
+        properties: ['openDirectory'],
+      });
+
+      if (!result.canceled && result.filePaths.length > 0) {
+        const selectedPath = result.filePaths[0];
+        form.setValue(fieldName, selectedPath);
+        handleFieldChange(fieldName, selectedPath);
+      }
+    } catch (error) {
+      console.error('Error selecting folder:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,15 +90,28 @@ export function DataSettingsForm({ form }: DataSettingsFormProps) {
                 <FormItem>
                   <FormLabel>Data Directory Path</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value ?? ''}
-                      placeholder="e.g., /path/to/data"
-                      onChange={(e) => {
-                        field.onChange(e.target.value);
-                        handleFieldChange('dataDir', e.target.value);
-                      }}
-                    />
+                    <InputGroup>
+                      <InputGroupInput
+                        {...field}
+                        value={field.value ?? ''}
+                        placeholder="e.g., /path/to/data"
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          handleFieldChange('dataDir', e.target.value);
+                        }}
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSelectFolder('dataDir')}
+                          disabled={isSelectingDataDir}
+                        >
+                          <FolderOpen className="h-4 w-4" />
+                        </Button>
+                      </InputGroupAddon>
+                    </InputGroup>
                   </FormControl>
                   <FormDescription>
                     Custom data directory path (optional, defaults to system
@@ -88,18 +140,33 @@ export function DataSettingsForm({ form }: DataSettingsFormProps) {
                 <FormItem>
                   <FormLabel>Import Blocks From Directory</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value ?? ''}
-                      placeholder="e.g., /path/to/blocks"
-                      onChange={(e) => {
-                        field.onChange(e.target.value);
-                        handleFieldChange(
-                          'importBlocksFromDirectory',
-                          e.target.value
-                        );
-                      }}
-                    />
+                    <InputGroup>
+                      <InputGroupInput
+                        {...field}
+                        value={field.value ?? ''}
+                        placeholder="e.g., /path/to/blocks"
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          handleFieldChange(
+                            'importBlocksFromDirectory',
+                            e.target.value
+                          );
+                        }}
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            handleSelectFolder('importBlocksFromDirectory')
+                          }
+                          disabled={isSelectingImportDir}
+                        >
+                          <FolderOpen className="h-4 w-4" />
+                        </Button>
+                      </InputGroupAddon>
+                    </InputGroup>
                   </FormControl>
                   <FormDescription>
                     Directory to import blocks from (optional)
