@@ -7,7 +7,11 @@
 
 import type { NeptuneCoreSettings } from "../../shared/types/neptune-core-settings";
 import { DEFAULT_NEPTUNE_CORE_SETTINGS } from "../../shared/types/neptune-core-settings";
-import { CLI_FLAG_MAP, COMPUTED_FLAGS } from "../config/cli-flag-mapping";
+import {
+    CLI_FLAG_MAP,
+    COMPUTED_FLAGS,
+    CLIFlagConfig,
+} from "../config/cli-flag-mapping";
 import type { PeerService } from "./peer.service";
 
 export class NeptuneCoreArgsBuilder {
@@ -20,44 +24,45 @@ export class NeptuneCoreArgsBuilder {
     async buildArgs(settings: NeptuneCoreSettings): Promise<string[]> {
         const args: string[] = [];
 
-        console.log("🔧 Building CLI args from settings...");
-
         // Process each settings category
         this.processCategory(
             args,
             "network",
-            settings.network,
-            DEFAULT_NEPTUNE_CORE_SETTINGS.network,
+            settings.network as Record<string, unknown>,
+            DEFAULT_NEPTUNE_CORE_SETTINGS.network as Record<string, unknown>,
         );
         this.processCategory(
             args,
             "mining",
-            settings.mining,
-            DEFAULT_NEPTUNE_CORE_SETTINGS.mining,
+            settings.mining as Record<string, unknown>,
+            DEFAULT_NEPTUNE_CORE_SETTINGS.mining as Record<string, unknown>,
         );
         this.processCategory(
             args,
             "performance",
-            settings.performance,
-            DEFAULT_NEPTUNE_CORE_SETTINGS.performance,
+            settings.performance as Record<string, unknown>,
+            DEFAULT_NEPTUNE_CORE_SETTINGS.performance as Record<
+                string,
+                unknown
+            >,
         );
         this.processCategory(
             args,
             "security",
-            settings.security,
-            DEFAULT_NEPTUNE_CORE_SETTINGS.security,
+            settings.security as Record<string, unknown>,
+            DEFAULT_NEPTUNE_CORE_SETTINGS.security as Record<string, unknown>,
         );
         this.processCategory(
             args,
             "data",
-            settings.data,
-            DEFAULT_NEPTUNE_CORE_SETTINGS.data,
+            settings.data as Record<string, unknown>,
+            DEFAULT_NEPTUNE_CORE_SETTINGS.data as Record<string, unknown>,
         );
         this.processCategory(
             args,
             "advanced",
-            settings.advanced,
-            DEFAULT_NEPTUNE_CORE_SETTINGS.advanced,
+            settings.advanced as Record<string, unknown>,
+            DEFAULT_NEPTUNE_CORE_SETTINGS.advanced as Record<string, unknown>,
         );
 
         // Add peer flags from peer store
@@ -69,7 +74,7 @@ export class NeptuneCoreArgsBuilder {
         // Add positional arguments
         this.addPositionalArgs(args, settings);
 
-        console.log("✅ CLI args built:", args.join(" "));
+        // CLI args built successfully
         return args;
     }
 
@@ -104,7 +109,7 @@ export class NeptuneCoreArgsBuilder {
             // Get flag config
             const flagConfig = CLI_FLAG_MAP[settingKey];
             if (!flagConfig) {
-                console.warn(`⚠️ No CLI flag mapping for ${settingKey}`);
+                // No CLI flag mapping for this setting - skipping
                 continue;
             }
 
@@ -158,11 +163,9 @@ export class NeptuneCoreArgsBuilder {
                 args.push("--peer", peer.address);
             }
 
-            if (enabledPeers.length > 0) {
-                console.log(`📡 Added ${enabledPeers.length} peer flags`);
-            }
+            // Added peer flags successfully
         } catch (error) {
-            console.error("❌ Failed to load peers for CLI args:", error);
+            // Failed to load peers for CLI args - continuing without peers
         }
     }
 
@@ -173,11 +176,8 @@ export class NeptuneCoreArgsBuilder {
         args: string[],
         settings: NeptuneCoreSettings,
     ): void {
-        // --mine is computed from compose || guess
-        if (settings.mining.compose || settings.mining.guess) {
-            args.push(COMPUTED_FLAGS.MINE);
-            console.log("⛏️ Added --mine flag (compose || guess)");
-        }
+        // No computed flags needed - all flags are handled by the CLI flag mapping
+        // The --mine flag doesn't exist in neptune-core
     }
 
     /**
@@ -190,7 +190,7 @@ export class NeptuneCoreArgsBuilder {
         // Block notify command is a positional argument
         if (settings.advanced.blockNotifyCommand) {
             args.push(settings.advanced.blockNotifyCommand);
-            console.log("🔔 Added block notify command as positional arg");
+            // Added block notify command as positional arg
         }
     }
 

@@ -5,7 +5,11 @@
  */
 
 import { BrowserWindow, ipcMain } from 'electron';
+import pino from 'pino';
 import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
+
+// Logger
+const logger = pino({ level: 'info' });
 import type {
   WindowMaximizedResponse,
   WindowTitleRequest,
@@ -23,7 +27,10 @@ export function handleWindowMinimize(event: Electron.IpcMainInvokeEvent) {
     }
     return { success: false, error: 'Window not found' };
   } catch (error) {
-    console.error('Error minimizing window:', error);
+    logger.error(
+      { error: (error as Error).message },
+      'Error minimizing window'
+    );
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -47,7 +54,10 @@ export function handleWindowMaximize(event: Electron.IpcMainInvokeEvent) {
     }
     return { success: false, error: 'Window not found' };
   } catch (error) {
-    console.error('Error maximizing window:', error);
+    logger.error(
+      { error: (error as Error).message },
+      'Error maximizing window'
+    );
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -67,7 +77,7 @@ export function handleWindowClose(event: Electron.IpcMainInvokeEvent) {
     }
     return { success: false, error: 'Window not found' };
   } catch (error) {
-    console.error('Error closing window:', error);
+    logger.error({ error: (error as Error).message }, 'Error closing window');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -88,7 +98,10 @@ export function handleWindowIsMaximized(
     }
     throw new Error('Window not found');
   } catch (error) {
-    console.error('Error checking window maximized state:', error);
+    logger.error(
+      { error: (error as Error).message },
+      'Error checking window maximized state'
+    );
     throw new Error(error instanceof Error ? error.message : 'Unknown error');
   }
 }
@@ -108,7 +121,10 @@ export function handleWindowSetTitle(
     }
     return { success: false, error: 'Window not found' };
   } catch (error) {
-    console.error('Error setting window title:', error);
+    logger.error(
+      { error: (error as Error).message },
+      'Error setting window title'
+    );
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

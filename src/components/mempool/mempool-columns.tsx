@@ -47,7 +47,7 @@ export const mempoolColumns: ColumnDef<MempoolTransaction>[] = [
             return (
                 <div className="text-right">
                     <span className="font-mono text-sm">
-                        {feeNum.toFixed(6)} NPT
+                        {feeNum.toFixed(6)} $NPT
                     </span>
                 </div>
             );
@@ -63,7 +63,7 @@ export const mempoolColumns: ColumnDef<MempoolTransaction>[] = [
                 const k = 1024;
                 const sizes = ["B", "KB", "MB"];
                 const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+                return `${parseFloat((bytes / k ** i).toFixed(1))} ${sizes[i]}`;
             };
 
             return (

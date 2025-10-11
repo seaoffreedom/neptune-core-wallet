@@ -4,196 +4,190 @@
  * Displays enhanced balance information with confirmed/unconfirmed breakdown
  */
 
-import { CheckCircle, ChevronDown, ChevronUp, Clock, Info } from 'lucide-react';
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { CheckCircle, Clock, Info } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface BalanceCardProps {
-  confirmedBalance: string | null;
-  unconfirmedBalance: string | null;
-  mempoolTxCount: number;
-  isLoading?: boolean;
+    confirmedBalance: string | null;
+    unconfirmedBalance: string | null;
+    mempoolTxCount: number;
+    dashboardData?: {
+        confirmed_available_balance: string;
+        confirmed_total_balance: string;
+        unconfirmed_available_balance: string;
+        unconfirmed_total_balance: string;
+    } | null;
+    isLoading?: boolean;
 }
 
 export function BalanceCard({
-  confirmedBalance,
-  unconfirmedBalance,
-  mempoolTxCount,
-  isLoading = false,
+    confirmedBalance,
+    unconfirmedBalance,
+    mempoolTxCount,
+    dashboardData,
+    isLoading = false,
 }: BalanceCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+    // Parse balances - use detailed dashboard data if available, fallback to basic data
+    const confirmedAvailable = dashboardData
+        ? parseFloat(dashboardData.confirmed_available_balance)
+        : confirmedBalance
+          ? parseFloat(confirmedBalance)
+          : 0;
+    const confirmedTotal = dashboardData
+        ? parseFloat(dashboardData.confirmed_total_balance)
+        : confirmedBalance
+          ? parseFloat(confirmedBalance)
+          : 0;
+    const unconfirmedAvailable = dashboardData
+        ? parseFloat(dashboardData.unconfirmed_available_balance)
+        : unconfirmedBalance
+          ? parseFloat(unconfirmedBalance)
+          : 0;
+    const unconfirmedTotal = dashboardData
+        ? parseFloat(dashboardData.unconfirmed_total_balance)
+        : unconfirmedBalance
+          ? parseFloat(unconfirmedBalance)
+          : 0;
 
-  // Parse balances
-  const confirmed = confirmedBalance ? parseFloat(confirmedBalance) : 0;
-  const unconfirmed = unconfirmedBalance ? parseFloat(unconfirmedBalance) : 0;
-  const pendingAmount = unconfirmed - confirmed;
-  const hasPending = Math.abs(pendingAmount) > 0.00001; // Account for floating point
+    const pendingAmount = unconfirmedAvailable - confirmedAvailable;
+    const hasPending = Math.abs(pendingAmount) > 0.00001; // Account for floating point
+    const hasLocked = Math.abs(confirmedTotal - confirmedAvailable) > 0.00001;
 
-  // Format to 2 decimal places
-  const formatBalance = (amount: number): string => {
-    return amount.toFixed(2);
-  };
+    // Format to 2 decimal places
+    const formatBalance = (amount: number): string => {
+        return amount.toFixed(2);
+    };
 
-  if (isLoading) {
+    if (isLoading) {
+        return (
+            <Card className="p-6">
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-5 w-5 rounded-full" />
+                    </div>
+                    <Skeleton className="h-12 w-48" />
+                    <div className="pt-4 space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                    </div>
+                </div>
+            </Card>
+        );
+    }
+
     return (
-      <Card className="p-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-5 w-5 rounded-full" />
-          </div>
-          <Skeleton className="h-12 w-48" />
-          <div className="pt-4 space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="p-6">
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Total Balance
-          </h3>
-          <div className="flex items-center gap-1">
-            {hasPending ? (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Clock className="h-4 w-4 text-warning" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>You have pending transactions</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ) : (
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            )}
-          </div>
-        </div>
-
-        {/* Primary Balance Display */}
-        <div className="space-y-1">
-          <div className="text-4xl font-bold font-mono">
-            {formatBalance(confirmed)} NPT
-          </div>
-          {hasPending && (
-            <div className="text-sm text-warning">
-              {pendingAmount > 0 ? '+' : ''}
-              {formatBalance(pendingAmount)} NPT pending
-            </div>
-          )}
-        </div>
-
-        {/* Expandable Details */}
-        {hasPending && (
-          <>
-            <button
-              type="button"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="w-full flex items-center justify-between text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <span>{isExpanded ? 'Hide' : 'Show'} details</span>
-              {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </button>
-
-            {isExpanded && (
-              <div className="pt-4 border-t space-y-3">
-                {/* Confirmed Balance */}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <div>
-                      <div className="text-sm font-medium">
-                        Confirmed Available
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Ready to spend
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-sm font-mono font-semibold">
-                    {formatBalance(confirmed)} NPT
-                  </div>
-                </div>
-
-                {/* Pending Balance */}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-warning" />
-                    <div>
-                      <div className="flex items-center gap-1">
-                        <div className="text-sm font-medium text-warning">
-                          Pending (Unconfirmed)
-                        </div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <Info className="h-3 w-3 text-muted-foreground" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-xs">
-                                Pending transactions are waiting for network
-                                confirmation. They will be available once
-                                confirmed.
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {mempoolTxCount}{' '}
-                        {mempoolTxCount === 1 ? 'transaction' : 'transactions'}
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    className={cn(
-                      'text-sm font-mono font-semibold',
-                      pendingAmount > 0 ? 'text-green-500' : 'text-warning'
-                    )}
-                  >
-                    {pendingAmount > 0 ? '+' : ''}
-                    {formatBalance(pendingAmount)} NPT
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="border-t border-dashed" />
-
-                {/* Total After Confirmation */}
+        <Card className="p-6">
+            <div className="space-y-4">
+                {/* Header */}
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">
-                    Total After Confirmation
-                  </div>
-                  <div className="text-lg font-mono font-bold">
-                    {formatBalance(unconfirmed)} NPT
-                  </div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                        Total Balance
+                    </h3>
+                    <div className="flex items-center gap-1">
+                        {hasPending ? (
+                            <Clock className="h-4 w-4 text-warning" />
+                        ) : (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                        )}
+                    </div>
                 </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </Card>
-  );
+
+                {/* Primary Balance Display - Compact */}
+                <div className="space-y-2">
+                    <div className="text-3xl font-bold font-mono text-primary">
+                        {formatBalance(confirmedAvailable)} $NPT
+                    </div>
+
+                    {/* Balance Variants Grid */}
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                        {/* Confirmed Available */}
+                        <div className="flex items-center justify-between p-2 bg-muted/30 rounded-md">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle className="h-3 w-3 text-green-500" />
+                                <span className="text-muted-foreground">
+                                    Available
+                                </span>
+                            </div>
+                            <span className="font-mono font-medium">
+                                {formatBalance(confirmedAvailable)} $NPT
+                            </span>
+                        </div>
+
+                        {/* Confirmed Total (if different) */}
+                        {hasLocked ? (
+                            <div className="flex items-center justify-between p-2 bg-muted/30 rounded-md">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-3 w-3 text-muted-foreground" />
+                                    <span className="text-muted-foreground">
+                                        Total
+                                    </span>
+                                </div>
+                                <span className="font-mono font-medium">
+                                    {formatBalance(confirmedTotal)} $NPT
+                                </span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-between p-2 bg-muted/30 rounded-md">
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                    <span className="text-muted-foreground">
+                                        Total
+                                    </span>
+                                </div>
+                                <span className="font-mono font-medium">
+                                    {formatBalance(confirmedTotal)} $NPT
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Pending Available */}
+                        <div className="flex items-center justify-between p-2 bg-muted/30 rounded-md">
+                            <div className="flex items-center gap-2">
+                                <Clock className="h-3 w-3 text-warning" />
+                                <span className="text-muted-foreground">
+                                    Pending
+                                </span>
+                            </div>
+                            <span className="font-mono font-medium text-warning">
+                                {pendingAmount > 0 ? "+" : ""}
+                                {formatBalance(pendingAmount)} $NPT
+                            </span>
+                        </div>
+
+                        {/* Total After Confirmation */}
+                        <div className="flex items-center justify-between p-2 bg-muted/30 rounded-md">
+                            <div className="flex items-center gap-2">
+                                <Info className="h-3 w-3 text-primary" />
+                                <span className="text-muted-foreground">
+                                    After Confirm
+                                </span>
+                            </div>
+                            <span className="font-mono font-medium text-primary">
+                                {formatBalance(unconfirmedAvailable)} $NPT
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Transaction Count Info */}
+                {mempoolTxCount > 0 && (
+                    <div className="pt-2 border-t">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>
+                                {mempoolTxCount}{" "}
+                                {mempoolTxCount === 1
+                                    ? "transaction"
+                                    : "transactions"}{" "}
+                                pending confirmation
+                            </span>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </Card>
+    );
 }

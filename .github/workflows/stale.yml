@@ -1,0 +1,51 @@
+name: Mark stale issues and pull requests
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Daily at midnight UTC
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: |
+            This issue has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs.
+
+            If you believe this issue is still relevant, please:
+            - Add a comment explaining why it's still important
+            - Update the issue with any new information
+            - Remove the `stale` label if you're actively working on it
+
+            Thank you for your contribution to Neptune Core Wallet!
+          stale-pr-message: |
+            This pull request has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs.
+
+            If you believe this PR is still relevant, please:
+            - Add a comment explaining why it's still important
+            - Update the PR with any new information
+            - Remove the `stale` label if you're actively working on it
+
+            Thank you for your contribution to Neptune Core Wallet!
+          close-issue-message: |
+            This issue has been automatically closed due to inactivity. If you believe this issue is still relevant, please open a new issue with updated information.
+
+            Thank you for your contribution to Neptune Core Wallet!
+          close-pr-message: |
+            This pull request has been automatically closed due to inactivity. If you believe this PR is still relevant, please open a new pull request with updated information.
+
+            Thank you for your contribution to Neptune Core Wallet!
+          stale-issue-label: "stale"
+          stale-pr-label: "stale"
+          days-before-stale: 30
+          days-before-close: 7
+          exempt-issue-labels: "bug,security,good first issue,help wanted,priority:high,priority:critical"
+          exempt-pr-labels: "bug,security,priority:high,priority:critical"
+          operations-per-run: 100
+          remove-stale-when-updated: true
+          debug-only: false

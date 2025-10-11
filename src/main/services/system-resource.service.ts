@@ -29,11 +29,6 @@ export class SystemResourceService {
     private neptuneCliPid?: number;
     private isMonitoring = false;
     private monitoringInterval?: NodeJS.Timeout;
-    private lastCpuStats: {
-        idle: number;
-        total: number;
-        timestamp: number;
-    } | null = null;
 
     constructor() {
         this.appPid = process.pid;
@@ -85,6 +80,22 @@ export class SystemResourceService {
             );
             return null;
         }
+    }
+
+    /**
+     * Get total system RAM in bytes
+     */
+    getTotalSystemRAM(): number {
+        return os.totalmem();
+    }
+
+    /**
+     * Check if system has sufficient RAM for mining (64GB minimum)
+     */
+    hasSufficientRAMForMining(): boolean {
+        const totalRAM = this.getTotalSystemRAM();
+        const minRAMForMining = 64 * 1024 * 1024 * 1024; // 64GB in bytes
+        return totalRAM >= minRAMForMining;
     }
 
     /**
@@ -320,7 +331,9 @@ export function getSystemResourceService(): SystemResourceService {
 export const systemResourceService = new Proxy({} as SystemResourceService, {
     get(_target, prop) {
         const instance = getSystemResourceService();
-        const value = (instance as Record<string, unknown>)[prop];
+        const value = (instance as unknown as Record<string, unknown>)[
+            prop as string
+        ];
         return typeof value === "function" ? value.bind(instance) : value;
     },
 });

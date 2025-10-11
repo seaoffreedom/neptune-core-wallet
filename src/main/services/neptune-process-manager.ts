@@ -34,6 +34,9 @@ const logger = pino({
     // },
 });
 
+// Log handling options
+export type LogLevel = "suppress" | "file" | "errors-only" | "verbose";
+
 // Process configuration
 export interface ProcessConfig {
     core: {
@@ -45,6 +48,10 @@ export interface ProcessConfig {
     cli: {
         port: number;
         rpcPort: number;
+    };
+    logging: {
+        level: LogLevel;
+        logDir?: string;
     };
 }
 
@@ -59,6 +66,10 @@ const DEFAULT_CONFIG: ProcessConfig = {
     cli: {
         port: 9799, // Connect to core's RPC port
         rpcPort: 9801, // Standard neptune-cli HTTP server port
+    },
+    logging: {
+        level: (process.env.NEPTUNE_LOG_LEVEL as LogLevel) || "errors-only", // Show errors by default to help debug issues
+        logDir: path.join(PROJECT_ROOT, "logs"),
     },
 };
 
@@ -80,6 +91,108 @@ export class NeptuneProcessManager {
             { config: this.config },
             "NeptuneProcessManager initialized",
         );
+    }
+
+    /**
+     * Setup log handling for neptune-core process
+     */
+    private setupLogHandling(process: ChildProcess, processName: string): void {
+        const logLevel = this.config.logging.level;
+
+        if (logLevel === "suppress") {
+            // Completely suppress all output
+            return;
+        }
+
+        // Ensure log directory exists for file logging
+        if (logLevel === "file" && this.config.logging.logDir) {
+            try {
+                const fs = require("node:fs");
+                if (!fs.existsSync(this.config.logging.logDir)) {
+                    fs.mkdirSync(this.config.logging.logDir, {
+                        recursive: true,
+                    });
+                }
+            } catch (error) {
+                logger.warn(
+                    { error },
+                    "Failed to create log directory, falling back to console",
+                );
+            }
+        }
+
+        // Handle stdout
+        if (process.stdout) {
+            process.stdout.on("data", (data) => {
+                const output = data.toString();
+                this.handleLogOutput(output, "stdout", processName, logLevel);
+            });
+        }
+
+        // Handle stderr
+        if (process.stderr) {
+            process.stderr.on("data", (data) => {
+                const output = data.toString();
+                this.handleLogOutput(output, "stderr", processName, logLevel);
+            });
+        }
+    }
+
+    /**
+     * Handle log output based on configuration
+     */
+    private handleLogOutput(
+        output: string,
+        stream: "stdout" | "stderr",
+        processName: string,
+        logLevel: LogLevel,
+    ): void {
+        const timestamp = new Date().toISOString();
+        const logEntry = `[${timestamp}] [${processName}] ${output}`;
+
+        switch (logLevel) {
+            case "suppress":
+                // Do nothing - completely suppress
+                break;
+
+            case "file":
+                // Write to log file
+                if (this.config.logging.logDir) {
+                    const logFile = path.join(
+                        this.config.logging.logDir,
+                        `${processName}.log`,
+                    );
+                    try {
+                        const fs = require("node:fs");
+                        fs.appendFileSync(logFile, logEntry);
+                    } catch {
+                        // Fallback to console if file write fails
+                        console.log(logEntry);
+                    }
+                }
+                break;
+
+            case "errors-only":
+                // Only show errors and critical messages
+                if (
+                    stream === "stderr" ||
+                    output.toLowerCase().includes("error") ||
+                    output.toLowerCase().includes("fatal") ||
+                    output.toLowerCase().includes("panic")
+                ) {
+                    console.log(logEntry);
+                }
+                break;
+
+            case "verbose":
+                // Show everything (original behavior)
+                if (stream === "stderr") {
+                    console.error(logEntry);
+                } else {
+                    console.log(logEntry);
+                }
+                break;
+        }
     }
 
     /**
@@ -285,31 +398,8 @@ export class NeptuneProcessManager {
                 }
             });
 
-            // Log stdout/stderr for debugging peer connections
-            if (this.coreProcess.stdout) {
-                this.coreProcess.stdout.on("data", (data) => {
-                    const output = data.toString();
-                    if (
-                        output.includes("peer") ||
-                        output.includes("connection")
-                    ) {
-                        console.log("[neptune-core]", output);
-                    }
-                });
-            }
-
-            if (this.coreProcess.stderr) {
-                this.coreProcess.stderr.on("data", (data) => {
-                    const output = data.toString();
-                    if (
-                        output.includes("peer") ||
-                        output.includes("connection") ||
-                        output.includes("error")
-                    ) {
-                        console.error("[neptune-core ERROR]", output);
-                    }
-                });
-            }
+            // Setup log handling based on configuration
+            this.setupLogHandling(this.coreProcess, "neptune-core");
 
             // Wait a moment for the process to start
             await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -364,7 +454,7 @@ export class NeptuneProcessManager {
                     }
 
                     logger.info("Cookie obtained successfully");
-                    console.log("🍪 Cookie value:", cookie);
+                    // Cookie retrieved successfully
                     return cookie;
                 } catch (error) {
                     logger.debug(
@@ -446,6 +536,9 @@ export class NeptuneProcessManager {
                     logger.error({ error }, "neptune-cli process error");
                 }
             });
+
+            // Setup log handling based on configuration
+            this.setupLogHandling(this.cliProcess, "neptune-cli");
 
             // Wait a moment for the process to start
             await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -571,6 +664,21 @@ export class NeptuneProcessManager {
     }
 
     /**
+     * Update log level configuration
+     */
+    setLogLevel(level: LogLevel): void {
+        this.config.logging.level = level;
+        logger.info({ level }, "Neptune process log level updated");
+    }
+
+    /**
+     * Get current log level
+     */
+    getLogLevel(): LogLevel {
+        return this.config.logging.level;
+    }
+
+    /**
      * Shutdown all processes
      */
     async shutdown(): Promise<void> {
@@ -636,7 +744,9 @@ export function getNeptuneProcessManager(): NeptuneProcessManager {
 export const neptuneProcessManager = new Proxy({} as NeptuneProcessManager, {
     get(_target, prop) {
         const instance = getNeptuneProcessManager();
-        const value = (instance as Record<string, unknown>)[prop];
+        const value = (instance as unknown as Record<string, unknown>)[
+            prop as string
+        ];
         return typeof value === "function" ? value.bind(instance) : value;
     },
 });

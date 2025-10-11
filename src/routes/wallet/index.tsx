@@ -1,12 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageContainer } from "@/components/layout/PageContainer";
-import {
-    BalanceCard,
-    QuickActions,
-    QuickStatsGrid,
-    RecentActivity,
-} from "@/components/wallet";
-import { useUtxos } from "@/renderer/hooks/use-onchain-data";
+import { BalanceCard, QuickActions, RecentActivity } from "@/components/wallet";
+import { CardSkeleton, TableSkeleton } from "@/components/ui/skeleton-enhanced";
 import { useOnchainStore } from "@/store/onchain.store";
 
 function WalletOverview() {
@@ -17,33 +12,11 @@ function WalletOverview() {
         (state) => state.unconfirmedBalance,
     );
     const blockHeight = useOnchainStore((state) => state.blockHeight);
-    const peerInfo = useOnchainStore((state) => state.peerInfo);
     const transactionHistory = useOnchainStore(
         (state) => state.transactionHistory,
     );
-    const mempoolTxCount = useOnchainStore((state) => state.mempoolTxCount);
-    const mempoolSize = useOnchainStore((state) => state.mempoolSize);
-
-    // Get UTXO data (fetched globally via auto-polling)
-    const { utxos, calculateSummary } = useUtxos();
 
     const isLoading = !dashboardData;
-
-    // Calculate pending amount
-    const confirmed = confirmedBalance ? parseFloat(confirmedBalance) : 0;
-    const unconfirmed = unconfirmedBalance ? parseFloat(unconfirmedBalance) : 0;
-    const pendingAmount = unconfirmed - confirmed;
-
-    // Calculate UTXO stats
-    const utxoSummary = calculateSummary();
-    const utxoCount = utxos.length > 0 ? utxos.length : null;
-    const utxoTotalValue = utxos.length > 0 ? utxoSummary.totalValue : null;
-
-    // Check sync status
-    const isSynced =
-        dashboardData?.syncing === false &&
-        blockHeight !== null &&
-        parseInt(blockHeight, 10) > 0;
 
     return (
         <PageContainer>
@@ -56,35 +29,43 @@ function WalletOverview() {
                     </p>
                 </div>
 
-                {/* Balance Card */}
-                <BalanceCard
-                    confirmedBalance={confirmedBalance}
-                    unconfirmedBalance={unconfirmedBalance}
-                    mempoolTxCount={dashboardData?.mempool_own_tx_count || 0}
-                    isLoading={isLoading}
-                />
+                {isLoading ? (
+                    // Loading skeletons that match the actual content structure
+                    <>
+                        {/* Balance Card Skeleton */}
+                        <CardSkeleton />
 
-                {/* Quick Stats Grid */}
-                <QuickStatsGrid
-                    utxoCount={utxoCount}
-                    utxoTotalValue={utxoTotalValue}
-                    pendingTxCount={dashboardData?.mempool_own_tx_count || 0}
-                    pendingAmount={pendingAmount}
-                    mempoolTxCount={mempoolTxCount}
-                    mempoolSize={mempoolSize}
-                    isSynced={isSynced}
-                    peerCount={peerInfo.length}
-                    blockHeight={blockHeight}
-                    isLoading={isLoading}
-                />
+                        {/* Recent Activity Skeleton */}
+                        <div className="rounded-md border p-6">
+                            <div className="space-y-4">
+                                <div className="h-5 w-32 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
+                                <TableSkeleton rows={5} columns={4} />
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    // Actual content
+                    <>
+                        {/* Balance Card */}
+                        <BalanceCard
+                            confirmedBalance={confirmedBalance}
+                            unconfirmedBalance={unconfirmedBalance}
+                            mempoolTxCount={
+                                dashboardData?.mempool_own_tx_count || 0
+                            }
+                            dashboardData={dashboardData}
+                            isLoading={false}
+                        />
 
-                {/* Recent Activity */}
-                <RecentActivity
-                    transactions={transactionHistory}
-                    blockHeight={blockHeight}
-                    confirmations={dashboardData?.confirmations}
-                    isLoading={isLoading}
-                />
+                        {/* Recent Activity */}
+                        <RecentActivity
+                            transactions={transactionHistory}
+                            blockHeight={blockHeight}
+                            confirmations={dashboardData?.confirmations}
+                            isLoading={false}
+                        />
+                    </>
+                )}
 
                 {/* Quick Actions */}
                 {/* <QuickActions /> */}

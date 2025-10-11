@@ -30,18 +30,19 @@ export function RecentActivity({
         return num.toFixed(2);
     };
 
-    const formatTimeAgo = (timestamp: string): string => {
-        const date = new Date(timestamp);
-        const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
+    const formatDateTime = (timestamp: string): string => {
+        // Timestamp is in milliseconds as a string from RPC
+        const timestampMs = parseInt(timestamp, 10);
+        if (isNaN(timestampMs)) return "Unknown";
 
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffHours < 24) return `${diffHours}h ago`;
-        if (diffDays < 7) return `${diffDays}d ago`;
-        return `${Math.floor(diffDays / 7)}w ago`;
+        const date = new Date(timestampMs);
+        return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
     };
 
     const getStatus = (
@@ -88,7 +89,14 @@ export function RecentActivity({
         );
     }
 
-    const recentTxs = transactions.slice(0, 5);
+    // Sort transactions by timestamp (newest first) and take the first 5
+    const recentTxs = transactions
+        .sort((a, b) => {
+            const timestampA = parseInt(a.timestamp, 10);
+            const timestampB = parseInt(b.timestamp, 10);
+            return timestampB - timestampA; // Newest first (descending)
+        })
+        .slice(0, 5);
 
     return (
         <Card className="p-4">
@@ -161,7 +169,7 @@ export function RecentActivity({
                                             </Badge>
                                         </div>
                                         <div className="text-xs text-muted-foreground">
-                                            {formatTimeAgo(tx.timestamp)}
+                                            {formatDateTime(tx.timestamp)}
                                         </div>
                                     </div>
 

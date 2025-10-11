@@ -6,6 +6,7 @@
  */
 
 import Store from "electron-store";
+import pino from "pino";
 import type {
     AdvancedSettings,
     DataSettings,
@@ -15,6 +16,10 @@ import type {
     PerformanceSettings,
     SecuritySettings,
 } from "@/shared/types/neptune-core-settings";
+
+// Logger
+const logger = pino({ level: "info" });
+
 import {
     DEFAULT_ADVANCED_SETTINGS,
     DEFAULT_DATA_SETTINGS,
@@ -146,8 +151,6 @@ export class NeptuneCoreSettingsService {
      */
     updateAdvanced(settings: Partial<AdvancedSettings>): NeptuneCoreSettings {
         const current = this.getAll();
-        console.log("🔍 Current advanced settings:", current.advanced);
-        console.log("🔄 Incoming update:", settings);
         const updated: NeptuneCoreSettings = {
             ...current,
             advanced: {
@@ -155,11 +158,8 @@ export class NeptuneCoreSettingsService {
                 ...settings,
             },
         };
-        console.log("✨ Updated advanced settings:", updated.advanced);
         store.set("neptuneCore", updated);
-        const result = this.getAll();
-        console.log("💾 Saved advanced settings:", result.advanced);
-        return result;
+        return this.getAll();
     }
 
     /**

@@ -105,7 +105,7 @@ export function WalletSidebar() {
                                     ) : (
                                         <span className="font-mono">
                                             {formatBalance(confirmedBalance)}{" "}
-                                            NPT
+                                            $NPT
                                         </span>
                                     )}
                                 </div>
@@ -122,7 +122,7 @@ export function WalletSidebar() {
                                                 {formatBalance(
                                                     pendingAmount.toString(),
                                                 )}{" "}
-                                                NPT
+                                                $NPT
                                                 <span className="text-xs ml-1">
                                                     (
                                                     {dashboardData?.mempool_own_tx_count ||
@@ -263,7 +263,10 @@ export function WalletSidebar() {
                                     {isLoading ? (
                                         <Skeleton className="h-4 w-12" />
                                     ) : (
-                                        <span>{peerInfo.length}</span>
+                                        <span>
+                                            {dashboardData?.peer_count ||
+                                                peerInfo.length}
+                                        </span>
                                     )}
                                 </div>
                             </div>

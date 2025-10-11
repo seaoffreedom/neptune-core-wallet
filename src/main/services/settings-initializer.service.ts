@@ -46,10 +46,10 @@ export class SettingsInitializerService {
                     "No valid settings found, initializing with defaults...",
                 );
                 neptuneCoreSettingsService.resetToDefaults();
-                logger.info(
-                    "✅ Default settings initialized successfully",
-                    neptuneCoreSettingsService.getStorePath(),
-                );
+                logger.info({
+                    message: "✅ Default settings initialized successfully",
+                    storePath: neptuneCoreSettingsService.getStorePath(),
+                });
             } else {
                 logger.info("✅ Existing settings found and valid");
             }

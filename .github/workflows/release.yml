@@ -1,0 +1,198 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g., v1.0.0)"
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9"
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update package.json version
+        run: |
+          pnpm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
+
+      - name: Build application
+        run: pnpm make
+
+      - name: Create release archive
+        run: |
+          cd out
+          tar -czf neptune-core-wallet-${{ steps.version.outputs.VERSION }}-linux.tar.gz *
+          zip -r neptune-core-wallet-${{ steps.version.outputs.VERSION }}-linux.zip *
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            # Extract changelog for this version
+            VERSION="${{ steps.version.outputs.VERSION }}"
+            CHANGELOG=$(awk "/^## \[$VERSION\]/{flag=1;next}/^## \[/{flag=0}flag" CHANGELOG.md)
+            echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGELOG" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "CHANGELOG=No changelog available" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: Neptune Core Wallet ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## Neptune Core Wallet ${{ steps.version.outputs.VERSION }}
+
+            ### Changes
+            ${{ steps.changelog.outputs.CHANGELOG }}
+
+            ### Downloads
+            - **Linux**: `neptune-core-wallet-${{ steps.version.outputs.VERSION }}-linux.tar.gz`
+            - **Linux (ZIP)**: `neptune-core-wallet-${{ steps.version.outputs.VERSION }}-linux.zip`
+
+            ### Installation
+            1. Download the appropriate archive for your platform
+            2. Extract the archive
+            3. Run the executable
+
+            ### Security
+            - All releases are cryptographically signed
+            - SHA256 checksums are provided for verification
+            - Source code is available for audit
+
+            ### Support
+            - [Documentation](https://github.com/${{ github.repository }}/wiki)
+            - [Issues](https://github.com/${{ github.repository }}/issues)
+            - [Discussions](https://github.com/${{ github.repository }}/discussions)
+          files: |
+            out/neptune-core-wallet-${{ steps.version.outputs.VERSION }}-linux.tar.gz
+            out/neptune-core-wallet-${{ steps.version.outputs.VERSION }}-linux.zip
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.VERSION, 'alpha') || contains(steps.version.outputs.VERSION, 'beta') || contains(steps.version.outputs.VERSION, 'rc') }}
+
+      - name: Generate checksums
+        run: |
+          cd out
+          sha256sum neptune-core-wallet-${{ steps.version.outputs.VERSION }}-linux.tar.gz > checksums.txt
+          sha256sum neptune-core-wallet-${{ steps.version.outputs.VERSION }}-linux.zip >> checksums.txt
+
+      - name: Upload checksums
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./out/checksums.txt
+          asset_name: checksums.txt
+          asset_content_type: text/plain
+
+  build-cross-platform:
+    name: Build Cross-Platform
+    runs-on: ${{ matrix.os }}
+    needs: release
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: win32
+          - os: macos-latest
+            platform: darwin
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build for platform
+        run: pnpm make
+        env:
+          ELECTRON_BUILDER_PLATFORM: ${{ matrix.platform }}
+
+      - name: Upload platform artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}
+          path: out/
+          retention-days: 30

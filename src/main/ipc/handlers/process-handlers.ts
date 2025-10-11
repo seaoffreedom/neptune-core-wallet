@@ -6,6 +6,7 @@
 
 import { type ChildProcess, spawn } from "node:child_process";
 import { ipcMain } from "electron";
+import pino from "pino";
 import { APP_CONSTANTS } from "../../../shared/constants/app-constants";
 import { IPC_CHANNELS } from "../../../shared/constants/ipc-channels";
 import type {
@@ -19,6 +20,9 @@ import type {
 
 // Store active processes
 const activeProcesses = new Map<number, ChildProcess>();
+
+// Logger
+const logger = pino({ level: "info" });
 
 /**
  * Handle spawn process request
@@ -46,8 +50,9 @@ export async function handleProcessSpawn(
 
         // Set up process event handlers
         childProcess.on("exit", (code, signal) => {
-            console.log(
-                `Process ${childProcess.pid} exited with code ${code} and signal ${signal}`,
+            logger.debug(
+                { pid: childProcess.pid, code, signal },
+                "Process exited",
             );
             if (childProcess.pid) {
                 activeProcesses.delete(childProcess.pid);
@@ -55,7 +60,10 @@ export async function handleProcessSpawn(
         });
 
         childProcess.on("error", (error) => {
-            console.error(`Process ${childProcess.pid} error:`, error);
+            logger.error(
+                { pid: childProcess.pid, error: (error as Error).message },
+                "Process error",
+            );
             if (childProcess.pid) {
                 activeProcesses.delete(childProcess.pid);
             }
@@ -64,8 +72,9 @@ export async function handleProcessSpawn(
         // Set timeout to kill process if it runs too long
         const timeout = setTimeout(() => {
             if (childProcess.pid && activeProcesses.has(childProcess.pid)) {
-                console.log(
-                    `Killing process ${childProcess.pid} due to timeout`,
+                logger.warn(
+                    { pid: childProcess.pid },
+                    "Killing process due to timeout",
                 );
                 childProcess.kill("SIGTERM");
                 activeProcesses.delete(childProcess.pid);
@@ -81,7 +90,10 @@ export async function handleProcessSpawn(
             pid: childProcess.pid,
         };
     } catch (error) {
-        console.error("Error spawning process:", error);
+        logger.error(
+            { error: (error as Error).message },
+            "Error spawning process",
+        );
         return {
             success: false,
             error: error instanceof Error ? error.message : "Unknown error",
@@ -106,14 +118,17 @@ export async function handleProcessKill(
             };
         }
 
-        childProcess.kill(request.signal || "SIGTERM");
+        childProcess.kill(request.signal || ("SIGTERM" as NodeJS.Signals));
         activeProcesses.delete(request.pid);
 
         return {
             success: true,
         };
     } catch (error) {
-        console.error("Error killing process:", error);
+        logger.error(
+            { error: (error as Error).message },
+            "Error killing process",
+        );
         return {
             success: false,
             error: error instanceof Error ? error.message : "Unknown error",
@@ -146,7 +161,10 @@ export async function handleProcessStatus(
             running,
         };
     } catch (error) {
-        console.error("Error getting process status:", error);
+        logger.error(
+            { error: (error as Error).message },
+            "Error getting process status",
+        );
         return {
             success: false,
             error: error instanceof Error ? error.message : "Unknown error",
@@ -158,14 +176,19 @@ export async function handleProcessStatus(
  * Clean up all active processes on app exit
  */
 export function cleanupProcesses() {
-    console.log(`Cleaning up ${activeProcesses.size} active processes`);
+    logger.info(
+        { processCount: activeProcesses.size },
+        "Cleaning up active processes",
+    );
 
     for (const [pid, childProcess] of activeProcesses) {
         try {
-            console.log(`Killing process ${pid}`);
             childProcess.kill("SIGTERM");
         } catch (error) {
-            console.error(`Error killing process ${pid}:`, error);
+            logger.error(
+                { pid, error: (error as Error).message },
+                "Error killing process during cleanup",
+            );
         }
     }
 

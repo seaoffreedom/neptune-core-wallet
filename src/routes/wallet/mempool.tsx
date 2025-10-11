@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+    CardSkeleton,
+    StatsGridSkeleton,
+    TableSkeleton,
+} from "@/components/ui/skeleton-enhanced";
 import {
     MempoolEmpty,
     MempoolTable,
@@ -63,6 +68,18 @@ function MempoolPage() {
         fetchMempoolOverview();
     }, [fetchMempoolOverview]);
 
+    // Enhanced refresh function with toast feedback
+    const handleRefresh = async () => {
+        try {
+            await Promise.all([fetchDashboard(), fetchMempoolOverview()]);
+            toast.success("Mempool data refreshed successfully");
+        } catch (error) {
+            toast.error("Failed to refresh mempool data", {
+                description: (error as Error).message,
+            });
+        }
+    };
+
     return (
         <PageContainer>
             <div className="space-y-6">
@@ -76,55 +93,29 @@ function MempoolPage() {
                 </div>
 
                 {isInitialLoading ? (
-                    // Loading skeletons
+                    // Loading skeletons that match the actual content structure
                     <>
                         {/* Summary skeleton */}
-                        <div className="rounded-md border p-6">
+                        <div className="rounded-md border p-6 bg-primary/2">
                             <div className="space-y-4">
-                                <Skeleton className="h-5 w-32" />
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {[1, 2, 3, 4].map((i) => (
-                                        <div key={i} className="space-y-2">
-                                            <Skeleton className="h-4 w-20" />
-                                            <Skeleton className="h-8 w-24" />
-                                            <Skeleton className="h-3 w-32" />
-                                        </div>
-                                    ))}
+                                <div className="h-5 w-32 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
+                                <StatsGridSkeleton items={4} />
+                            </div>
+                        </div>
+
+                        {/* Management skeleton */}
+                        <div className="rounded-md border p-4">
+                            <div className="flex items-center justify-between">
+                                <div className="h-5 w-24 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
+                                <div className="flex gap-2">
+                                    <div className="h-9 w-24 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
+                                    <div className="h-9 w-24 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
                                 </div>
                             </div>
                         </div>
 
                         {/* Table skeleton */}
-                        <div className="space-y-4">
-                            <Skeleton className="h-10 w-full max-w-sm" />
-                            <div className="rounded-md border">
-                                <div className="p-4 space-y-4">
-                                    {/* Table header */}
-                                    <div className="flex gap-4">
-                                        <Skeleton className="h-8 flex-1" />
-                                        <Skeleton className="h-8 w-32" />
-                                        <Skeleton className="h-8 w-24" />
-                                        <Skeleton className="h-8 w-24" />
-                                        <Skeleton className="h-8 w-20" />
-                                    </div>
-                                    {/* Table rows */}
-                                    {[1, 2, 3, 4, 5].map((i) => (
-                                        <div key={i} className="flex gap-4">
-                                            <Skeleton className="h-12 flex-1" />
-                                            <Skeleton className="h-12 w-32" />
-                                            <Skeleton className="h-12 w-24" />
-                                            <Skeleton className="h-12 w-24" />
-                                            <Skeleton className="h-12 w-20" />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            {/* Pagination skeleton */}
-                            <div className="flex items-center justify-end space-x-2">
-                                <Skeleton className="h-9 w-20" />
-                                <Skeleton className="h-9 w-20" />
-                            </div>
-                        </div>
+                        <TableSkeleton rows={5} columns={5} />
                     </>
                 ) : txCount === 0 || !overview?.transactions?.length ? (
                     // Empty state with management
@@ -132,10 +123,7 @@ function MempoolPage() {
                         <MempoolEmpty />
                         <MempoolManagement
                             txCount={txCount}
-                            onRefresh={() => {
-                                fetchDashboard();
-                                fetchMempoolOverview();
-                            }}
+                            onRefresh={handleRefresh}
                             isRefreshing={isRefreshing}
                         />
                     </>
@@ -236,10 +224,7 @@ function MempoolPage() {
                         {/* Management Actions */}
                         <MempoolManagement
                             txCount={txCount}
-                            onRefresh={() => {
-                                fetchDashboard();
-                                fetchMempoolOverview();
-                            }}
+                            onRefresh={handleRefresh}
                             isRefreshing={isRefreshing}
                         />
 
@@ -247,10 +232,7 @@ function MempoolPage() {
                         <MempoolTable
                             columns={mempoolColumns}
                             data={overview.transactions || []}
-                            onRefresh={() => {
-                                fetchDashboard();
-                                fetchMempoolOverview();
-                            }}
+                            onRefresh={handleRefresh}
                             isRefreshing={isRefreshing}
                         />
                     </>

@@ -206,18 +206,7 @@ export class NeptuneRpcService {
                     headers.Cookie = `neptune-cli=${this.cookie}`;
                 }
 
-                logger.info(
-                    {
-                        method,
-                        id: currentRequestId,
-                        cookie: this.cookie
-                            ? `${this.cookie.substring(0, 16)}...`
-                            : "none",
-                        requestBody: request,
-                        headers,
-                    },
-                    "Making RPC call",
-                );
+                // Making RPC call - no logging needed for normal operations
 
                 const response = await ky
                     .post(this.rpcUrl, {
@@ -235,10 +224,7 @@ export class NeptuneRpcService {
                     })
                     .json<JsonRpcResponse<T>>();
 
-                logger.info(
-                    { method, id: currentRequestId },
-                    "RPC call successful",
-                );
+                // RPC call successful - no logging needed for normal operations
 
                 if (response.error) {
                     throw new Error(
@@ -250,19 +236,13 @@ export class NeptuneRpcService {
                     throw new Error("RPC response missing result");
                 }
 
-                logger.debug(
-                    { method, id: currentRequestId },
-                    "RPC call successful",
-                );
+                // RPC call successful - no logging needed for normal operations
 
                 return response.result;
             } catch (error) {
                 // Handle abort errors gracefully
                 if (error instanceof Error && error.name === "AbortError") {
-                    logger.info(
-                        { method, id: currentRequestId },
-                        "RPC call aborted",
-                    );
+                    // RPC call aborted - no logging needed for normal shutdown
                     throw new Error(
                         "RPC call aborted - neptune-cli may be shutting down",
                     );
@@ -531,16 +511,82 @@ export class NeptuneRpcService {
 
     /**
      * Validate Neptune address
+     * Since Neptune CLI handles actual validation, we'll be very permissive here
+     * and let the blockchain handle the real validation
      */
     async validateAddress(params: { address: string }): Promise<boolean> {
-        return this.call<boolean>("validate_address", params);
+        const { address } = params;
+
+        // Basic validation - just check it's a non-empty string
+        if (!address || typeof address !== "string") {
+            return false;
+        }
+
+        // Trim whitespace
+        const trimmedAddress = address.trim();
+
+        // Very minimal checks - let Neptune CLI handle the rest:
+        // 1. Must not be empty
+        // 2. Must be reasonably long (addresses are typically long)
+        // 3. Must contain only printable characters
+
+        if (trimmedAddress.length === 0) {
+            return false;
+        }
+
+        // Check length (very permissive - just ensure it's not too short or too long)
+        if (trimmedAddress.length < 10 || trimmedAddress.length > 10000) {
+            return false;
+        }
+
+        // Check for basic printable characters (extremely permissive)
+        // Allow any printable ASCII characters that might be in addresses
+        const basicRegex = /^[\x20-\x7E]+$/;
+        if (!basicRegex.test(trimmedAddress)) {
+            return false;
+        }
+
+        // If we get here, it looks like it could be an address
+        // Let Neptune CLI handle the actual validation
+        return true;
     }
 
     /**
      * Validate amount
+     * Amounts should be positive numbers with reasonable precision
      */
     async validateAmount(params: { amount: string }): Promise<boolean> {
-        return this.call<boolean>("validate_amount", params);
+        const { amount } = params;
+
+        if (!amount || typeof amount !== "string") {
+            return false;
+        }
+
+        const trimmedAmount = amount.trim();
+
+        // Check if it's a valid number
+        const num = parseFloat(trimmedAmount);
+        if (Number.isNaN(num) || !Number.isFinite(num)) {
+            return false;
+        }
+
+        // Check if it's positive
+        if (num <= 0) {
+            return false;
+        }
+
+        // Check if it has reasonable precision (max 8 decimal places)
+        const decimalPlaces = (trimmedAmount.split(".")[1] || "").length;
+        if (decimalPlaces > 8) {
+            return false;
+        }
+
+        // Check if it's not too large (prevent overflow)
+        if (num > 1e15) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

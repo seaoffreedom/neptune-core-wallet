@@ -1,0 +1,405 @@
+---
+alwaysApply: true
+---
+
+# TypeScript Style Guide for Neptune Core Wallet
+
+Based on [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html) and [TS.dev Style Guide](https://ts.dev/style/#field-initializers).
+
+## Naming Conventions
+
+### Identifiers
+
+- **Classes/Interfaces/Types/Enums**: `UpperCamelCase`
+- **Variables/Functions/Methods/Properties**: `lowerCamelCase`
+- **Constants**: `CONSTANT_CASE`
+- **Private fields**: Use `private` keyword, NOT `#private` or `_prefix`
+
+```typescript
+// ✅ Good
+class UserService {
+  private static readonly MAX_RETRIES = 3;
+  private readonly apiUrl: string;
+
+  public async getUser(id: string): Promise<User> {
+    // ...
+  }
+}
+
+// ❌ Bad
+class userService {
+  private static readonly max_retries = 3;
+  private readonly _apiUrl: string;
+
+  public async get_user(id: string): Promise<User> {
+    // ...
+  }
+}
+```
+
+### File Naming
+
+- **Files**: `kebab-case.ts` or `PascalCase.tsx` for components
+- **Directories**: `kebab-case`
+- **Test files**: `*.test.ts` or `*.spec.ts`
+
+## Type System
+
+### Type Annotations
+
+- **Explicit return types** for public APIs
+- **Infer types** for local variables when obvious
+- **Avoid `any`** - use `unknown` or specific types
+
+```typescript
+// ✅ Good
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+function getUser(id: string): Promise<User> {
+  const user = await fetchUser(id); // Type inferred
+  return user;
+}
+
+// ❌ Bad
+function getUser(id: any): any {
+  const user: any = await fetchUser(id);
+  return user;
+}
+```
+
+### Nullable Types
+
+- Use `| null` or `| undefined` explicitly
+- Prefer `| undefined` over optional properties when appropriate
+- Use non-null assertion (`!`) sparingly
+
+```typescript
+// ✅ Good
+function processUser(user: User | null): void {
+  if (user) {
+    // user is now User type
+    console.log(user.name);
+  }
+}
+
+// ❌ Bad
+function processUser(user: User): void {
+  console.log(user.name); // Could be null
+}
+```
+
+## Classes and Interfaces
+
+### Class Structure
+
+- **Field initializers** for simple values
+- **Constructor** for complex initialization
+- **Readonly** for immutable properties
+- **Private** for internal state
+
+```typescript
+// ✅ Good
+class NeptuneRpcService {
+  private readonly rpcUrl: string;
+  private readonly timeout: number = 10000;
+  private cookie: string | null = null;
+
+  constructor(rpcUrl: string) {
+    this.rpcUrl = rpcUrl;
+  }
+
+  public async call<T>(method: string): Promise<T> {
+    // Implementation
+  }
+}
+
+// ❌ Bad
+class NeptuneRpcService {
+  private rpcUrl: string;
+  private timeout: number;
+  private cookie: string | null;
+
+  constructor(rpcUrl: string) {
+    this.rpcUrl = rpcUrl;
+    this.timeout = 10000;
+    this.cookie = null;
+  }
+}
+```
+
+### Interfaces vs Type Aliases
+
+- **Interfaces** for object shapes that might be extended
+- **Type aliases** for unions, primitives, and computed types
+
+```typescript
+// ✅ Good - Interface for extensible object shape
+interface User {
+  id: string;
+  name: string;
+}
+
+interface AdminUser extends User {
+  permissions: string[];
+}
+
+// ✅ Good - Type alias for union
+type Status = "loading" | "success" | "error";
+
+// ✅ Good - Type alias for computed type
+type UserKeys = keyof User;
+```
+
+## Functions
+
+### Function Declarations
+
+- **Arrow functions** for expressions and callbacks
+- **Function declarations** for top-level functions
+- **Explicit return types** for public APIs
+
+```typescript
+// ✅ Good
+function createUser(userData: CreateUserRequest): Promise<User> {
+  return api.post("/users", userData);
+}
+
+const handleClick = (event: MouseEvent): void => {
+  event.preventDefault();
+};
+
+// ❌ Bad
+const createUser = (userData: any) => {
+  return api.post("/users", userData);
+};
+```
+
+### Parameters
+
+- **Optional parameters** with `?` when truly optional
+- **Default parameters** for common values
+- **Rest parameters** for variable arguments
+
+```typescript
+// ✅ Good
+function fetchData(
+  url: string,
+  options: RequestOptions = {},
+  retries: number = 3,
+): Promise<Response> {
+  // Implementation
+}
+
+// ❌ Bad
+function fetchData(url: string, options?: any, retries?: number) {
+  // Implementation
+}
+```
+
+## Modules and Imports
+
+### Import Organization
+
+- **Type-only imports** with `import type`
+- **Namespace imports** for large libraries
+- **Destructuring imports** for specific functions
+
+```typescript
+// ✅ Good
+import { useState, useEffect } from "react";
+import type { User } from "./types";
+import * as electron from "electron";
+
+// ❌ Bad
+import React, { useState, useEffect } from "react";
+import { User } from "./types";
+```
+
+### Export Patterns
+
+- **Named exports** for multiple items
+- **Default exports** for single primary export
+- **Re-exports** for barrel files
+
+```typescript
+// ✅ Good
+export interface User {
+  id: string;
+  name: string;
+}
+
+export function createUser(userData: CreateUserRequest): Promise<User> {
+  // Implementation
+}
+
+export default UserService;
+```
+
+## Error Handling
+
+### Exception Handling
+
+- **Specific error types** instead of generic Error
+- **Error boundaries** for React components
+- **Proper error propagation**
+
+```typescript
+// ✅ Good
+class RpcError extends Error {
+  constructor(
+    public readonly code: number,
+    public readonly method: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "RpcError";
+  }
+}
+
+async function callRpc<T>(method: string): Promise<T> {
+  try {
+    return await rpcService.call<T>(method);
+  } catch (error) {
+    if (error instanceof RpcError) {
+      throw error;
+    }
+    throw new RpcError(-1, method, "Unknown error occurred");
+  }
+}
+```
+
+## React/JSX Specific
+
+### Component Patterns
+
+- **Function components** with hooks
+- **Props interfaces** for type safety
+- **Event handler types** from React
+
+```typescript
+// ✅ Good
+interface ButtonProps {
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  children: React.ReactNode;
+  disabled?: boolean;
+}
+
+function Button({ onClick, children, disabled = false }: ButtonProps) {
+  return (
+    <button onClick={onClick} disabled={disabled}>
+      {children}
+    </button>
+  );
+}
+
+// ❌ Bad
+function Button(props: any) {
+  return <button onClick={props.onClick}>{props.children}</button>;
+}
+```
+
+## Code Organization
+
+### File Structure
+
+- **One main export** per file
+- **Related functionality** grouped together
+- **Barrel exports** for clean imports
+
+```typescript
+// ✅ Good - services/user.service.ts
+export class UserService {
+  // Implementation
+}
+
+export type { User, CreateUserRequest };
+
+// ✅ Good - services/index.ts
+export { UserService } from "./user.service";
+export { WalletService } from "./wallet.service";
+export type { User, Wallet } from "./types";
+```
+
+### Comments and Documentation
+
+- **JSDoc** for public APIs
+- **Inline comments** for complex logic
+- **TODO comments** with issue references
+
+```typescript
+/**
+ * Creates a new user account with the provided data.
+ * @param userData - The user information to create
+ * @returns Promise that resolves to the created user
+ * @throws {ValidationError} When user data is invalid
+ */
+async function createUser(userData: CreateUserRequest): Promise<User> {
+  // Validate input data
+  if (!userData.email || !userData.name) {
+    throw new ValidationError("Email and name are required");
+  }
+
+  // TODO: Add email verification step (issue #123)
+  return await api.post("/users", userData);
+}
+```
+
+## Performance and Best Practices
+
+### Memory Management
+
+- **Avoid memory leaks** in event listeners
+- **Cleanup resources** in useEffect
+- **Lazy loading** for large components
+
+```typescript
+// ✅ Good
+function useWebSocket(url: string) {
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+
+  useEffect(() => {
+    const ws = new WebSocket(url);
+    setSocket(ws);
+
+    return () => {
+      ws.close();
+    };
+  }, [url]);
+
+  return socket;
+}
+```
+
+### Type Safety
+
+- **Strict null checks** enabled
+- **No implicit any** allowed
+- **Explicit return types** for public APIs
+
+## Project-Specific Guidelines
+
+### Electron Integration
+
+- **IPC handlers** with proper typing
+- **Preload scripts** with context bridge
+- **Main process** services with dependency injection
+
+### State Management
+
+- **Zustand stores** with proper typing
+- **Immutable updates** for state changes
+- **Type-safe selectors** for derived state
+
+### API Integration
+
+- **RPC calls** with proper error handling
+- **Request/response types** defined
+- **Retry logic** with exponential backoff
+
+---
+
+_This style guide ensures consistency, maintainability, and type safety across the Neptune Core Wallet codebase._

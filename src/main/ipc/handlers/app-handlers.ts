@@ -5,7 +5,11 @@
  */
 
 import { app, ipcMain } from 'electron';
+import pino from 'pino';
 import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
+
+// Logger
+const logger = pino({ level: 'info' });
 import type {
   AppQuitRequest,
   AppVersionResponse,
@@ -26,7 +30,7 @@ export function handleAppQuit(
     }
     return { success: true };
   } catch (error) {
-    console.error('Error quitting app:', error);
+    logger.error({ error: (error as Error).message }, 'Error quitting app');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -43,7 +47,7 @@ export function handleAppRestart(_event: Electron.IpcMainInvokeEvent) {
     app.quit();
     return { success: true };
   } catch (error) {
-    console.error('Error restarting app:', error);
+    logger.error({ error: (error as Error).message }, 'Error restarting app');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -64,7 +68,10 @@ export function handleGetVersion(
       nodeVersion: process.versions.node,
     };
   } catch (error) {
-    console.error('Error getting app version:', error);
+    logger.error(
+      { error: (error as Error).message },
+      'Error getting app version'
+    );
     throw new Error(error instanceof Error ? error.message : 'Unknown error');
   }
 }
