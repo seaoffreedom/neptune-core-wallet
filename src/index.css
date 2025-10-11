@@ -46,3 +46,32 @@ body {
 .animate-shimmer {
   animation: shimmer 2s ease-in-out infinite;
 }
+
+/* Nautical theme specific animations */
+@keyframes wave {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes ocean-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(34, 211, 238, 0.2);
+  }
+}
+
+.nautical .animate-wave {
+  animation: wave 3s ease-in-out infinite;
+}
+
+.nautical .animate-ocean-glow {
+  animation: ocean-glow 4s ease-in-out infinite;
+}

@@ -5,7 +5,13 @@
  */
 
 import { Network, Shield } from "lucide-react";
-import { Empty } from "@/components/ui/empty";
+import {
+    Empty,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+    EmptyDescription,
+} from "@/components/ui/empty";
 
 interface PeersEmptyProps {
     type: "active" | "banned";
@@ -14,19 +20,32 @@ interface PeersEmptyProps {
 export function PeersEmpty({ type }: PeersEmptyProps) {
     if (type === "active") {
         return (
-            <Empty
-                icon={<Network className="h-12 w-12" />}
-                title="No active peers"
-                description="Add peer connections to improve your network connectivity"
-            />
+            <Empty>
+                <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                        <Network className="h-12 w-12" />
+                    </EmptyMedia>
+                    <EmptyTitle>No active peers</EmptyTitle>
+                    <EmptyDescription>
+                        Add peer connections to improve your network
+                        connectivity
+                    </EmptyDescription>
+                </EmptyHeader>
+            </Empty>
         );
     }
 
     return (
-        <Empty
-            icon={<Shield className="h-12 w-12" />}
-            title="No banned peers"
-            description="Peers you ban will appear here"
-        />
+        <Empty>
+            <EmptyHeader>
+                <EmptyMedia variant="icon">
+                    <Shield className="h-12 w-12" />
+                </EmptyMedia>
+                <EmptyTitle>No banned peers</EmptyTitle>
+                <EmptyDescription>
+                    Peers you ban will appear here
+                </EmptyDescription>
+            </EmptyHeader>
+        </Empty>
     );
 }

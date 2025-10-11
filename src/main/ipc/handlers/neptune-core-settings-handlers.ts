@@ -5,8 +5,12 @@
  */
 
 import { ipcMain } from 'electron';
+import pino from 'pino';
 import { neptuneCoreSettingsService } from '@/main/services/neptune-core-settings.service';
 import { IPC_CHANNELS } from '@/shared/constants/ipc-channels';
+
+// Logger
+const logger = pino({ level: 'info' });
 import type {
   AdvancedSettings,
   DataSettings,
@@ -30,7 +34,10 @@ export function registerNeptuneCoreSettingsHandlers(): void {
         settings,
       };
     } catch (error) {
-      console.error('Failed to get settings:', error);
+      logger.error(
+        { error: (error as Error).message },
+        'Failed to get settings'
+      );
       return {
         success: false,
         error: (error as Error).message,
@@ -49,7 +56,10 @@ export function registerNeptuneCoreSettingsHandlers(): void {
           settings: updated,
         };
       } catch (error) {
-        console.error('Failed to update settings:', error);
+        logger.error(
+          { error: (error as Error).message },
+          'Failed to update settings'
+        );
         return {
           success: false,
           error: (error as Error).message,
@@ -69,7 +79,10 @@ export function registerNeptuneCoreSettingsHandlers(): void {
           settings: updated,
         };
       } catch (error) {
-        console.error('Failed to update network settings:', error);
+        logger.error(
+          { error: (error as Error).message },
+          'Failed to update network settings'
+        );
         return {
           success: false,
           error: (error as Error).message,
@@ -89,7 +102,10 @@ export function registerNeptuneCoreSettingsHandlers(): void {
           settings: updated,
         };
       } catch (error) {
-        console.error('Failed to update mining settings:', error);
+        logger.error(
+          { error: (error as Error).message },
+          'Failed to update mining settings'
+        );
         return {
           success: false,
           error: (error as Error).message,
@@ -109,7 +125,10 @@ export function registerNeptuneCoreSettingsHandlers(): void {
           settings: updated,
         };
       } catch (error) {
-        console.error('Failed to update performance settings:', error);
+        logger.error(
+          { error: (error as Error).message },
+          'Failed to update performance settings'
+        );
         return {
           success: false,
           error: (error as Error).message,
@@ -129,7 +148,10 @@ export function registerNeptuneCoreSettingsHandlers(): void {
           settings: updated,
         };
       } catch (error) {
-        console.error('Failed to update security settings:', error);
+        logger.error(
+          { error: (error as Error).message },
+          'Failed to update security settings'
+        );
         return {
           success: false,
           error: (error as Error).message,
@@ -149,7 +171,10 @@ export function registerNeptuneCoreSettingsHandlers(): void {
           settings: updated,
         };
       } catch (error) {
-        console.error('Failed to update data settings:', error);
+        logger.error(
+          { error: (error as Error).message },
+          'Failed to update data settings'
+        );
         return {
           success: false,
           error: (error as Error).message,
@@ -169,7 +194,10 @@ export function registerNeptuneCoreSettingsHandlers(): void {
           settings: updated,
         };
       } catch (error) {
-        console.error('Failed to update advanced settings:', error);
+        logger.error(
+          { error: (error as Error).message },
+          'Failed to update advanced settings'
+        );
         return {
           success: false,
           error: (error as Error).message,
@@ -187,7 +215,10 @@ export function registerNeptuneCoreSettingsHandlers(): void {
         settings,
       };
     } catch (error) {
-      console.error('Failed to reset settings:', error);
+      logger.error(
+        { error: (error as Error).message },
+        'Failed to reset settings'
+      );
       return {
         success: false,
         error: (error as Error).message,
@@ -204,7 +235,10 @@ export function registerNeptuneCoreSettingsHandlers(): void {
         json,
       };
     } catch (error) {
-      console.error('Failed to export settings:', error);
+      logger.error(
+        { error: (error as Error).message },
+        'Failed to export settings'
+      );
       return {
         success: false,
         error: (error as Error).message,
@@ -223,7 +257,10 @@ export function registerNeptuneCoreSettingsHandlers(): void {
           settings,
         };
       } catch (error) {
-        console.error('Failed to import settings:', error);
+        logger.error(
+          { error: (error as Error).message },
+          'Failed to import settings'
+        );
         return {
           success: false,
           error: (error as Error).message,
@@ -232,7 +269,7 @@ export function registerNeptuneCoreSettingsHandlers(): void {
     }
   );
 
-  console.log('✅ Neptune Core settings IPC handlers registered');
+  logger.info('Neptune Core settings IPC handlers registered');
 }
 
 /**
@@ -251,5 +288,5 @@ export function cleanupNeptuneCoreSettingsHandlers(): void {
   ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_SETTINGS_EXPORT);
   ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_SETTINGS_IMPORT);
 
-  console.log('✅ Neptune Core settings IPC handlers cleaned up');
+  logger.info('Neptune Core settings IPC handlers cleaned up');
 }

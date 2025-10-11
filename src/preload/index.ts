@@ -81,6 +81,15 @@ const electronAPI: ElectronAPI = {
     getNeptuneCookie: neptuneAPI.getCookie,
     getNeptuneWalletData: neptuneAPI.getWalletData,
 
+    // Blockchain data fetching - top-level methods
+    setBlockchainCookie: blockchainAPI.setCookie,
+    getDashboardOverview: blockchainAPI.getDashboardOverview,
+    getBlockHeight: blockchainAPI.getBlockHeight,
+    getNetwork: blockchainAPI.getNetwork,
+    getWalletStatus: blockchainAPI.getWalletStatus,
+    getNextReceivingAddress: blockchainAPI.getNextReceivingAddress,
+    getTransactionHistory: blockchainAPI.getHistory,
+
     // Blockchain data fetching - expose as nested object
     blockchain: blockchainAPI,
 

@@ -23,8 +23,8 @@ export const CSP_POLICY_DEV = `
   base-uri 'self';
   upgrade-insecure-requests;
 `
-    .replace(/\s+/g, " ")
-    .trim();
+  .replace(/\s+/g, ' ')
+  .trim();
 
 // Production CSP - strict security without unsafe-inline
 export const CSP_POLICY_PROD = `
@@ -44,23 +44,23 @@ export const CSP_POLICY_PROD = `
   base-uri 'self';
   upgrade-insecure-requests;
 `
-    .replace(/\s+/g, " ")
-    .trim();
+  .replace(/\s+/g, ' ')
+  .trim();
 
 // Additional security headers
 export const SECURITY_HEADERS = {
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "X-XSS-Protection": "1; mode=block",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
 };
 
 // Get appropriate CSP based on environment
 export function getCSPPolicy(): string {
-    return process.env.NODE_ENV === "development"
-        ? CSP_POLICY_DEV
-        : CSP_POLICY_PROD;
+  return process.env.NODE_ENV === 'development'
+    ? CSP_POLICY_DEV
+    : CSP_POLICY_PROD;
 }
 
 // Legacy export for backward compatibility

@@ -1,5 +1,5 @@
 {
-  "timestamp": 1760121191118,
+  "timestamp": 1760140751878,
   "config": {
     "core": {
       "network": "main",
@@ -10,6 +10,10 @@
     "cli": {
       "port": 9799,
       "rpcPort": 9801
+    },
+    "logging": {
+      "level": "errors-only",
+      "logDir": "/home/anon/Documents/GitHub_alt/neptune-core-wallet/logs"
     }
   },
   "isInitialized": true

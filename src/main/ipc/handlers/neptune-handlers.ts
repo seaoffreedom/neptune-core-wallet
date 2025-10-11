@@ -5,8 +5,12 @@
  */
 
 import { ipcMain } from "electron";
+import pino from "pino";
 import { IPC_CHANNELS } from "../../../shared/constants/ipc-channels";
 import { neptuneProcessManager } from "../../services/neptune-process-manager";
+
+// Logger
+const logger = pino({ level: "info" });
 
 /**
  * Register IPC handlers for Neptune process management.
@@ -56,10 +60,12 @@ export async function handleInitialize(
         await neptuneProcessManager.initialize();
         return { success: true };
     } catch (error) {
-        console.error("Neptune initialization failed:", error);
+        const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+        logger.error({ error: errorMessage }, "Neptune initialization failed");
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
+            error: errorMessage,
         };
     }
 }
@@ -89,10 +95,12 @@ export function handleGetStatus(_event: Electron.IpcMainInvokeEvent): {
             status,
         };
     } catch (error) {
-        console.error("Failed to get Neptune status:", error);
+        const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+        logger.error({ error: errorMessage }, "Failed to get Neptune status");
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
+            error: errorMessage,
         };
     }
 }
@@ -110,7 +118,10 @@ export async function handleShutdown(
         await neptuneProcessManager.shutdown();
         return { success: true };
     } catch (error) {
-        console.error("Neptune shutdown failed:", error);
+        logger.error(
+            { error: error instanceof Error ? error.message : "Unknown error" },
+            "Neptune shutdown failed",
+        );
         return {
             success: false,
             error: error instanceof Error ? error.message : "Unknown error",
@@ -133,7 +144,10 @@ export async function handleRestart(
         await neptuneProcessManager.initialize();
         return { success: true };
     } catch (error) {
-        console.error("Neptune restart failed:", error);
+        logger.error(
+            { error: error instanceof Error ? error.message : "Unknown error" },
+            "Neptune restart failed",
+        );
         return {
             success: false,
             error: error instanceof Error ? error.message : "Unknown error",
@@ -164,7 +178,10 @@ export async function handleGetCookie(
             cookie,
         };
     } catch (error) {
-        console.error("Failed to get cookie:", error);
+        logger.error(
+            { error: error instanceof Error ? error.message : "Unknown error" },
+            "Failed to get cookie",
+        );
         return {
             success: false,
             error: error instanceof Error ? error.message : "Unknown error",
@@ -198,7 +215,10 @@ export async function handleGetWalletData(
             },
         };
     } catch (error) {
-        console.error("Failed to get wallet data:", error);
+        logger.error(
+            { error: error instanceof Error ? error.message : "Unknown error" },
+            "Failed to get wallet data",
+        );
         return {
             success: false,
             error: error instanceof Error ? error.message : "Unknown error",

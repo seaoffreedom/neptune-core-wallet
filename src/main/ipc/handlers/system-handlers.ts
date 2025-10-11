@@ -5,8 +5,12 @@
  */
 
 import { ipcMain } from "electron";
+import pino from "pino";
 import { IPC_CHANNELS } from "../../../shared/constants/ipc-channels";
 import { systemResourceService } from "../../services/system-resource.service";
+
+// Logger
+const logger = pino({ level: "info" });
 
 /**
  * Handle get system resource stats request
@@ -35,10 +39,15 @@ export async function handleGetSystemResourceStats(): Promise<{
             stats,
         };
     } catch (error) {
-        console.error("Error getting system resource stats:", error);
+        const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+        logger.error(
+            { error: errorMessage },
+            "Error getting system resource stats",
+        );
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
+            error: errorMessage,
         };
     }
 }
@@ -79,10 +88,15 @@ export async function handleGetCombinedResourceStats(): Promise<{
             stats,
         };
     } catch (error) {
-        console.error("Error getting combined resource stats:", error);
+        const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+        logger.error(
+            { error: errorMessage },
+            "Error getting combined resource stats",
+        );
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
+            error: errorMessage,
         };
     }
 }
@@ -111,10 +125,71 @@ export async function handleGetProcessStats(pid: number): Promise<{
             stats,
         };
     } catch (error) {
-        console.error("Error getting process stats:", error);
+        const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+        logger.error({ error: errorMessage }, "Error getting process stats");
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
+            error: errorMessage,
+        };
+    }
+}
+
+/**
+ * Handle get total system RAM request
+ */
+export async function handleGetTotalSystemRAM(): Promise<{
+    success: boolean;
+    totalRAM?: number;
+    error?: string;
+}> {
+    try {
+        const totalRAM = systemResourceService.getTotalSystemRAM();
+
+        return {
+            success: true,
+            totalRAM,
+        };
+    } catch (error) {
+        const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+        logger.error({ error: errorMessage }, "Error getting total system RAM");
+        return {
+            success: false,
+            error: errorMessage,
+        };
+    }
+}
+
+/**
+ * Handle check if system has sufficient RAM for mining
+ */
+export async function handleHasSufficientRAMForMining(): Promise<{
+    success: boolean;
+    hasSufficientRAM?: boolean;
+    totalRAM?: number;
+    minRAMRequired?: number;
+    error?: string;
+}> {
+    try {
+        const hasSufficientRAM =
+            systemResourceService.hasSufficientRAMForMining();
+        const totalRAM = systemResourceService.getTotalSystemRAM();
+        const minRAMRequired = 64 * 1024 * 1024 * 1024; // 64GB in bytes
+
+        return {
+            success: true,
+            hasSufficientRAM,
+            totalRAM,
+            minRAMRequired,
+        };
+    } catch (error) {
+        const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+        logger.error({ error: errorMessage }, "Error checking RAM for mining");
+        return {
+            success: false,
+            error: errorMessage,
         };
     }
 }
@@ -123,7 +198,7 @@ export async function handleGetProcessStats(pid: number): Promise<{
  * Register system resource handlers
  */
 export function registerSystemHandlers(): void {
-    console.log("Registering system resource handlers...");
+    logger.info("Registering system resource handlers");
 
     ipcMain.handle(
         IPC_CHANNELS.SYSTEM_GET_RESOURCE_STATS,
@@ -143,18 +218,26 @@ export function registerSystemHandlers(): void {
         },
     );
 
-    console.log("✅ System resource handlers registered");
+    // Add RAM checking handlers
+    ipcMain.handle(IPC_CHANNELS.SYSTEM_GET_TOTAL_RAM, handleGetTotalSystemRAM);
+
+    ipcMain.handle(
+        IPC_CHANNELS.SYSTEM_HAS_SUFFICIENT_RAM_FOR_MINING,
+        handleHasSufficientRAMForMining,
+    );
+
+    logger.info("System resource handlers registered");
 }
 
 /**
  * Unregister system resource handlers
  */
 export function unregisterSystemHandlers(): void {
-    console.log("Unregistering system resource handlers...");
+    logger.info("Unregistering system resource handlers");
 
     ipcMain.removeHandler(IPC_CHANNELS.SYSTEM_GET_RESOURCE_STATS);
     ipcMain.removeHandler(IPC_CHANNELS.SYSTEM_GET_COMBINED_STATS);
     ipcMain.removeHandler(IPC_CHANNELS.SYSTEM_GET_PROCESS_STATS);
 
-    console.log("✅ System resource handlers unregistered");
+    logger.info("System resource handlers unregistered");
 }

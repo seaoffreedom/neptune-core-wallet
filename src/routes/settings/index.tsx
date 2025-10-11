@@ -82,7 +82,6 @@ function SettingsOverview() {
                     {settingsCategories.map((category) => (
                         <Link
                             key={category.href}
-                            // @ts-expect-error - Route types will be regenerated
                             to={category.href}
                             className="group"
                         >

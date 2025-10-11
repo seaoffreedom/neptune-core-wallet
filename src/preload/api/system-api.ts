@@ -71,4 +71,30 @@ export const systemAPI = {
     }> => {
         return ipcRenderer.invoke(IPC_CHANNELS.SYSTEM_GET_PROCESS_STATS, pid);
     },
+
+    /**
+     * Get total system RAM in bytes
+     */
+    getTotalRAM: async (): Promise<{
+        success: boolean;
+        totalRAM?: number;
+        error?: string;
+    }> => {
+        return ipcRenderer.invoke(IPC_CHANNELS.SYSTEM_GET_TOTAL_RAM);
+    },
+
+    /**
+     * Check if system has sufficient RAM for mining (64GB minimum)
+     */
+    hasSufficientRAMForMining: async (): Promise<{
+        success: boolean;
+        hasSufficientRAM?: boolean;
+        totalRAM?: number;
+        minRAMRequired?: number;
+        error?: string;
+    }> => {
+        return ipcRenderer.invoke(
+            IPC_CHANNELS.SYSTEM_HAS_SUFFICIENT_RAM_FOR_MINING,
+        );
+    },
 };

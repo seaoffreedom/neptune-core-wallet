@@ -1,0 +1,29 @@
+# Global code owners
+* @sploitzberg
+
+# Core application files
+/src/ @sploitzberg
+/package.json @sploitzberg
+/tsconfig.json @sploitzberg
+/vite.*.config.ts @sploitzberg
+/forge.config.ts @sploitzberg
+
+# Configuration files
+/.cursor/ @sploitzberg
+/.github/ @sploitzberg
+/biome.json @sploitzberg
+/components.json @sploitzberg
+
+# Documentation
+/README.md @sploitzberg
+/AGENTS.md @sploitzberg
+/docs/ @sploitzberg
+
+# Security and compliance
+/.github/SECURITY.md @sploitzberg
+/.github/workflows/ @sploitzberg
+/.github/dependabot.yml @sploitzberg
+
+# Build and deployment
+/scripts/ @sploitzberg
+/resources/ @sploitzberg

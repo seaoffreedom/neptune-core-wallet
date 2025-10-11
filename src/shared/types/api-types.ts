@@ -751,6 +751,18 @@ export interface ElectronAPI {
             };
             error?: string;
         }>;
+        getTotalRAM: () => Promise<{
+            success: boolean;
+            totalRAM?: number;
+            error?: string;
+        }>;
+        hasSufficientRAMForMining: () => Promise<{
+            success: boolean;
+            hasSufficientRAM?: boolean;
+            totalRAM?: number;
+            minRAMRequired?: number;
+            error?: string;
+        }>;
     };
 
     neptuneCoreSettings: {

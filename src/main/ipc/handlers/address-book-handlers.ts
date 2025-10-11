@@ -5,8 +5,12 @@
  */
 
 import { ipcMain } from 'electron';
+import pino from 'pino';
 import { addressBookService } from '@/main/services/address-book.service';
 import { IPC_CHANNELS } from '@/shared/constants/ipc-channels';
+
+// Logger
+const logger = pino({ level: 'info' });
 
 /**
  * Register all address book IPC handlers
@@ -169,7 +173,7 @@ export function registerAddressBookHandlers() {
     }
   });
 
-  console.log('✅ Address Book handlers registered (9 endpoints)');
+  logger.info('Address Book handlers registered (9 endpoints)');
 }
 
 /**
@@ -186,5 +190,5 @@ export function unregisterAddressBookHandlers() {
   ipcMain.removeHandler(IPC_CHANNELS.ADDRESS_BOOK_IMPORT);
   ipcMain.removeHandler(IPC_CHANNELS.ADDRESS_BOOK_CLEAR_ALL);
 
-  console.log('✅ Address Book handlers unregistered (9 endpoints)');
+  logger.info('Address Book handlers unregistered (9 endpoints)');
 }

@@ -105,6 +105,7 @@ export function validateInput<T>(
             const message = context
                 ? `${context}: ${firstError.message}`
                 : firstError.message;
+
             return {
                 success: false,
                 error: message,
@@ -144,7 +145,7 @@ export function createValidatedHandler<TInput, TOutput>(
  */
 export function sanitizeString(input: string): string {
     return input
-        .replace(/[<>\"'&]/g, "") // Remove potentially dangerous characters
+        .replace(/[<>"'&]/g, "") // Remove potentially dangerous characters
         .trim()
         .substring(0, 1000); // Limit length
 }

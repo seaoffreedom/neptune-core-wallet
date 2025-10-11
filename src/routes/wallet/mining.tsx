@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useOnchainStore } from "@/store/onchain.store";
+import {
+    CardSkeleton,
+    StatsGridSkeleton,
+    TableSkeleton,
+} from "@/components/ui/skeleton-enhanced";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,13 +22,37 @@ import {
     Loader2,
     AlertTriangle,
     CheckCircle,
+    Play,
+    Pause,
 } from "lucide-react";
 import { toast } from "sonner";
+import { RAMWarningAlert } from "@/components/settings/ram-warning-alert";
 
 interface MiningData {
     blockDifficulties: Array<[number, number[]]>;
     blockIntervals: Array<[number, number]>;
     cpuTemp: number | null;
+    dashboardData: {
+        confirmations: string;
+        confirmed_available_balance: string;
+        confirmed_total_balance: string;
+        cpu_temp: number | null;
+        max_num_peers: number;
+        mempool_own_tx_count: number;
+        mempool_size: number;
+        mempool_total_tx_count: number;
+        mining_status: string;
+        peer_count: number;
+        proving_capability: string;
+        syncing: boolean;
+        tip_digest: string;
+        tip_header: {
+            height: number;
+            timestamp: number;
+        };
+        unconfirmed_available_balance: string;
+        unconfirmed_total_balance: string;
+    } | null;
     syncStatus: {
         connectedPeers: number;
         currentBlockHeight: string;
@@ -45,6 +74,15 @@ function MiningPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isMiningActionLoading, setIsMiningActionLoading] = useState(false);
+
+    // Get mining state from Zustand store
+    const minerStatus = useOnchainStore((state) => state.minerStatus);
+    const setMinerStatus = useOnchainStore((state) => state.setMinerStatus);
+    const dashboardData = useOnchainStore((state) => state.dashboardData);
+
+    // Derive mining state from store
+    const isMining = minerStatus === "active";
 
     const fetchMiningData = useCallback(async () => {
         try {
@@ -55,6 +93,7 @@ function MiningPage() {
                 blockDifficultiesResult,
                 blockIntervalsResult,
                 cpuTempResult,
+                dashboardResult,
                 syncStatusResult,
                 networkInfoResult,
             ] = await Promise.all([
@@ -67,6 +106,7 @@ function MiningPage() {
                     max_num_blocks: 10,
                 }),
                 window.electronAPI.blockchain.getCpuTemp(),
+                window.electronAPI.blockchain.getDashboardOverview(),
                 window.electronAPI.blockchain.getSyncStatus(),
                 window.electronAPI.blockchain.getNetworkInfo(),
             ]);
@@ -81,6 +121,10 @@ function MiningPage() {
                 cpuTemp: cpuTempResult.success
                     ? (cpuTempResult.temp ?? null)
                     : null,
+                dashboardData: dashboardResult.success
+                    ? (dashboardResult.data as MiningData["dashboardData"]) ||
+                      null
+                    : null,
                 syncStatus: syncStatusResult.success
                     ? syncStatusResult.result || null
                     : null,
@@ -90,6 +134,22 @@ function MiningPage() {
             };
 
             setMiningData(newMiningData);
+
+            // Initialize mining status from dashboard data only if not already set
+            if (
+                minerStatus === "unknown" &&
+                newMiningData.dashboardData?.mining_status
+            ) {
+                const status =
+                    newMiningData.dashboardData.mining_status.toLowerCase();
+                if (status === "active" || status === "running") {
+                    setMinerStatus("active");
+                } else if (status === "paused" || status === "stopped") {
+                    setMinerStatus("paused");
+                } else {
+                    setMinerStatus("unknown");
+                }
+            }
         } catch (err) {
             setError((err as Error).message);
             toast.error("Failed to fetch mining data");
@@ -97,11 +157,52 @@ function MiningPage() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    }, []);
+    }, [setMinerStatus, minerStatus]);
 
     useEffect(() => {
         fetchMiningData();
     }, [fetchMiningData]);
+
+    const handlePauseMining = useCallback(async () => {
+        try {
+            setIsMiningActionLoading(true);
+            const result = await window.electronAPI.blockchain.pauseMiner();
+            if (result.success) {
+                setMinerStatus("paused");
+                toast.success("Mining paused", {
+                    description: result.result || "Miner paused successfully",
+                });
+                // Don't refresh dashboard data immediately - let it update naturally
+            } else {
+                toast.error(`Failed to pause mining: ${result.error}`);
+            }
+        } catch (err) {
+            toast.error(`Failed to pause mining: ${(err as Error).message}`);
+        } finally {
+            setIsMiningActionLoading(false);
+        }
+    }, [setMinerStatus]);
+
+    const handleRestartMining = useCallback(async () => {
+        try {
+            setIsMiningActionLoading(true);
+            const result = await window.electronAPI.blockchain.restartMiner();
+            if (result.success) {
+                setMinerStatus("active");
+                toast.success("Mining restarted", {
+                    description:
+                        result.result || "Miner restarted successfully",
+                });
+                // Don't refresh dashboard data immediately - let it update naturally
+            } else {
+                toast.error(`Failed to restart mining: ${result.error}`);
+            }
+        } catch (err) {
+            toast.error(`Failed to restart mining: ${(err as Error).message}`);
+        } finally {
+            setIsMiningActionLoading(false);
+        }
+    }, [setMinerStatus]);
 
     const formatTimeAgo = (timestamp: string): string => {
         const date = new Date(timestamp);
@@ -143,33 +244,58 @@ function MiningPage() {
                         </p>
                     </div>
 
-                    {/* Loading skeletons */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <Card key={i}>
-                                <CardHeader className="pb-2">
-                                    <Skeleton className="h-5 w-32" />
-                                </CardHeader>
-                                <CardContent>
-                                    <Skeleton className="h-8 w-24 mb-2" />
-                                    <Skeleton className="h-3 w-20" />
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
+                    {/* Loading skeletons that match the actual content structure */}
+                    <StatsGridSkeleton
+                        items={6}
+                        className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                    />
 
-                    {/* Table skeleton */}
+                    {/* Block difficulties skeleton */}
                     <Card>
                         <CardHeader>
-                            <Skeleton className="h-6 w-40" />
+                            <div className="h-6 w-40 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {[1, 2, 3, 4, 5].map((i) => (
-                                    <div key={i} className="flex gap-4">
-                                        <Skeleton className="h-12 flex-1" />
-                                        <Skeleton className="h-12 w-32" />
-                                        <Skeleton className="h-12 w-24" />
+                                    <div
+                                        key={i}
+                                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-muted/30 animate-pulse rounded-full border border-muted/20" />
+                                            <div className="space-y-2">
+                                                <div className="h-4 w-20 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
+                                                <div className="h-3 w-32 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
+                                            </div>
+                                        </div>
+                                        <div className="h-6 w-16 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Block intervals skeleton */}
+                    <Card>
+                        <CardHeader>
+                            <div className="h-6 w-40 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                    <div
+                                        key={i}
+                                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-muted/30 animate-pulse rounded-full border border-muted/20" />
+                                            <div className="space-y-2">
+                                                <div className="h-4 w-20 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
+                                                <div className="h-3 w-32 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
+                                            </div>
+                                        </div>
+                                        <div className="h-6 w-16 bg-muted/30 animate-pulse rounded-md border border-muted/20" />
                                     </div>
                                 ))}
                             </div>
@@ -223,19 +349,149 @@ function MiningPage() {
                             Monitor network mining statistics and performance.
                         </p>
                     </div>
-                    <Button
-                        variant="outline"
-                        onClick={fetchMiningData}
-                        disabled={isRefreshing}
-                    >
-                        {isRefreshing ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                        )}
-                        Refresh Data
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        {/* Mining Controls */}
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant={isMining ? "destructive" : "default"}
+                                onClick={
+                                    isMining
+                                        ? handlePauseMining
+                                        : handleRestartMining
+                                }
+                                disabled={isMiningActionLoading}
+                                size="sm"
+                            >
+                                {isMiningActionLoading ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : isMining ? (
+                                    <Pause className="mr-2 h-4 w-4" />
+                                ) : (
+                                    <Play className="mr-2 h-4 w-4" />
+                                )}
+                                {isMining ? "Pause Mining" : "Start Mining"}
+                            </Button>
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={fetchMiningData}
+                            disabled={isRefreshing}
+                            size="sm"
+                        >
+                            {isRefreshing ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                            )}
+                            Refresh Data
+                        </Button>
+                    </div>
                 </div>
+
+                {/* RAM Warning Alert */}
+                <RAMWarningAlert />
+
+                {/* Comprehensive Blockchain Status */}
+                {miningData?.dashboardData && (
+                    <Card className="p-6">
+                        <CardHeader>
+                            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                                <Zap className="h-5 w-5" />
+                                Blockchain Status
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">
+                                        Network
+                                    </p>
+                                    <p className="font-mono text-sm capitalize">
+                                        {miningData.networkInfo?.network ||
+                                            "Unknown"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">
+                                        Synchronizing
+                                    </p>
+                                    <p className="font-mono text-sm">
+                                        {miningData.dashboardData.syncing
+                                            ? "true"
+                                            : "false"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">
+                                        Mining Status
+                                    </p>
+                                    <p className="font-mono text-sm capitalize">
+                                        {isMining ? "active" : "inactive"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">
+                                        Block Height
+                                    </p>
+                                    <p className="font-mono text-sm">
+                                        {
+                                            miningData.dashboardData.tip_header
+                                                .height
+                                        }
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">
+                                        Block Interval
+                                    </p>
+                                    <p className="font-mono text-sm">
+                                        {miningData.blockIntervals.length > 0
+                                            ? `${miningData.blockIntervals[0][1]}s`
+                                            : "-"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">
+                                        Difficulty
+                                    </p>
+                                    <p className="font-mono text-sm">
+                                        {miningData.blockDifficulties.length > 0
+                                            ? miningData.blockDifficulties[0][1][0]?.toLocaleString() ||
+                                              "-"
+                                            : "-"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">
+                                        Connected Peers
+                                    </p>
+                                    <p className="font-mono text-sm">
+                                        {miningData.dashboardData.peer_count}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">
+                                        Latest Block
+                                    </p>
+                                    <p className="font-mono text-xs">
+                                        {new Date(
+                                            miningData.dashboardData.tip_header
+                                                .timestamp * 1000,
+                                        ).toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t">
+                                <p className="text-sm text-muted-foreground">
+                                    Tip Hash
+                                </p>
+                                <p className="font-mono text-xs break-all">
+                                    {miningData.dashboardData.tip_digest}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Overview Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

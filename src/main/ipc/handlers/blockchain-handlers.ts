@@ -5,14 +5,10 @@
  */
 
 import { ipcMain } from "electron";
-import { z } from "zod";
 import pino from "pino";
 import { neptuneRpcService } from "@/main/services/neptune-rpc.service";
 import { IPC_CHANNELS } from "@/shared/constants/ipc-channels";
-import {
-    createValidatedHandler,
-    ValidationSchemas,
-} from "@/main/security/input-validation";
+import { ValidationSchemas } from "@/main/security/input-validation";
 
 const logger = pino({ level: "info" });
 
@@ -470,56 +466,78 @@ export function registerBlockchainHandlers(): void {
     // Validate address
     ipcMain.handle(
         IPC_CHANNELS.BLOCKCHAIN_VALIDATE_ADDRESS,
-        createValidatedHandler(
-            z.object({
-                address: ValidationSchemas.string(200), // Address should be reasonable length
-            }),
-            async (params: { address: string }) => {
-                try {
-                    const isValid =
-                        await neptuneRpcService.validateAddress(params);
-                    return { success: true, isValid };
-                } catch (error) {
+        async (_event, params: { address: string }) => {
+            try {
+                console.log(
+                    "🔍 IPC Handler received address validation request:",
+                    {
+                        address: params.address?.substring(0, 20) + "...",
+                        length: params.address?.length,
+                        type: typeof params.address,
+                    },
+                );
+
+                // Basic validation
+                if (!params || typeof params !== "object" || !params.address) {
                     return {
                         success: false,
-                        error: (error as Error).message,
+                        error: "Address parameter is required",
                     };
                 }
-            },
-            "Address Validation",
-        ),
+
+                const isValid = await neptuneRpcService.validateAddress(params);
+                return { success: true, isValid };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: (error as Error).message,
+                };
+            }
+        },
     );
 
     // Validate amount
     ipcMain.handle(
         IPC_CHANNELS.BLOCKCHAIN_VALIDATE_AMOUNT,
-        createValidatedHandler(
-            z.object({
-                amount: z
-                    .union([z.string(), z.number()])
-                    .transform((val) =>
-                        typeof val === "string" ? parseFloat(val) : val,
-                    )
-                    .refine(
-                        (val) => !Number.isNaN(val) && val >= 0,
-                        "Amount must be a valid positive number",
-                    ),
-            }),
-            async (params: { amount: number }) => {
-                try {
-                    const isValid = await neptuneRpcService.validateAmount({
-                        amount: params.amount.toString(),
-                    });
-                    return { success: true, isValid };
-                } catch (error) {
+        async (_event, params: { amount: string | number }) => {
+            try {
+                // Basic validation
+                if (
+                    !params ||
+                    typeof params !== "object" ||
+                    params.amount === undefined
+                ) {
                     return {
                         success: false,
-                        error: (error as Error).message,
+                        error: "Amount parameter is required",
                     };
                 }
-            },
-            "Amount Validation",
-        ),
+
+                // Convert to string and validate
+                const amountStr =
+                    typeof params.amount === "string"
+                        ? params.amount
+                        : params.amount.toString();
+                const amountNum = parseFloat(amountStr);
+
+                if (Number.isNaN(amountNum) || amountNum < 0) {
+                    return {
+                        success: false,
+                        error: "Amount must be a valid positive number",
+                    };
+                }
+
+                const isValid = await neptuneRpcService.validateAmount({
+                    amount: amountStr,
+                });
+                return { success: true, isValid };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: (error as Error).message,
+                };
+            }
+        },
     );
 
     // Get nth receiving address

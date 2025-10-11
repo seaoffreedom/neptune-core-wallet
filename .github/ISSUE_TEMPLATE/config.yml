@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GitHub Community Support
+    url: https://github.com/orgs/neptune-core-wallet/discussions
+    about: Please ask and answer questions here.
+  - name: Documentation
+    url: https://github.com/neptune-core-wallet/neptune-core-wallet/wiki
+    about: Check our documentation for guides and tutorials.
+  - name: Security Policy
+    url: https://github.com/neptune-core-wallet/neptune-core-wallet/security/policy
+    about: Please report security vulnerabilities through our security policy.

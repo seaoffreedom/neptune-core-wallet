@@ -52,6 +52,9 @@ export const IPC_CHANNELS = {
     SYSTEM_GET_RESOURCE_STATS: "system:get-resource-stats",
     SYSTEM_GET_COMBINED_STATS: "system:get-combined-stats",
     SYSTEM_GET_PROCESS_STATS: "system:get-process-stats",
+    SYSTEM_GET_TOTAL_RAM: "system:get-total-ram",
+    SYSTEM_HAS_SUFFICIENT_RAM_FOR_MINING:
+        "system:has-sufficient-ram-for-mining",
 
     // Worker management (temporarily disabled)
     // WORKER_EXECUTE: 'worker:execute',
