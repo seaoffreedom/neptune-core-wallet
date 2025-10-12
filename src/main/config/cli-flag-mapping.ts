@@ -10,6 +10,7 @@ export interface CLIFlagConfig {
     type: "value" | "boolean" | "array"; // Flag type
     valueMap?: Record<string, string>; // Optional value transformation
     arraySeparator?: string; // For array types, how to separate values
+    useEqualsFormat?: boolean; // Use --flag=value format instead of --flag value
 }
 
 /**
@@ -160,6 +161,7 @@ export const CLI_FLAG_MAP: Record<string, CLIFlagConfig> = {
     "performance.txProvingCapability": {
         flag: "--tx-proving-capability",
         type: "value",
+        useEqualsFormat: true,
         valueMap: {
             lockscript: "lockscript",
             singleproof: "singleproof",

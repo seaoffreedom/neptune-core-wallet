@@ -4,19 +4,19 @@
  * Handles file-related IPC communication between main and renderer processes.
  */
 
-import path from 'node:path';
 import { dialog, ipcMain } from 'electron';
-import pino from 'pino';
 import fs from 'fs-extra';
+import pino from 'pino';
+import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
 import {
+  fileExistsWithRetry,
   readFileWithRetry,
   writeFileWithRetry,
-  fileExistsWithRetry,
 } from '../../utils/async-file-operations';
-import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
 
 // Logger
 const logger = pino({ level: 'info' });
+
 import type {
   FileDeleteRequest,
   FileDeleteResponse,

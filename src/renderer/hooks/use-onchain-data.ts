@@ -8,15 +8,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   type DashboardOverviewData,
-  type MempoolOverview,
-  type PeerInfo,
   type TransactionHistoryItem,
   type UTXO,
   useOnchainStore,
 } from '@/store/onchain.store';
 import {
-  dashboardDataFetcher,
   balanceDataFetcher,
+  dashboardDataFetcher,
   mempoolDataFetcher,
 } from '../utils/resilient-data-fetching';
 
@@ -84,6 +82,61 @@ export function useDashboardData() {
     isRefreshing,
     fetchDashboard,
     lastUpdate,
+  };
+}
+
+/**
+ * Hook for fetching current blockchain difficulty
+ */
+export function useCurrentDifficulty() {
+  const currentDifficulty = useOnchainStore((state) => state.currentDifficulty);
+  const setCurrentDifficulty = useOnchainStore(
+    (state) => state.setCurrentDifficulty
+  );
+  const setLoading = useOnchainStore((state) => state.setLoading);
+  const setError = useOnchainStore((state) => state.setError);
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchDifficulty = useCallback(async () => {
+    setIsRefreshing(true);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await dashboardDataFetcher.fetch(
+        () =>
+          window.electronAPI.blockchain.getBlockDifficulties({
+            block_selector: 'Tip',
+            max_num_blocks: 1,
+          }),
+        {
+          retries: 3,
+          timeout: 10000,
+          deduplicateKey: 'current_difficulty',
+        }
+      );
+
+      if (result.success && result.result && result.result.length > 0) {
+        // Extract difficulty from the first (most recent) block
+        const difficulty = result.result[0][1][0]; // [height, [difficulty]]
+        setCurrentDifficulty(difficulty);
+      } else {
+        setCurrentDifficulty(null);
+      }
+    } catch (error) {
+      setError((error as Error).message);
+      setCurrentDifficulty(null);
+    } finally {
+      setIsRefreshing(false);
+      setLoading(false);
+    }
+  }, [setCurrentDifficulty, setLoading, setError]);
+
+  return {
+    difficulty: currentDifficulty,
+    isRefreshing,
+    fetchDifficulty,
   };
 }
 
@@ -400,7 +453,7 @@ export function useMempoolInfo() {
     setError(null);
 
     try {
-      const [countResult, sizeResult] = await Promise.all([
+      const [countResult, sizeResult, overviewResult] = await Promise.all([
         mempoolDataFetcher.fetch(
           () => window.electronAPI.blockchain.getMempoolTxCount(),
           {
@@ -417,6 +470,18 @@ export function useMempoolInfo() {
             deduplicateKey: 'mempool_size',
           }
         ),
+        mempoolDataFetcher.fetch(
+          () =>
+            window.electronAPI.blockchain.getMempoolOverview({
+              start_index: 0,
+              number: 10,
+            }),
+          {
+            retries: 2,
+            timeout: 10000,
+            deduplicateKey: 'mempool_overview_0_10',
+          }
+        ),
       ]);
 
       // Only set successful results (mempool endpoints may timeout)
@@ -428,14 +493,37 @@ export function useMempoolInfo() {
         setMempoolSize(sizeResult.size);
       }
 
+      if (overviewResult.success && overviewResult.transactions) {
+        setMempoolOverview({
+          transactions: overviewResult.transactions,
+          count: countResult.success ? countResult.count || 0 : 0,
+          lastUpdated: new Date().toISOString(),
+        });
+      } else {
+        // Set empty overview if no transactions or error
+        setMempoolOverview({
+          transactions: [],
+          count: countResult.success ? countResult.count || 0 : 0,
+          lastUpdated: new Date().toISOString(),
+        });
+      }
+
       // Silently ignore errors (mempool endpoints are optional)
-    } catch {
+    } catch (error) {
+      // Debug: Log any errors that might be causing polling to stop
+      console.error('Mempool fetch error:', error);
       // Silently ignore mempool fetch errors (non-critical)
     } finally {
       setIsRefreshing(false);
       setLoading(false);
     }
-  }, [setMempoolTxCount, setMempoolSize, setLoading, setError]);
+  }, [
+    setMempoolTxCount,
+    setMempoolSize,
+    setMempoolOverview,
+    setLoading,
+    setError,
+  ]);
 
   const fetchMempoolOverview = useCallback(
     async (startIndex = 0, count = 10) => {
@@ -444,59 +532,46 @@ export function useMempoolInfo() {
       setError(null);
 
       try {
-        // First check if there are any transactions
-        const txCountResult =
-          await window.electronAPI.blockchain.getMempoolTxCount();
+        // Use the comprehensive mempool overview endpoint
+        const overviewResult = await mempoolDataFetcher.fetch(
+          () =>
+            window.electronAPI.blockchain.getMempoolOverview({
+              start_index: startIndex,
+              number: count,
+            }),
+          {
+            retries: 2,
+            timeout: 10000,
+            deduplicateKey: `mempool_overview_${startIndex}_${count}`,
+          }
+        );
 
-        if (
-          !txCountResult.success ||
-          !txCountResult.count ||
-          txCountResult.count === 0
-        ) {
-          // No transactions, set empty overview
+        if (overviewResult.success && overviewResult.transactions) {
+          // Get total count for the overview
+          const txCountResult =
+            await window.electronAPI.blockchain.getMempoolTxCount();
+
+          setMempoolOverview({
+            transactions: overviewResult.transactions,
+            count: txCountResult.success ? txCountResult.count || 0 : 0,
+            lastUpdated: new Date().toISOString(),
+          });
+        } else {
+          // No transactions or error, set empty overview
           setMempoolOverview({
             transactions: [],
             count: 0,
             lastUpdated: new Date().toISOString(),
           });
-          return;
         }
-
-        // Get transaction IDs first
-        const txIdsResult =
-          await window.electronAPI.blockchain.getMempoolTxIds();
-
-        if (
-          !txIdsResult.success ||
-          !txIdsResult.txIds ||
-          txIdsResult.txIds.length === 0
-        ) {
-          // No transaction IDs, set empty overview
-          setMempoolOverview({
-            transactions: [],
-            count: 0,
-            lastUpdated: new Date().toISOString(),
-          });
-          return;
-        }
-
-        // Create overview with transaction IDs (mempool_overview endpoint doesn't exist)
-        const transactions = txIdsResult.txIds
-          .slice(startIndex, startIndex + count)
-          .map((txId) => ({
-            tx_id: txId,
-            fee: '0', // We don't have fee info from tx_ids
-            size: 0, // We don't have size info from tx_ids
-            timestamp: new Date().toISOString(),
-          }));
-
-        setMempoolOverview({
-          transactions,
-          count: txCountResult.count,
-          lastUpdated: new Date().toISOString(),
-        });
       } catch (error) {
         setError((error as Error).message);
+        // Set empty overview on error
+        setMempoolOverview({
+          transactions: [],
+          count: 0,
+          lastUpdated: new Date().toISOString(),
+        });
       } finally {
         setIsRefreshing(false);
         setLoading(false);
@@ -607,7 +682,9 @@ export function useUtxos() {
  */
 export function usePeerInfo() {
   const peerInfo = useOnchainStore((state) => state.peerInfo);
-  const setPeerInfo = useOnchainStore((state) => state.setPeerInfo);
+  const setPeerInfoFromCli = useOnchainStore(
+    (state) => state.setPeerInfoFromCli
+  );
   const setLoading = useOnchainStore((state) => state.setLoading);
   const setError = useOnchainStore((state) => state.setError);
 
@@ -619,10 +696,11 @@ export function usePeerInfo() {
     setError(null);
 
     try {
-      const result = await window.electronAPI.blockchain.getPeerInfo();
+      // Use CLI command for more reliable peer info
+      const result = await window.electronAPI.blockchain.getPeerInfoCli();
 
       if (result.success && result.peers) {
-        setPeerInfo(result.peers as PeerInfo[]);
+        setPeerInfoFromCli(result.peers);
       } else {
         setError(result.error || 'Failed to fetch peer info');
       }
@@ -632,7 +710,7 @@ export function usePeerInfo() {
       setIsRefreshing(false);
       setLoading(false);
     }
-  }, [setPeerInfo, setLoading, setError]);
+  }, [setPeerInfoFromCli, setLoading, setError]);
 
   return {
     peers: peerInfo,

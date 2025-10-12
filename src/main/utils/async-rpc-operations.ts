@@ -5,9 +5,9 @@
  * and connection health monitoring for blockchain data fetching
  */
 
+import pLimit from 'p-limit';
 import pRetry from 'p-retry';
 import pTimeout from 'p-timeout';
-import pLimit from 'p-limit';
 import pino from 'pino';
 
 const logger = pino({ level: 'info' });

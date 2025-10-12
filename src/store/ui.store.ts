@@ -77,6 +77,9 @@ interface UIStore {
   // Navigation state
   navigation: NavigationState;
 
+  // Experimental features
+  experimentalMode: boolean;
+
   // Hydration state
   isHydrated: boolean;
 
@@ -88,6 +91,10 @@ interface UIStore {
   // Navigation actions
   setLastClickedRoute: (route: string | null) => void;
   handleNavigationClick: (route: string, currentRoute: string) => boolean;
+
+  // Experimental actions
+  toggleExperimentalMode: () => void;
+  setExperimentalMode: (enabled: boolean) => void;
 
   // Hydration actions
   setHydrated: (hydrated: boolean) => void;
@@ -106,6 +113,9 @@ export const useUIStore = create<UIStore>()(
       navigation: {
         lastClickedRoute: null,
       },
+
+      // Initial experimental state
+      experimentalMode: false,
 
       // Initial hydration state
       isHydrated: false,
@@ -160,6 +170,15 @@ export const useUIStore = create<UIStore>()(
         return true; // Should navigate
       },
 
+      // Experimental actions
+      toggleExperimentalMode: () =>
+        set((state) => ({
+          experimentalMode: !state.experimentalMode,
+        })),
+
+      setExperimentalMode: (enabled: boolean) =>
+        set({ experimentalMode: enabled }),
+
       // Hydration actions
       setHydrated: (hydrated: boolean) => set({ isHydrated: hydrated }),
     }),
@@ -168,6 +187,7 @@ export const useUIStore = create<UIStore>()(
       partialize: (state) => ({
         sidebar: state.sidebar,
         navigation: state.navigation,
+        experimentalMode: state.experimentalMode,
       }),
     }
   )

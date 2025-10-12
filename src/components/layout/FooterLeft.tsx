@@ -1,4 +1,4 @@
-import { Info, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Info, Wifi, WifiOff } from 'lucide-react';
 import { useMemo } from 'react';
 import { useOnchainStore } from '@/store/onchain.store';
 

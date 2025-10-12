@@ -4,9 +4,11 @@
  * Displays and manages active (non-banned) peers
  */
 
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw, Users } from 'lucide-react';
 import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { PeerEntry } from '@/main/stores/peer-store';
 import { BanPeerDialog } from './ban-peer-dialog';
 import { DeletePeerDialog } from './delete-peer-dialog';
@@ -17,11 +19,15 @@ import { PeersEmpty } from './peers-empty';
 interface ActivePeersSectionProps {
   peers: PeerEntry[];
   network: string;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 export function ActivePeersSection({
   peers,
   network,
+  onRefresh,
+  isRefreshing = false,
 }: ActivePeersSectionProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -45,30 +51,54 @@ export function ActivePeersSection({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h4 className="text-lg font-semibold">Active Peers</h4>
-          <p className="text-sm text-muted-foreground">
-            {peers.length} {peers.length === 1 ? 'peer' : 'peers'} connected
-          </p>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Active Peers
+            </CardTitle>
+            <Badge variant="secondary">
+              {peers.length} {peers.length === 1 ? 'peer' : 'peers'}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            {onRefresh && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRefresh}
+                disabled={isRefreshing}
+              >
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`}
+                />
+                Refresh
+              </Button>
+            )}
+            <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Peer
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Peer
-        </Button>
-      </div>
-
-      {peers.length === 0 ? (
-        <PeersEmpty type="active" />
-      ) : (
-        <PeerTable
-          peers={peers}
-          onEdit={handleEdit}
-          onBan={handleBan}
-          onDelete={handleDelete}
-        />
-      )}
+        <p className="text-sm text-muted-foreground">
+          Manage your active peer connections and network settings.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {peers.length === 0 ? (
+          <PeersEmpty type="active" />
+        ) : (
+          <PeerTable
+            peers={peers}
+            onEdit={handleEdit}
+            onBan={handleBan}
+            onDelete={handleDelete}
+          />
+        )}
+      </CardContent>
 
       {/* Add Peer Dialog */}
       <PeerFormDialog
@@ -98,6 +128,6 @@ export function ActivePeersSection({
         onOpenChange={setIsDeleteDialogOpen}
         peer={selectedPeer}
       />
-    </div>
+    </Card>
   );
 }

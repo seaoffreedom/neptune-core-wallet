@@ -1,11 +1,16 @@
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { Puzzle, Settings, Wallet } from 'lucide-react';
+import { FlaskConical, Puzzle, Settings, Wallet } from 'lucide-react';
 import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/ui.store';
 
 export function IconSidebar() {
-  const { handleNavigationClick, setLastClickedRoute } = useUIStore();
+  const {
+    handleNavigationClick,
+    setLastClickedRoute,
+    experimentalMode,
+    toggleExperimentalMode,
+  } = useUIStore();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -16,7 +21,10 @@ export function IconSidebar() {
 
   const sidebarItems = [
     { icon: Wallet, label: 'Wallet', href: '/wallet' },
-    { icon: Puzzle, label: 'Extension', href: '/extension' },
+    // Only show Extension icon when experimental mode is enabled
+    ...(experimentalMode
+      ? [{ icon: Puzzle, label: 'Extension', href: '/extension' }]
+      : []),
   ];
 
   const onNavigationClick = (href: string) => {
@@ -56,8 +64,24 @@ export function IconSidebar() {
         })}
       </nav>
 
-      {/* Footer with Settings */}
-      <div className="p-1.5">
+      {/* Footer with Experimental Toggle and Settings */}
+      <div className="p-1.5 space-y-1">
+        {/* Experimental Mode Toggle */}
+        <button
+          type="button"
+          onClick={toggleExperimentalMode}
+          className={cn(
+            'flex items-center justify-center w-full h-10 rounded-md text-sm font-medium transition-colors',
+            experimentalMode
+              ? 'bg-orange-500 text-white hover:bg-orange-600'
+              : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+          )}
+          title={`Experimental Mode - ${experimentalMode ? 'Enabled' : 'Disabled'}`}
+        >
+          <FlaskConical className="h-5 w-5" />
+        </button>
+
+        {/* Settings */}
         <button
           type="button"
           onClick={() => onNavigationClick('/settings')}

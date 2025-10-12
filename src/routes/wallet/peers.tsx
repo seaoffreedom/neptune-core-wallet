@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { ActivePeersSection } from "@/components/peers/active-peers-section";
 import { BannedPeersSection } from "@/components/peers/banned-peers-section";
+import { CliPeersSection } from "@/components/peers/cli-peers-section";
 import { ListSkeleton } from "@/components/ui/skeleton-enhanced";
 import { usePeerStore } from "@/renderer/stores/peer-store";
 import { useNetworkSettings } from "@/store/neptune-core-settings.store";
@@ -49,9 +50,9 @@ function PeerManager() {
                 <div>
                     <h3 className="text-2xl font-bold">Peer Manager</h3>
                     <p className="text-muted-foreground">
-                        Manage your Neptune Core peer connections and banned
-                        peers. (Active: {activePeers.length}, Banned:{" "}
-                        {bannedPeers.length})
+                        Discover connected peers via CLI and manage your Neptune
+                        Core peer connections. (Active: {activePeers.length},
+                        Banned: {bannedPeers.length})
                     </p>
                 </div>
 
@@ -74,6 +75,7 @@ function PeerManager() {
                     </div>
                 ) : (
                     <>
+                        <CliPeersSection />
                         <ActivePeersSection
                             peers={activePeers}
                             network={networkSettings?.network || "main"}

@@ -5,10 +5,10 @@
  * for better performance and error handling.
  */
 
+import path from 'node:path';
 import fs from 'fs-extra';
 import pRetry from 'p-retry';
 import pTimeout from 'p-timeout';
-import path from 'node:path';
 import pino from 'pino';
 
 const logger = pino({ level: 'info' });

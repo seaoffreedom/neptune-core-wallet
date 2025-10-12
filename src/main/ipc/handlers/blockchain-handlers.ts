@@ -6,9 +6,10 @@
 
 import { ipcMain } from "electron";
 import pino from "pino";
+import { ValidationSchemas } from "@/main/security/input-validation";
+import { neptuneCliService } from "@/main/services/neptune-cli.service";
 import { neptuneRpcService } from "@/main/services/neptune-rpc.service";
 import { IPC_CHANNELS } from "@/shared/constants/ipc-channels";
-import { ValidationSchemas } from "@/main/security/input-validation";
 
 const logger = pino({ level: "info" });
 
@@ -190,7 +191,7 @@ export function registerBlockchainHandlers(): void {
         }
     });
 
-    // Send transaction
+    // Send transaction (using RPC service for better error handling and reliability)
     ipcMain.handle(
         IPC_CHANNELS.BLOCKCHAIN_SEND,
         async (_event, params: unknown) => {
@@ -200,6 +201,10 @@ export function registerBlockchainHandlers(): void {
                 );
                 return { success: true, txId: result.tx_id };
             } catch (error) {
+                logger.error(
+                    { error, params },
+                    "Failed to send transaction via RPC",
+                );
                 return {
                     success: false,
                     error: (error as Error).message,
@@ -208,7 +213,27 @@ export function registerBlockchainHandlers(): void {
         },
     );
 
-    // Send transparent transaction
+    // Get peer info using CLI (for autopolling)
+    ipcMain.handle(IPC_CHANNELS.CLI_GET_PEER_INFO, async () => {
+        try {
+            const result = await neptuneCliService.getPeerInfo();
+            if (result.success) {
+                return { success: true, peers: result.data };
+            } else {
+                return {
+                    success: false,
+                    error: result.error || "Failed to get peer info",
+                };
+            }
+        } catch (error) {
+            return {
+                success: false,
+                error: (error as Error).message,
+            };
+        }
+    });
+
+    // Send transparent transaction (keeping RPC for now)
     ipcMain.handle(
         IPC_CHANNELS.BLOCKCHAIN_SEND_TRANSPARENT,
         async (_event, params: unknown) => {
@@ -316,6 +341,25 @@ export function registerBlockchainHandlers(): void {
             };
         }
     });
+
+    // Get comprehensive mempool transaction overview
+    ipcMain.handle(
+        IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_OVERVIEW,
+        async (_event, params: { start_index?: number; number?: number }) => {
+            try {
+                const transactions = await neptuneRpcService.getMempoolOverview(
+                    params.start_index || 0,
+                    params.number || 10,
+                );
+                return { success: true, transactions };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: (error as Error).message,
+                };
+            }
+        },
+    );
 
     // Broadcast all mempool transactions
     ipcMain.handle(
@@ -471,7 +515,7 @@ export function registerBlockchainHandlers(): void {
                 console.log(
                     "🔍 IPC Handler received address validation request:",
                     {
-                        address: params.address?.substring(0, 20) + "...",
+                        address: `${params.address?.substring(0, 20)}...`,
                         length: params.address?.length,
                         type: typeof params.address,
                     },
@@ -720,6 +764,79 @@ export function registerBlockchainHandlers(): void {
         }
     });
 
+    // Get best mining proposal
+    ipcMain.handle(IPC_CHANNELS.BLOCKCHAIN_GET_BEST_PROPOSAL, async () => {
+        try {
+            const proposal = await neptuneRpcService.getBestProposal();
+            return { success: true, proposal };
+        } catch (error) {
+            return {
+                success: false,
+                error: (error as Error).message,
+            };
+        }
+    });
+
+    // Mine blocks to wallet
+    ipcMain.handle(
+        IPC_CHANNELS.BLOCKCHAIN_MINE_BLOCKS_TO_WALLET,
+        async (_event, params: unknown) => {
+            try {
+                const result = await neptuneRpcService.mineBlocksToWallet(
+                    params as Parameters<
+                        typeof neptuneRpcService.mineBlocksToWallet
+                    >[0],
+                );
+                return { success: true, result };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: (error as Error).message,
+                };
+            }
+        },
+    );
+
+    // Provide proof-of-work solution
+    ipcMain.handle(
+        IPC_CHANNELS.BLOCKCHAIN_PROVIDE_POW_SOLUTION,
+        async (_event, params: unknown) => {
+            try {
+                const result = await neptuneRpcService.providePowSolution(
+                    params as Parameters<
+                        typeof neptuneRpcService.providePowSolution
+                    >[0],
+                );
+                return { success: true, result };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: (error as Error).message,
+                };
+            }
+        },
+    );
+
+    // Provide new block tip
+    ipcMain.handle(
+        IPC_CHANNELS.BLOCKCHAIN_PROVIDE_NEW_TIP,
+        async (_event, params: unknown) => {
+            try {
+                const result = await neptuneRpcService.provideNewTip(
+                    params as Parameters<
+                        typeof neptuneRpcService.provideNewTip
+                    >[0],
+                );
+                return { success: true, result };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: (error as Error).message,
+                };
+            }
+        },
+    );
+
     // Generate wallet
     ipcMain.handle(IPC_CHANNELS.BLOCKCHAIN_GENERATE_WALLET, async () => {
         try {
@@ -779,7 +896,7 @@ export function registerBlockchainHandlers(): void {
         }
     });
 
-    logger.info("All blockchain data handlers registered (40 endpoints)");
+    logger.info("All blockchain data handlers registered (45 endpoints)");
 }
 
 /**
@@ -798,6 +915,7 @@ export function unregisterBlockchainHandlers(): void {
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_LIST_OWN_COINS);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_SEND);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_SEND_TRANSPARENT);
+    ipcMain.removeHandler(IPC_CHANNELS.CLI_GET_PEER_INFO);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_TX_COUNT);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_SIZE);
 
@@ -806,6 +924,7 @@ export function unregisterBlockchainHandlers(): void {
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_GET_SPENDABLE_INPUTS);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_SELECT_SPENDABLE_INPUTS);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_TX_IDS);
+    ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_OVERVIEW);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_BROADCAST_ALL_MEMPOOL_TXS);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_CLEAR_MEMPOOL);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_GET_MEMPOOL_TX_KERNEL);
@@ -830,10 +949,14 @@ export function unregisterBlockchainHandlers(): void {
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_PAUSE_MINER);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_RESTART_MINER);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_GET_CPU_TEMP);
+    ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_GET_BEST_PROPOSAL);
+    ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_MINE_BLOCKS_TO_WALLET);
+    ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_PROVIDE_POW_SOLUTION);
+    ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_PROVIDE_NEW_TIP);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_GENERATE_WALLET);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_EXPORT_SEED);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_IMPORT_SEED);
     ipcMain.removeHandler(IPC_CHANNELS.BLOCKCHAIN_WHICH_WALLET);
 
-    logger.info("All blockchain data handlers unregistered (40 endpoints)");
+    logger.info("All blockchain data handlers unregistered (45 endpoints)");
 }

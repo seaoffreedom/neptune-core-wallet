@@ -4,7 +4,7 @@
  * Displays the receiving address with copy functionality and innovative "show all" section
  */
 
-import { Check, Copy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -114,27 +114,6 @@ export function ReceiveAddressCard({
                 </>
               )}
             </Button>
-
-            {/* Quick Copy with Icon Button */}
-            <div className="flex gap-2">
-              <div className="flex-1 p-3 bg-muted/50 rounded-lg">
-                <p className="font-mono text-xs text-muted-foreground text-center">
-                  {truncateAddress(address)}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleCopy}
-                className="shrink-0"
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
           </>
         ) : (
           <div className="text-center text-muted-foreground py-8">

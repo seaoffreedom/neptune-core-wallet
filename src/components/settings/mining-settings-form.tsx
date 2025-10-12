@@ -5,7 +5,10 @@
  * proof upgrading, block composition, and guessing parameters.
  */
 
+import { Info, Shield, Users, Zap } from 'lucide-react';
 import type { UseFormReturn } from 'react-hook-form';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -41,7 +44,28 @@ export function MiningSettingsForm({ form }: MiningSettingsFormProps) {
         {/* Step 1: Proof Upgrading */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Step 1: Proof Upgrading</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Zap className="h-5 w-5 text-blue-600" />
+                Step 1: Proof Upgrading
+              </CardTitle>
+              <Badge
+                variant="outline"
+                className="bg-blue-50 text-blue-700 border-blue-200"
+              >
+                Proof Upgraders
+              </Badge>
+            </div>
+            <Alert className="mt-3">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Role:</strong> Convert Proof Collections to Single
+                Proofs using powerful hardware (64GB+ RAM).
+                <br />
+                <strong>Revenue:</strong> Earn 0.05+ NPT per transaction from
+                users who need third-party proof generation.
+              </AlertDescription>
+            </Alert>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* TX Proof Upgrading */}
@@ -161,9 +185,28 @@ export function MiningSettingsForm({ form }: MiningSettingsFormProps) {
         {/* Step 2: Block Composition */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">
-              Step 2: Block Composition
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-5 w-5 text-green-600" />
+                Step 2: Block Composition
+              </CardTitle>
+              <Badge
+                variant="outline"
+                className="bg-green-50 text-green-700 border-green-200"
+              >
+                Composers
+              </Badge>
+            </div>
+            <Alert className="mt-3">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Role:</strong> Select and merge Single Proofs into
+                blocks, similar to Ethereum's block builders.
+                <br />
+                <strong>Revenue:</strong> Earn 0.02 NPT per transaction included
+                in blocks.
+              </AlertDescription>
+            </Alert>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Compose */}
@@ -281,7 +324,28 @@ export function MiningSettingsForm({ form }: MiningSettingsFormProps) {
         {/* Step 3: Guessing */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Step 3: Guessing</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Shield className="h-5 w-5 text-orange-600" />
+                Step 3: Guessing
+              </CardTitle>
+              <Badge
+                variant="outline"
+                className="bg-orange-50 text-orange-700 border-orange-200"
+              >
+                Guessers
+              </Badge>
+            </div>
+            <Alert className="mt-3">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Role:</strong> Solve proof-of-work puzzles using ASICs,
+                GPUs, or mining hardware.
+                <br />
+                <strong>Revenue:</strong> Earn block rewards plus all
+                transaction fees from composed blocks.
+              </AlertDescription>
+            </Alert>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Guess */}

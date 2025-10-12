@@ -11,6 +11,7 @@ import { IPC_CHANNELS } from '@/shared/constants/ipc-channels';
 
 // Logger
 const logger = pino({ level: 'info' });
+
 import type {
   AdvancedSettings,
   DataSettings,

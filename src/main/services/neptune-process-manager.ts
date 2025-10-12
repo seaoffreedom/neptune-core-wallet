@@ -16,6 +16,7 @@ import { NeptuneCoreArgsBuilder } from "./neptune-core-args-builder";
 import { neptuneCoreSettingsService } from "./neptune-core-settings.service";
 import { peerService } from "./peer.service";
 import { systemResourceService } from "./system-resource.service";
+import { BINARY_PATHS, RPC_PORTS, NETWORK_PORTS } from "../config/constants";
 
 // Get the project root directory
 const PROJECT_ROOT = path.resolve(__dirname, "../../../");
@@ -43,7 +44,7 @@ export interface ProcessConfig {
         network: "main" | "alpha" | "beta" | "testnet" | "regtest";
         rpcPort: number;
         peerPort: number;
-        dataDir: string;
+        dataDir?: string; // Optional - let neptune-core use default if not specified
     };
     cli: {
         port: number;
@@ -59,13 +60,13 @@ export interface ProcessConfig {
 const DEFAULT_CONFIG: ProcessConfig = {
     core: {
         network: "main",
-        rpcPort: 9799, // Standard neptune-core RPC port
-        peerPort: 9798, // Standard neptune-core peer port
-        dataDir: path.join(PROJECT_ROOT, "data"),
+        rpcPort: RPC_PORTS.CORE,
+        peerPort: NETWORK_PORTS.PEER,
+        // No dataDir - let neptune-core use its default ~/.local/share/neptune/main/
     },
     cli: {
-        port: 9799, // Connect to core's RPC port
-        rpcPort: 9801, // Standard neptune-cli HTTP server port
+        port: RPC_PORTS.CORE,
+        rpcPort: RPC_PORTS.CLI,
     },
     logging: {
         level: (process.env.NEPTUNE_LOG_LEVEL as LogLevel) || "errors-only", // Show errors by default to help debug issues
@@ -199,14 +200,8 @@ export class NeptuneProcessManager {
      * Validate that required binaries exist and are executable
      */
     private async validateBinaries(): Promise<void> {
-        const corePath = path.join(
-            PROJECT_ROOT,
-            "resources/binaries/neptune-core",
-        );
-        const cliPath = path.join(
-            PROJECT_ROOT,
-            "resources/binaries/neptune-cli",
-        );
+        const corePath = BINARY_PATHS.NEPTUNE_CORE;
+        const cliPath = BINARY_PATHS.NEPTUNE_CLI;
 
         try {
             await access(corePath);
@@ -221,6 +216,11 @@ export class NeptuneProcessManager {
      * Cache process state for faster restarts
      */
     private async cacheProcessState(): Promise<void> {
+        // Skip caching if no custom data directory is set
+        if (!this.config.core.dataDir) {
+            return;
+        }
+
         const stateFile = path.join(
             this.config.core.dataDir,
             ".process-state.json",
@@ -243,6 +243,11 @@ export class NeptuneProcessManager {
      * Check if we can skip initialization based on cached state
      */
     private async canSkipInitialization(): Promise<boolean> {
+        // Skip initialization check if no custom data directory is set
+        if (!this.config.core.dataDir) {
+            return false;
+        }
+
         const stateFile = path.join(
             this.config.core.dataDir,
             ".process-state.json",
@@ -344,10 +349,7 @@ export class NeptuneProcessManager {
     private async startCore(): Promise<void> {
         logger.info("Starting neptune-core...");
 
-        const binaryPath = path.join(
-            PROJECT_ROOT,
-            "resources/binaries/neptune-core",
-        );
+        const binaryPath = BINARY_PATHS.NEPTUNE_CORE;
         // Build CLI args from settings
         const settings = neptuneCoreSettingsService.getAll();
         const args = await this.argsBuilder.buildArgs(settings);
@@ -429,10 +431,7 @@ export class NeptuneProcessManager {
     private async waitForCoreReady(): Promise<string> {
         logger.info("Waiting for neptune-core to be ready...");
 
-        const binaryPath = path.join(
-            PROJECT_ROOT,
-            "resources/binaries/neptune-cli",
-        );
+        const binaryPath = BINARY_PATHS.NEPTUNE_CLI;
 
         return pRetry(
             async () => {
@@ -484,10 +483,7 @@ export class NeptuneProcessManager {
     private async startCli(): Promise<void> {
         logger.info("Starting neptune-cli in RPC mode...");
 
-        const binaryPath = path.join(
-            PROJECT_ROOT,
-            "resources/binaries/neptune-cli",
-        );
+        const binaryPath = BINARY_PATHS.NEPTUNE_CLI;
         const args = [
             "--port",
             this.config.core.rpcPort.toString(), // Connect to neptune-core
@@ -595,10 +591,7 @@ export class NeptuneProcessManager {
      * Fetch wallet data using the CLI
      */
     private async fetchWalletData(_cookie: string): Promise<void> {
-        const binaryPath = path.join(
-            PROJECT_ROOT,
-            "resources/binaries/neptune-cli",
-        );
+        const binaryPath = BINARY_PATHS.NEPTUNE_CLI;
 
         try {
             // Fetch balance

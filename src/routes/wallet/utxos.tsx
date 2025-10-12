@@ -11,11 +11,15 @@ import {
     UTXOTable,
     utxoColumns,
 } from "@/components/utxos";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Coins, RefreshCw } from "lucide-react";
 import { useUtxos } from "@/renderer/hooks/use-onchain-data";
 
 function UTXOsPage() {
     // Get UTXO data (fetched globally via auto-polling)
-    const { utxos, isRefreshing, calculateSummary } = useUtxos();
+    const { utxos, isRefreshing, calculateSummary, fetchUtxos } = useUtxos();
 
     // Determine if we're in initial loading state
     const isInitialLoading = isRefreshing && utxos.length === 0;
@@ -67,7 +71,42 @@ function UTXOsPage() {
                         <UTXOSummaryCard summary={summary} />
 
                         {/* UTXO Table */}
-                        <UTXOTable columns={utxoColumns} data={utxos} />
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Coins className="h-5 w-5" />
+                                            UTXOs & Coins
+                                        </CardTitle>
+                                        <Badge variant="secondary">
+                                            {utxos.length}{" "}
+                                            {utxos.length === 1
+                                                ? "coin"
+                                                : "coins"}
+                                        </Badge>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={fetchUtxos}
+                                        disabled={isRefreshing}
+                                    >
+                                        <RefreshCw
+                                            className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+                                        />
+                                        Refresh
+                                    </Button>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                    Manage your unspent transaction outputs and
+                                    wallet coins.
+                                </p>
+                            </CardHeader>
+                            <CardContent>
+                                <UTXOTable columns={utxoColumns} data={utxos} />
+                            </CardContent>
+                        </Card>
                     </>
                 )}
             </div>

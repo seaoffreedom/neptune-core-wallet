@@ -4,19 +4,20 @@
  * Handles settings-related IPC communication between main and renderer processes.
  */
 
-import fs from 'fs-extra';
 import path from 'node:path';
 import { app, ipcMain } from 'electron';
+import fs from 'fs-extra';
 import pino from 'pino';
+import { APP_CONSTANTS } from '../../../shared/constants/app-constants';
+import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
 import {
   readJsonWithRetry,
   writeJsonWithRetry,
 } from '../../utils/async-file-operations';
-import { APP_CONSTANTS } from '../../../shared/constants/app-constants';
-import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
 
 // Logger
 const logger = pino({ level: 'info' });
+
 import type {
   SettingsExportRequest,
   SettingsExportResponse,

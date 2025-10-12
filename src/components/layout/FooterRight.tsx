@@ -1,7 +1,7 @@
-import { Cpu, HardDrive, Clock, Thermometer } from 'lucide-react';
+import { Clock, Cpu, HardDrive, Thermometer } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useSystemStore } from '@/store/system.store';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSystemStore } from '@/store/system.store';
 
 interface SystemStats {
   cpu: number;
