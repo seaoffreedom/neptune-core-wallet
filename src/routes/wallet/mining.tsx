@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
     Activity,
     Clock,
@@ -24,9 +25,16 @@ import {
     CheckCircle,
     Play,
     Pause,
+    Settings,
+    ChevronDown,
+    ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { RAMWarningAlert } from "@/components/settings/ram-warning-alert";
+import { useMiningEndpoints } from "@/renderer/hooks/use-mining-endpoints";
+import { useMiningSettings } from "@/renderer/hooks/use-mining-settings";
+import { MiningRoleExplanation } from "@/components/mining/mining-role-explanation";
+import { SystemResourceCards } from "@/components/mining/system-resource-cards";
 
 interface MiningData {
     blockDifficulties: Array<[number, number[]]>;
@@ -75,14 +83,43 @@ function MiningPage() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isMiningActionLoading, setIsMiningActionLoading] = useState(false);
+    const [showBlockDifficulties, setShowBlockDifficulties] = useState(false);
+    const [showBlockIntervals, setShowBlockIntervals] = useState(false);
 
     // Get mining state from Zustand store
     const minerStatus = useOnchainStore((state) => state.minerStatus);
     const setMinerStatus = useOnchainStore((state) => state.setMinerStatus);
     const dashboardData = useOnchainStore((state) => state.dashboardData);
+    const network = useOnchainStore((state) => state.network);
+
+    // Get mining settings
+    const { settings: miningSettings, isLoading: isSettingsLoading } =
+        useMiningSettings();
+
+    // Get mining endpoints data from store (only for regtest)
+    const bestProposal = useOnchainStore((state) => state.bestProposal);
+    const miningResult = useOnchainStore((state) => state.miningResult);
+    const powSolutionResult = useOnchainStore(
+        (state) => state.powSolutionResult,
+    );
+    const newTipResult = useOnchainStore((state) => state.newTipResult);
+
+    // Mining endpoints hook (only useful in regtest)
+    const {
+        getBestProposal,
+        mineBlocksToWallet,
+        providePowSolution,
+        provideNewTip,
+    } = useMiningEndpoints();
 
     // Derive mining state from store
     const isMining = minerStatus === "active";
+
+    // Check if mining flags were used at spawn
+    const hasMiningFlags = Boolean(
+        miningSettings &&
+            (miningSettings.mining.compose || miningSettings.mining.guess),
+    );
 
     const fetchMiningData = useCallback(async () => {
         try {
@@ -232,7 +269,7 @@ function MiningPage() {
         return difficulty[0].toLocaleString();
     };
 
-    if (isLoading) {
+    if (isLoading || isSettingsLoading) {
         return (
             <PageContainer>
                 <div className="space-y-6">
@@ -346,31 +383,43 @@ function MiningPage() {
                     <div>
                         <h3 className="text-2xl font-bold">Mining Dashboard</h3>
                         <p className="text-muted-foreground">
-                            Monitor network mining statistics and performance.
+                            Monitor your mining role, settings, and network
+                            performance in Neptune's three-step mining process.
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
                         {/* Mining Controls */}
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant={isMining ? "destructive" : "default"}
-                                onClick={
-                                    isMining
-                                        ? handlePauseMining
-                                        : handleRestartMining
-                                }
-                                disabled={isMiningActionLoading}
-                                size="sm"
-                            >
-                                {isMiningActionLoading ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : isMining ? (
-                                    <Pause className="mr-2 h-4 w-4" />
-                                ) : (
-                                    <Play className="mr-2 h-4 w-4" />
-                                )}
-                                {isMining ? "Pause Mining" : "Start Mining"}
-                            </Button>
+                            {hasMiningFlags ? (
+                                // Mining flags enabled - can start/pause
+                                <Button
+                                    variant={
+                                        isMining ? "destructive" : "default"
+                                    }
+                                    onClick={
+                                        isMining
+                                            ? handlePauseMining
+                                            : handleRestartMining
+                                    }
+                                    disabled={isMiningActionLoading}
+                                    size="sm"
+                                >
+                                    {isMiningActionLoading ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : isMining ? (
+                                        <Pause className="mr-2 h-4 w-4" />
+                                    ) : (
+                                        <Play className="mr-2 h-4 w-4" />
+                                    )}
+                                    {isMining ? "Pause Mining" : "Start Mining"}
+                                </Button>
+                            ) : (
+                                // No mining flags - restart required
+                                <Button variant="outline" disabled size="sm">
+                                    <AlertTriangle className="mr-2 h-4 w-4" />
+                                    Restart Required
+                                </Button>
+                            )}
                         </div>
                         <Button
                             variant="outline"
@@ -391,275 +440,217 @@ function MiningPage() {
                 {/* RAM Warning Alert */}
                 <RAMWarningAlert />
 
-                {/* Comprehensive Blockchain Status */}
-                {miningData?.dashboardData && (
-                    <Card className="p-6">
+                {/* Mining Flags Alert */}
+                {!hasMiningFlags && (
+                    <Alert>
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Mining Not Enabled</AlertTitle>
+                        <AlertDescription>
+                            To enable mining, you need to restart Neptune Core
+                            with mining flags (--compose, --guess, or
+                            --tx-proof-upgrading). Current mining settings
+                            cannot be changed at runtime.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {/* System Resource Cards */}
+                <SystemResourceCards />
+
+                {/* Mining Role Explanation */}
+                {miningSettings && (
+                    <MiningRoleExplanation
+                        settings={miningSettings}
+                        network={network}
+                        isMining={isMining}
+                        hasMiningFlags={hasMiningFlags}
+                    />
+                )}
+
+                {/* Advanced Mining Endpoints - Only show on regtest */}
+                {miningData?.networkInfo?.network === "regtest" && (
+                    <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2">
                                 <Zap className="h-5 w-5" />
-                                Blockchain Status
+                                Advanced Mining Features (Regtest Only)
                             </CardTitle>
+                            <div className="text-sm text-muted-foreground">
+                                Network:{" "}
+                                <span className="font-mono capitalize">
+                                    {miningData?.networkInfo?.network ||
+                                        "Unknown"}
+                                </span>
+                                <span className="ml-2 text-green-600 dark:text-green-400">
+                                    (Mining endpoints enabled)
+                                </span>
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">
-                                        Network
-                                    </p>
-                                    <p className="font-mono text-sm capitalize">
-                                        {miningData.networkInfo?.network ||
-                                            "Unknown"}
-                                    </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Best Proposal */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-medium">
+                                                Best Mining Proposal
+                                            </h4>
+                                            <p className="text-sm text-muted-foreground">
+                                                Get the current best mining
+                                                proposal
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={getBestProposal}
+                                        >
+                                            <Activity className="mr-2 h-4 w-4" />
+                                            Get Proposal
+                                        </Button>
+                                    </div>
+                                    {bestProposal && (
+                                        <div className="p-3 bg-muted/50 rounded-lg">
+                                            <p className="text-sm font-mono break-all">
+                                                {JSON.stringify(
+                                                    bestProposal.proposal,
+                                                    null,
+                                                    2,
+                                                )}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground mt-2">
+                                                Last updated:{" "}
+                                                {new Date(
+                                                    bestProposal.lastUpdated,
+                                                ).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">
-                                        Synchronizing
-                                    </p>
-                                    <p className="font-mono text-sm">
-                                        {miningData.dashboardData.syncing
-                                            ? "true"
-                                            : "false"}
-                                    </p>
+
+                                {/* Mine Blocks to Wallet */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-medium">
+                                                Mine Blocks (Test)
+                                            </h4>
+                                            <p className="text-sm text-muted-foreground">
+                                                Mine blocks to wallet for
+                                                testing
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                mineBlocksToWallet(1)
+                                            }
+                                        >
+                                            <Zap className="mr-2 h-4 w-4" />
+                                            Mine 1 Block
+                                        </Button>
+                                    </div>
+                                    {miningResult && (
+                                        <div className="p-3 bg-muted/50 rounded-lg">
+                                            <p className="text-sm font-mono">
+                                                {miningResult.result}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground mt-2">
+                                                Last updated:{" "}
+                                                {new Date(
+                                                    miningResult.lastUpdated,
+                                                ).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">
-                                        Mining Status
-                                    </p>
-                                    <p className="font-mono text-sm capitalize">
-                                        {isMining ? "active" : "inactive"}
-                                    </p>
+
+                                {/* PoW Solution */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-medium">
+                                                PoW Solution
+                                            </h4>
+                                            <p className="text-sm text-muted-foreground">
+                                                Provide proof-of-work solution
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                providePowSolution({}, {})
+                                            }
+                                            disabled
+                                        >
+                                            <CheckCircle className="mr-2 h-4 w-4" />
+                                            Provide PoW
+                                        </Button>
+                                    </div>
+                                    {powSolutionResult && (
+                                        <div className="p-3 bg-muted/50 rounded-lg">
+                                            <p className="text-sm">
+                                                Status:{" "}
+                                                {powSolutionResult.success
+                                                    ? "Accepted"
+                                                    : "Rejected"}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground mt-2">
+                                                Last updated:{" "}
+                                                {new Date(
+                                                    powSolutionResult.lastUpdated,
+                                                ).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">
-                                        Block Height
-                                    </p>
-                                    <p className="font-mono text-sm">
-                                        {
-                                            miningData.dashboardData.tip_header
-                                                .height
-                                        }
-                                    </p>
+
+                                {/* New Tip */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-medium">
+                                                New Block Tip
+                                            </h4>
+                                            <p className="text-sm text-muted-foreground">
+                                                Provide new block tip
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                provideNewTip({}, {})
+                                            }
+                                            disabled
+                                        >
+                                            <TrendingUp className="mr-2 h-4 w-4" />
+                                            Provide Tip
+                                        </Button>
+                                    </div>
+                                    {newTipResult && (
+                                        <div className="p-3 bg-muted/50 rounded-lg">
+                                            <p className="text-sm">
+                                                Status:{" "}
+                                                {newTipResult.accepted
+                                                    ? "Accepted"
+                                                    : "Rejected"}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground mt-2">
+                                                Last updated:{" "}
+                                                {new Date(
+                                                    newTipResult.lastUpdated,
+                                                ).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">
-                                        Block Interval
-                                    </p>
-                                    <p className="font-mono text-sm">
-                                        {miningData.blockIntervals.length > 0
-                                            ? `${miningData.blockIntervals[0][1]}s`
-                                            : "-"}
-                                    </p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">
-                                        Difficulty
-                                    </p>
-                                    <p className="font-mono text-sm">
-                                        {miningData.blockDifficulties.length > 0
-                                            ? miningData.blockDifficulties[0][1][0]?.toLocaleString() ||
-                                              "-"
-                                            : "-"}
-                                    </p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">
-                                        Connected Peers
-                                    </p>
-                                    <p className="font-mono text-sm">
-                                        {miningData.dashboardData.peer_count}
-                                    </p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">
-                                        Latest Block
-                                    </p>
-                                    <p className="font-mono text-xs">
-                                        {new Date(
-                                            miningData.dashboardData.tip_header
-                                                .timestamp * 1000,
-                                        ).toLocaleString()}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="mt-4 pt-4 border-t">
-                                <p className="text-sm text-muted-foreground">
-                                    Tip Hash
-                                </p>
-                                <p className="font-mono text-xs break-all">
-                                    {miningData.dashboardData.tip_digest}
-                                </p>
                             </div>
                         </CardContent>
                     </Card>
                 )}
-
-                {/* Overview Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Network Status */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Network className="h-4 w-4" />
-                                Network Status
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center gap-2 mb-2">
-                                {miningData?.syncStatus?.isSynced ? (
-                                    <>
-                                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                                        <span className="text-sm font-medium">
-                                            Synced
-                                        </span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse"></div>
-                                        <span className="text-sm font-medium">
-                                            Syncing
-                                        </span>
-                                    </>
-                                )}
-                            </div>
-                            <div className="text-2xl font-bold">
-                                {miningData?.syncStatus?.currentBlockHeight ||
-                                    "--"}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Block Height
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    {/* Connected Peers */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Activity className="h-4 w-4" />
-                                Connected Peers
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {miningData?.syncStatus?.connectedPeers || 0}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Active connections
-                            </p>
-                            {miningData?.syncStatus?.connectedPeers &&
-                                miningData.syncStatus.connectedPeers > 0 && (
-                                    <Badge
-                                        variant="outline"
-                                        className="mt-2 text-xs"
-                                    >
-                                        <CheckCircle className="h-3 w-3 mr-1" />
-                                        Connected
-                                    </Badge>
-                                )}
-                        </CardContent>
-                    </Card>
-
-                    {/* CPU Temperature */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Cpu className="h-4 w-4" />
-                                CPU Temperature
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {miningData?.cpuTemp
-                                    ? `${miningData.cpuTemp.toFixed(1)}°C`
-                                    : "--"}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Hardware monitoring
-                            </p>
-                            {miningData?.cpuTemp && (
-                                <div className="mt-2">
-                                    <Progress
-                                        value={Math.min(
-                                            (miningData.cpuTemp / 80) * 100,
-                                            100,
-                                        )}
-                                        className="h-2"
-                                    />
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Network Type */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Zap className="h-4 w-4" />
-                                Network Type
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold capitalize">
-                                {miningData?.networkInfo?.network || "--"}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Blockchain network
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    {/* Pending Transactions */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Activity className="h-4 w-4" />
-                                Pending Transactions
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {miningData?.syncStatus?.pendingTransactions ||
-                                    0}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                In mempool
-                            </p>
-                            {miningData?.syncStatus?.pendingTransactions &&
-                                miningData.syncStatus.pendingTransactions >
-                                    0 && (
-                                    <Badge
-                                        variant="outline"
-                                        className="mt-2 text-xs"
-                                    >
-                                        <AlertTriangle className="h-3 w-3 mr-1" />
-                                        Active
-                                    </Badge>
-                                )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Last Updated */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Clock className="h-4 w-4" />
-                                Last Updated
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {miningData?.syncStatus?.lastSyncCheck
-                                    ? formatTimeAgo(
-                                          miningData.syncStatus.lastSyncCheck,
-                                      )
-                                    : "--"}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Data freshness
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
 
                 {/* Block Difficulties */}
                 <Card>
@@ -672,38 +663,95 @@ function MiningPage() {
                     <CardContent>
                         {miningData?.blockDifficulties &&
                         miningData.blockDifficulties.length > 0 ? (
-                            <div className="space-y-3">
-                                {miningData.blockDifficulties
-                                    .slice(0, 5)
-                                    .map(([height, difficulty], index) => (
-                                        <div
-                                            key={height}
-                                            className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                            <>
+                                {/* Main Display with Fade Effect */}
+                                <div className="relative">
+                                    <div className="space-y-3">
+                                        {miningData.blockDifficulties
+                                            .slice(
+                                                0,
+                                                showBlockDifficulties
+                                                    ? undefined
+                                                    : 3,
+                                            )
+                                            .map(
+                                                (
+                                                    [height, difficulty],
+                                                    index,
+                                                ) => (
+                                                    <div
+                                                        key={height}
+                                                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+                                                                {height}
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-medium">
+                                                                    Block{" "}
+                                                                    {height}
+                                                                </div>
+                                                                <div className="text-sm text-muted-foreground">
+                                                                    Difficulty:{" "}
+                                                                    {formatDifficulty(
+                                                                        difficulty,
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <Badge variant="outline">
+                                                            {index === 0
+                                                                ? "Latest"
+                                                                : `${index + 1} ago`}
+                                                        </Badge>
+                                                    </div>
+                                                ),
+                                            )}
+                                    </div>
+
+                                    {/* Fade Effect - Only show when truncated */}
+                                    {!showBlockDifficulties &&
+                                        miningData.blockDifficulties.length >
+                                            3 && (
+                                            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background via-background/80 to-transparent rounded-b-lg pointer-events-none" />
+                                        )}
+                                </div>
+
+                                {/* Show All / Show Less Button */}
+                                {miningData.blockDifficulties.length > 3 && (
+                                    <div className="flex justify-center mt-4">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() =>
+                                                setShowBlockDifficulties(
+                                                    !showBlockDifficulties,
+                                                )
+                                            }
+                                            className="text-muted-foreground hover:text-foreground transition-colors"
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                                                    {height}
-                                                </div>
-                                                <div>
-                                                    <div className="font-medium">
-                                                        Block {height}
-                                                    </div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        Difficulty:{" "}
-                                                        {formatDifficulty(
-                                                            difficulty,
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <Badge variant="outline">
-                                                {index === 0
-                                                    ? "Latest"
-                                                    : `${index + 1} ago`}
-                                            </Badge>
-                                        </div>
-                                    ))}
-                            </div>
+                                            {showBlockDifficulties ? (
+                                                <>
+                                                    <ChevronUp className="mr-2 h-4 w-4" />
+                                                    Show Less
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ChevronDown className="mr-2 h-4 w-4" />
+                                                    Show All (
+                                                    {
+                                                        miningData
+                                                            .blockDifficulties
+                                                            .length
+                                                    }{" "}
+                                                    blocks)
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                )}
+                            </>
                         ) : (
                             <div className="text-center py-8 text-muted-foreground">
                                 No difficulty data available
@@ -723,38 +771,92 @@ function MiningPage() {
                     <CardContent>
                         {miningData?.blockIntervals &&
                         miningData.blockIntervals.length > 0 ? (
-                            <div className="space-y-3">
-                                {miningData.blockIntervals
-                                    .slice(0, 5)
-                                    .map(([height, interval], index) => (
-                                        <div
-                                            key={height}
-                                            className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                            <>
+                                {/* Main Display with Fade Effect */}
+                                <div className="relative">
+                                    <div className="space-y-3">
+                                        {miningData.blockIntervals
+                                            .slice(
+                                                0,
+                                                showBlockIntervals
+                                                    ? undefined
+                                                    : 3,
+                                            )
+                                            .map(
+                                                ([height, interval], index) => (
+                                                    <div
+                                                        key={height}
+                                                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+                                                                {height}
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-medium">
+                                                                    Block{" "}
+                                                                    {height}
+                                                                </div>
+                                                                <div className="text-sm text-muted-foreground">
+                                                                    Interval:{" "}
+                                                                    {formatInterval(
+                                                                        interval,
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <Badge variant="outline">
+                                                            {index === 0
+                                                                ? "Latest"
+                                                                : `${index + 1} ago`}
+                                                        </Badge>
+                                                    </div>
+                                                ),
+                                            )}
+                                    </div>
+
+                                    {/* Fade Effect - Only show when truncated */}
+                                    {!showBlockIntervals &&
+                                        miningData.blockIntervals.length >
+                                            3 && (
+                                            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background via-background/80 to-transparent rounded-b-lg pointer-events-none" />
+                                        )}
+                                </div>
+
+                                {/* Show All / Show Less Button */}
+                                {miningData.blockIntervals.length > 3 && (
+                                    <div className="flex justify-center mt-4">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() =>
+                                                setShowBlockIntervals(
+                                                    !showBlockIntervals,
+                                                )
+                                            }
+                                            className="text-muted-foreground hover:text-foreground transition-colors"
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                                                    {height}
-                                                </div>
-                                                <div>
-                                                    <div className="font-medium">
-                                                        Block {height}
-                                                    </div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        Interval:{" "}
-                                                        {formatInterval(
-                                                            interval,
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <Badge variant="outline">
-                                                {index === 0
-                                                    ? "Latest"
-                                                    : `${index + 1} ago`}
-                                            </Badge>
-                                        </div>
-                                    ))}
-                            </div>
+                                            {showBlockIntervals ? (
+                                                <>
+                                                    <ChevronUp className="mr-2 h-4 w-4" />
+                                                    Show Less
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ChevronDown className="mr-2 h-4 w-4" />
+                                                    Show All (
+                                                    {
+                                                        miningData
+                                                            .blockIntervals
+                                                            .length
+                                                    }{" "}
+                                                    blocks)
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                )}
+                            </>
                         ) : (
                             <div className="text-center py-8 text-muted-foreground">
                                 No interval data available

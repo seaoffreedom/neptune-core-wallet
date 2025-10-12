@@ -1,4 +1,4 @@
-import { CheckCircle2, CloudOff, Loader2, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CloudOff, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOnchainStore } from '@/store/onchain.store';

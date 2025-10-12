@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ipcMain } from "electron";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as NeptuneHandlers from "@/main/ipc/handlers/neptune-handlers";
 import { neptuneProcessManager } from "@/main/services/neptune-process-manager";
 
@@ -121,7 +121,9 @@ describe("NeptuneHandlers - Real Tests", () => {
 
     describe("Initialize Handler", () => {
         it("should call process manager initialize method", async () => {
-            const result = await NeptuneHandlers.handleInitialize({} as any);
+            const result = await NeptuneHandlers.handleInitialize(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(
                 vi.mocked(neptuneProcessManager.initialize),
@@ -134,7 +136,9 @@ describe("NeptuneHandlers - Real Tests", () => {
                 new Error("Initialization failed"),
             );
 
-            const result = await NeptuneHandlers.handleInitialize({} as any);
+            const result = await NeptuneHandlers.handleInitialize(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(result.success).toBe(false);
             expect(result.error).toBe("Initialization failed");
@@ -143,7 +147,9 @@ describe("NeptuneHandlers - Real Tests", () => {
 
     describe("Status Handler", () => {
         it("should return process status information", () => {
-            const result = NeptuneHandlers.handleGetStatus({} as any);
+            const result = NeptuneHandlers.handleGetStatus(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(
                 vi.mocked(neptuneProcessManager.getStatus),
@@ -163,7 +169,9 @@ describe("NeptuneHandlers - Real Tests", () => {
                 },
             );
 
-            const result = NeptuneHandlers.handleGetStatus({} as any);
+            const result = NeptuneHandlers.handleGetStatus(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(result.success).toBe(false);
             expect(result.error).toBe("Status check failed");
@@ -172,7 +180,9 @@ describe("NeptuneHandlers - Real Tests", () => {
 
     describe("Shutdown Handler", () => {
         it("should call process manager shutdown method", async () => {
-            const result = await NeptuneHandlers.handleShutdown({} as any);
+            const result = await NeptuneHandlers.handleShutdown(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(
                 vi.mocked(neptuneProcessManager.shutdown),
@@ -185,7 +195,9 @@ describe("NeptuneHandlers - Real Tests", () => {
                 new Error("Shutdown failed"),
             );
 
-            const result = await NeptuneHandlers.handleShutdown({} as any);
+            const result = await NeptuneHandlers.handleShutdown(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(result.success).toBe(false);
             expect(result.error).toBe("Shutdown failed");
@@ -194,7 +206,9 @@ describe("NeptuneHandlers - Real Tests", () => {
 
     describe("Restart Handler", () => {
         it("should call process manager restart method", async () => {
-            const result = await NeptuneHandlers.handleRestart({} as any);
+            const result = await NeptuneHandlers.handleRestart(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             // handleRestart calls shutdown and initialize, not restart
             expect(
@@ -211,7 +225,9 @@ describe("NeptuneHandlers - Real Tests", () => {
                 new Error("Restart failed"),
             );
 
-            const result = await NeptuneHandlers.handleRestart({} as any);
+            const result = await NeptuneHandlers.handleRestart(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(result.success).toBe(false);
             expect(result.error).toBe("Restart failed");
@@ -220,7 +236,9 @@ describe("NeptuneHandlers - Real Tests", () => {
 
     describe("Cookie Handler", () => {
         it("should return cookie from process manager", async () => {
-            const result = await NeptuneHandlers.handleGetCookie({} as any);
+            const result = await NeptuneHandlers.handleGetCookie(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(
                 vi.mocked(neptuneProcessManager.getCookie),
@@ -236,7 +254,9 @@ describe("NeptuneHandlers - Real Tests", () => {
                 },
             );
 
-            const result = await NeptuneHandlers.handleGetCookie({} as any);
+            const result = await NeptuneHandlers.handleGetCookie(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(result.success).toBe(false);
             expect(result.error).toBe("Cookie not available");
@@ -245,7 +265,9 @@ describe("NeptuneHandlers - Real Tests", () => {
 
     describe("Wallet Data Handler", () => {
         it("should return wallet data from process manager", async () => {
-            const result = await NeptuneHandlers.handleGetWalletData({} as any);
+            const result = await NeptuneHandlers.handleGetWalletData(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             // handleGetWalletData returns placeholder data, doesn't call getWalletData
             expect(result.success).toBe(true);
@@ -258,7 +280,9 @@ describe("NeptuneHandlers - Real Tests", () => {
         it("should handle wallet data retrieval errors", async () => {
             // Since handleGetWalletData doesn't throw errors in its current implementation,
             // this test validates that it returns success
-            const result = await NeptuneHandlers.handleGetWalletData({} as any);
+            const result = await NeptuneHandlers.handleGetWalletData(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(result.success).toBe(true);
         });
@@ -270,7 +294,9 @@ describe("NeptuneHandlers - Real Tests", () => {
                 new Error("Test error"),
             );
 
-            const result = await NeptuneHandlers.handleInitialize({} as any);
+            const result = await NeptuneHandlers.handleInitialize(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(result).toHaveProperty("success");
             expect(result).toHaveProperty("error");
@@ -282,7 +308,9 @@ describe("NeptuneHandlers - Real Tests", () => {
         it("should handle null/undefined errors", async () => {
             vi.mocked(neptuneProcessManager.initialize).mockRejectedValue(null);
 
-            const result = await NeptuneHandlers.handleInitialize({} as any);
+            const result = await NeptuneHandlers.handleInitialize(
+                {} as Electron.IpcMainInvokeEvent,
+            );
 
             expect(result.success).toBe(false);
             expect(result.error).toBe("Unknown error");
@@ -291,9 +319,11 @@ describe("NeptuneHandlers - Real Tests", () => {
 
     describe("Service Integration", () => {
         it("should call the correct service methods", async () => {
-            await NeptuneHandlers.handleInitialize({} as any);
-            NeptuneHandlers.handleGetStatus({} as any);
-            NeptuneHandlers.handleGetCookie({} as any);
+            await NeptuneHandlers.handleInitialize(
+                {} as Electron.IpcMainInvokeEvent,
+            );
+            NeptuneHandlers.handleGetStatus({} as Electron.IpcMainInvokeEvent);
+            NeptuneHandlers.handleGetCookie({} as Electron.IpcMainInvokeEvent);
 
             expect(
                 vi.mocked(neptuneProcessManager.initialize),
@@ -315,10 +345,10 @@ describe("NeptuneHandlers - Real Tests", () => {
             );
 
             const initResult = await NeptuneHandlers.handleInitialize(
-                {} as any,
+                {} as Electron.IpcMainInvokeEvent,
             );
             const cookieResult = await NeptuneHandlers.handleGetCookie(
-                {} as any,
+                {} as Electron.IpcMainInvokeEvent,
             );
 
             expect(initResult.success).toBe(false);

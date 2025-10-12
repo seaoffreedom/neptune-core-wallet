@@ -13,7 +13,7 @@ export { neptuneCoreSettingsAPI } from './neptune-core-settings-api';
 export { peerAPI } from './peer-api';
 export { processAPI } from './process-api';
 export { settingsAPI } from './settings-api';
+export { systemAPI } from './system-api';
 export { walletAPI } from './wallet-api';
 export { windowAPI } from './window-api';
-export { systemAPI } from './system-api';
 // export { workerAPI } from './worker-api'; // Temporarily disabled

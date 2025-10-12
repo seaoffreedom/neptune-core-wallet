@@ -35,8 +35,7 @@ function AdvancedSettings() {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Advanced Settings</h1>
           <p className="text-muted-foreground">
-            Configure advanced options including Tokio console and
-            notifications.
+            Configure advanced options including block notifications.
           </p>
         </div>
 

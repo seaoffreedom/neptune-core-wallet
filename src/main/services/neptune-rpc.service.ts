@@ -10,9 +10,9 @@ import ky from "ky";
 import pino from "pino";
 import { ResilientRpcOperation } from "../utils/async-rpc-operations";
 import {
-    withPerformanceMonitoring,
     priorityRpcQueue,
     rpcConnectionPool,
+    withPerformanceMonitoring,
 } from "../utils/performance-optimizations";
 
 const logger = pino({ level: "info" });
@@ -365,29 +365,37 @@ export class NeptuneRpcService {
         change_policy?: string;
         fee?: string;
     }): Promise<{ tx_id: string; lastUpdated: string }> {
-        // Modified neptune-cli now accepts wallet-friendly format and handles all parsing server-side
-        // See: neptune-core-cli/src/rpc/handlers.rs "send" handler
-        //
-        // neptune-cli will:
-        // 1. Parse bech32m addresses to ReceivingAddress enum
-        // 2. Convert to OutputFormat::AddressAndAmount
-        // 3. Apply default change policy (RecoverToNextUnusedKey + Generation + OnChain)
-        // 4. Parse fee as NativeCurrencyAmount
+        // neptune-cli RPC server expects simple wallet-friendly format:
+        // [{"address": "nolgam1...", "amount": "0.05"}]
+        // The RPC server handles all the parsing and conversion to Rust types internally
+        // and then calls the exact same client.send() that the CLI uses
 
         const rpcParams = {
-            outputs: params.outputs, // Simple format: [{address: "nolgam1...", amount: "123"}]
+            outputs: params.outputs, // Simple format: [{"address": "nolgam1...", "amount": "0.05"}]
             fee: params.fee || "0", // Optional, defaults to "0" if not provided
         };
 
         logger.info(
             { rpcParams, inputParams: params },
-            "Sending transaction with params",
+            "Sending transaction with wallet-friendly format (neptune-cli RPC server will handle parsing)",
         );
 
-        return this.call<{ tx_id: string; lastUpdated: string }>(
-            "send",
-            rpcParams,
-        );
+        // Call the RPC endpoint and handle the new response format
+        const response = await this.call<{
+            transaction: { txid: string };
+            all_offchain_notifications: Array<{
+                ciphertext: string;
+                receiver_identifier: string;
+            }>;
+        }>("send", rpcParams);
+
+        // Extract transaction ID from the response
+        const tx_id = response.transaction.txid;
+
+        return {
+            tx_id,
+            lastUpdated: new Date().toISOString(),
+        };
     }
 
     /**
@@ -398,9 +406,20 @@ export class NeptuneRpcService {
         change_policy?: string;
         fee?: string;
     }): Promise<{ tx_artifacts: string; lastUpdated: string }> {
+        // neptune-cli RPC server expects simple wallet-friendly format for send_transparent too
+        const rpcParams = {
+            outputs: params.outputs, // Simple format: [{"address": "nolgam1...", "amount": "0.05"}]
+            fee: params.fee || "0", // Optional, defaults to "0" if not provided
+        };
+
+        logger.info(
+            { rpcParams, inputParams: params },
+            "Sending transparent transaction with wallet-friendly format",
+        );
+
         return this.call<{ tx_artifacts: string; lastUpdated: string }>(
             "send_transparent",
-            params,
+            rpcParams,
         );
     }
 
@@ -482,6 +501,24 @@ export class NeptuneRpcService {
             {
                 retries: 3,
                 deduplicateKey: "mempool_tx_ids",
+            },
+        );
+    }
+
+    /**
+     * Get comprehensive mempool transaction overview
+     */
+    async getMempoolOverview(
+        startIndex: number = 0,
+        number: number = 10,
+    ): Promise<unknown[]> {
+        return this.resilientCall<unknown[]>(
+            "mempool_overview",
+            { start_index: startIndex, number },
+            10000,
+            {
+                retries: 3,
+                deduplicateKey: `mempool_overview_${startIndex}_${number}`,
             },
         );
     }
@@ -689,6 +726,40 @@ export class NeptuneRpcService {
      */
     async getCpuTemp(): Promise<number | null> {
         return this.call<number | null>("cpu_temp");
+    }
+
+    /**
+     * Get best mining proposal
+     */
+    async getBestProposal(): Promise<unknown> {
+        return this.call<unknown>("best_proposal");
+    }
+
+    /**
+     * Mine blocks to wallet
+     */
+    async mineBlocksToWallet(params: { n_blocks: number }): Promise<string> {
+        return this.call<string>("mine_blocks_to_wallet", params);
+    }
+
+    /**
+     * Provide proof-of-work solution
+     */
+    async providePowSolution(params: {
+        pow: unknown;
+        proposal_id: unknown;
+    }): Promise<boolean> {
+        return this.call<boolean>("provide_pow_solution", params);
+    }
+
+    /**
+     * Provide new block tip
+     */
+    async provideNewTip(params: {
+        pow: unknown;
+        block_proposal: unknown;
+    }): Promise<boolean> {
+        return this.call<boolean>("provide_new_tip", params);
     }
 
     /**

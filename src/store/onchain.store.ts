@@ -54,6 +54,7 @@ export interface Coin {
 
 export interface PeerInfo {
   address: string;
+  port: number;
   connected: boolean;
   lastSeen: number;
 }
@@ -75,10 +76,14 @@ export interface SpendableInput {
 }
 
 export interface MempoolTransaction {
-  tx_id: string;
-  fee: string;
-  size: number;
-  timestamp: string;
+  id: string; // Transaction kernel ID
+  proof_type: 'PrimitiveWitness' | 'SingleProof' | 'ProofCollection';
+  num_inputs: number;
+  num_outputs: number;
+  positive_balance_effect: string; // Native currency amount
+  negative_balance_effect: string; // Native currency amount
+  fee: string; // Native currency amount
+  synced: boolean;
 }
 
 export interface MempoolOverview {
@@ -109,6 +114,30 @@ export interface LatestTipDigests {
 
 export interface InstanceId {
   instance_id: string;
+  lastUpdated: string;
+}
+
+// ============================================================================
+// Types - Mining Endpoints
+// ============================================================================
+
+export interface BestProposal {
+  proposal: unknown; // The actual proposal data from neptune-core
+  lastUpdated: string;
+}
+
+export interface MiningResult {
+  result: string;
+  lastUpdated: string;
+}
+
+export interface PowSolutionResult {
+  success: boolean;
+  lastUpdated: string;
+}
+
+export interface NewTipResult {
+  accepted: boolean;
   lastUpdated: string;
 }
 
@@ -145,6 +174,13 @@ export interface OnchainState {
   // Tier 3: Advanced Data
   cpuTemp: number | null;
   minerStatus: 'active' | 'paused' | 'unknown';
+  currentDifficulty: number | null;
+
+  // Mining Endpoints (regtest only)
+  bestProposal: BestProposal | null;
+  miningResult: MiningResult | null;
+  powSolutionResult: PowSolutionResult | null;
+  newTipResult: NewTipResult | null;
 
   // Metadata
   lastUpdate: number | null;
@@ -171,6 +207,14 @@ export interface OnchainActions {
   setMempoolTxCount: (count: number) => void;
   setMempoolSize: (size: number) => void;
   setPeerInfo: (peers: PeerInfo[]) => void;
+  setPeerInfoFromCli: (
+    peers: Array<{
+      address: string;
+      port: number;
+      connected: boolean;
+      lastSeen: number;
+    }>
+  ) => void;
   setConfirmations: (confirmations: string) => void;
 
   // Tier 2: Important Actions
@@ -186,6 +230,13 @@ export interface OnchainActions {
   // Tier 3: Advanced Actions
   setCpuTemp: (temp: number | null) => void;
   setMinerStatus: (status: 'active' | 'paused' | 'unknown') => void;
+  setCurrentDifficulty: (difficulty: number | null) => void;
+
+  // Mining Endpoint Actions
+  setBestProposal: (proposal: BestProposal) => void;
+  setMiningResult: (result: MiningResult) => void;
+  setPowSolutionResult: (result: PowSolutionResult) => void;
+  setNewTipResult: (result: NewTipResult) => void;
 
   // Utility Actions
   setLoading: (loading: boolean) => void;
@@ -228,6 +279,13 @@ const initialState: OnchainState = {
   // Tier 3
   cpuTemp: null,
   minerStatus: 'unknown',
+  currentDifficulty: null,
+
+  // Mining Endpoints
+  bestProposal: null,
+  miningResult: null,
+  powSolutionResult: null,
+  newTipResult: null,
 
   // Metadata
   lastUpdate: null,
@@ -323,6 +381,17 @@ export const useOnchainStore = create<OnchainState & OnchainActions>()(
           lastUpdate: Date.now(),
         }),
 
+      setPeerInfoFromCli: (peers) =>
+        set({
+          peerInfo: peers.map((peer) => ({
+            address: peer.address,
+            port: peer.port,
+            connected: peer.connected,
+            lastSeen: peer.lastSeen,
+          })),
+          lastUpdate: Date.now(),
+        }),
+
       setConfirmations: (confirmations) =>
         set({
           confirmations,
@@ -392,6 +461,37 @@ export const useOnchainStore = create<OnchainState & OnchainActions>()(
       setMinerStatus: (status) =>
         set({
           minerStatus: status,
+          lastUpdate: Date.now(),
+        }),
+
+      setCurrentDifficulty: (difficulty) =>
+        set({
+          currentDifficulty: difficulty,
+          lastUpdate: Date.now(),
+        }),
+
+      // Mining Endpoint Actions
+      setBestProposal: (proposal) =>
+        set({
+          bestProposal: proposal,
+          lastUpdate: Date.now(),
+        }),
+
+      setMiningResult: (result) =>
+        set({
+          miningResult: result,
+          lastUpdate: Date.now(),
+        }),
+
+      setPowSolutionResult: (result) =>
+        set({
+          powSolutionResult: result,
+          lastUpdate: Date.now(),
+        }),
+
+      setNewTipResult: (result) =>
+        set({
+          newTipResult: result,
           lastUpdate: Date.now(),
         }),
 

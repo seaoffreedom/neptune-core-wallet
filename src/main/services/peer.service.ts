@@ -1,5 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
 import pino from 'pino';
+import { v4 as uuidv4 } from 'uuid';
 import { DEFAULT_BOOTSTRAP_PEERS } from '../config/default-peers';
 import { type PeerEntry, peerStore } from '../stores/peer-store';
 

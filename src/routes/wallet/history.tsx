@@ -6,12 +6,16 @@ import {
     TransactionTable,
 } from "@/components/transactions";
 import { TableSkeleton } from "@/components/ui/skeleton-enhanced";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { History, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useTransactionHistory } from "@/renderer/hooks/use-onchain-data";
 import { useOnchainStore } from "@/store/onchain.store";
 
 function TransactionHistory() {
     // Get transaction history (fetched globally via auto-polling)
-    const { history, isRefreshing } = useTransactionHistory();
+    const { history, isRefreshing, fetchHistory } = useTransactionHistory();
     const blockHeight = useOnchainStore((state) => state.blockHeight);
     const confirmations = useOnchainStore(
         (state) => state.dashboardData?.confirmations,
@@ -52,7 +56,7 @@ function TransactionHistory() {
 
     return (
         <PageContainer>
-            <div className="space-y-4">
+            <div className="space-y-6">
                 <div>
                     <h3 className="text-2xl font-bold">Transaction History</h3>
                     <p className="text-muted-foreground">
@@ -60,13 +64,44 @@ function TransactionHistory() {
                     </p>
                 </div>
 
-                {isInitialLoading ? (
-                    <TableSkeleton rows={5} columns={4} />
-                ) : transactions.length === 0 ? (
-                    <TransactionEmpty />
-                ) : (
-                    <TransactionTable data={transactions} />
-                )}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <CardTitle className="flex items-center gap-2">
+                                    <History className="h-5 w-5" />
+                                    Transaction History
+                                </CardTitle>
+                                <Badge variant="secondary">
+                                    {transactions.length} transactions
+                                </Badge>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={fetchHistory}
+                                disabled={isRefreshing}
+                            >
+                                <RefreshCw
+                                    className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+                                />
+                                Refresh
+                            </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            Complete history of all your Neptune transactions.
+                        </p>
+                    </CardHeader>
+                    <CardContent>
+                        {isInitialLoading ? (
+                            <TableSkeleton rows={5} columns={4} />
+                        ) : transactions.length === 0 ? (
+                            <TransactionEmpty />
+                        ) : (
+                            <TransactionTable data={transactions} />
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </PageContainer>
     );

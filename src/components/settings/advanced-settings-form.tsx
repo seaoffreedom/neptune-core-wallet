@@ -17,7 +17,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import type { AdvancedSettingsFormData } from '@/lib/validation/settings-schemas';
 import { useUpdateAdvancedSettings } from '@/store/neptune-core-settings.store';
 
@@ -37,39 +36,6 @@ export function AdvancedSettingsForm({ form }: AdvancedSettingsFormProps) {
   return (
     <Form {...form}>
       <form className="space-y-6">
-        {/* Development & Debugging */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Development & Debugging</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="tokioConsole"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Tokio Console</FormLabel>
-                    <FormDescription>
-                      Enable Tokio console for runtime diagnostics (development
-                      only)
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={(value) => {
-                        field.onChange(value);
-                        handleFieldChange('tokioConsole', value);
-                      }}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
         {/* Notifications */}
         <Card>
           <CardHeader>
