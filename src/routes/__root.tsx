@@ -1,15 +1,27 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { SidebarWrapper } from '@/components/layout/SidebarWrapper';
 import { SplashScreen } from '@/components/splash/SplashScreen';
 import { Toaster } from '@/components/ui/sonner';
 import { useAutoPolling } from '@/renderer/hooks/use-onchain-data';
+import { usePricePolling } from '@/hooks/use-price-polling';
+import { useLoadSettings } from '@/store/neptune-core-settings.store';
 
 const MainApp = () => {
+  // Load settings on app startup
+  const loadSettings = useLoadSettings();
+  
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+  
   // Start auto-polling blockchain data every 10 seconds
   useAutoPolling(10000);
+  
+  // Start price polling if enabled in settings
+  usePricePolling();
 
   return (
     <div className="h-screen flex flex-col">
