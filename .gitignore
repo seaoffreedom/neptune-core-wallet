@@ -9,6 +9,7 @@
 # Electron Forge build output
 out/
 dist/
+dist-electron-builder/
 build/
 app/
 app-builds/
@@ -82,6 +83,9 @@ test-results/
 playwright-report/
 test-results.xml
 
+# Test spawning directory (temporary test files)
+test-spawning/
+
 # ===========================================
 # Logs & Runtime
 # ===========================================
@@ -94,6 +98,12 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 pnpm-debug.log*
+
+# Temporary log files
+*-*.log
+spawn-test-*.log
+library-dependency-check-*.log
+privileged-spawning-test-*.log
 
 # Runtime data
 pids/
@@ -276,6 +286,14 @@ src/routeTree.gen.ts
 # Auto-generated files
 *.generated.*
 *.auto.*
+
+# Vite build cache
+.vite/
+
+# Electron Builder specific
+dist-electron-builder/
+builder-debug.yml
+latest-*.yml
 
 # ===========================================
 # Archives & Packages

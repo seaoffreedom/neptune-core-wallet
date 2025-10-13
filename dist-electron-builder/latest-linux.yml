@@ -1,9 +1,0 @@
-version: 1.0.0
-files:
-  - url: Neptune-Core-Wallet-1.0.0.AppImage
-    sha512: 7gmxISetPRn0J9UtCzwmRv2gtJMq2FgsJYo4uN4LRzNUXZzi67drLEOxO6Q1SE7/sGRd3s5YFLPHTTK4UatphQ==
-    size: 174893252
-    blockMapSize: 182488
-path: Neptune-Core-Wallet-1.0.0.AppImage
-sha512: 7gmxISetPRn0J9UtCzwmRv2gtJMq2FgsJYo4uN4LRzNUXZzi67drLEOxO6Q1SE7/sGRd3s5YFLPHTTK4UatphQ==
-releaseDate: '2025-10-13T23:05:54.964Z'
