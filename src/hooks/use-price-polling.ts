@@ -33,10 +33,14 @@ export function usePricePolling() {
     const priceFetchingSettings = usePriceFetchingSettings();
     const updatePriceFetchingSettings = useUpdatePriceFetchingSettings();
     const previousEnabledRef = useRef<boolean | null>(null);
-
+    const priceFetchingSettingsRef = useRef(priceFetchingSettings);
+    const updatePriceFetchingSettingsRef = useRef(updatePriceFetchingSettings);
+    const fetchAndUpdatePricesRef = useRef<() => Promise<void>>();
+    
     // Function to fetch and update prices
     const fetchAndUpdatePrices = useCallback(async () => {
-        if (!priceFetchingSettings) return;
+        const currentSettings = priceFetchingSettingsRef.current;
+        if (!currentSettings) return;
 
         try {
             logInfo(logger, "Fetching Neptune prices");
@@ -44,7 +48,7 @@ export function usePricePolling() {
 
             if (priceData) {
                 // Check if prices have actually changed
-                const currentPrices = priceFetchingSettings.cachedPrices;
+                const currentPrices = currentSettings.cachedPrices;
                 const newPrices = {
                     usd: priceData.usd,
                     eur: priceData.eur,
@@ -65,7 +69,7 @@ export function usePricePolling() {
 
                 if (pricesChanged) {
                     // Prices have changed - update the store
-                    updatePriceFetchingSettings({
+                    updatePriceFetchingSettingsRef.current({
                         lastFetched: priceData.timestamp,
                         cachedPrices: {
                             ...newPrices,
@@ -76,7 +80,7 @@ export function usePricePolling() {
                     logInfo(logger, "Prices updated in store - changes detected");
                 } else {
                     // Prices haven't changed - only update timestamp
-                    updatePriceFetchingSettings({
+                    updatePriceFetchingSettingsRef.current({
                         lastFetched: priceData.timestamp,
                     });
 
@@ -86,15 +90,16 @@ export function usePricePolling() {
         } catch (error) {
             logError(logger, "Failed to fetch and update prices", error as Error);
         }
-    }, [priceFetchingSettings, updatePriceFetchingSettings]);
+    }, []); // No dependencies - use refs for current values
 
     // Start polling function
     const startPolling = useCallback(() => {
-        if (!priceFetchingSettings) return;
+        const currentSettings = priceFetchingSettingsRef.current;
+        if (!currentSettings) return;
 
         logInfo(logger, "Starting price polling", {
             active: isGlobalPollingActive,
-            enabled: priceFetchingSettings.enabled,
+            enabled: currentSettings.enabled,
         });
 
         if (isGlobalPollingActive) {
@@ -102,27 +107,27 @@ export function usePricePolling() {
             return;
         }
 
-        if (!priceFetchingSettings.enabled) {
+        if (!currentSettings.enabled) {
             logWarning(logger, "Price fetching not enabled, skipping start");
             return;
         }
 
-        const pollIntervalMs = priceFetchingSettings.cacheTtl * 60 * 1000;
+        const pollIntervalMs = currentSettings.cacheTtl * 60 * 1000;
 
         logInfo(logger, "Starting price polling", {
-            intervalMinutes: priceFetchingSettings.cacheTtl,
+            intervalMinutes: currentSettings.cacheTtl,
         });
 
         isGlobalPollingActive = true;
 
         // Initial fetch
-        fetchAndUpdatePrices();
+        fetchAndUpdatePricesRef.current?.();
 
         // Set up interval
         globalPollingInterval = setInterval(() => {
-            fetchAndUpdatePrices();
+            fetchAndUpdatePricesRef.current?.();
         }, pollIntervalMs);
-    }, [priceFetchingSettings, fetchAndUpdatePrices]);
+    }, []); // No dependencies - use refs for current values
 
     // Stop polling function
     const stopPolling = useCallback(() => {
@@ -138,7 +143,14 @@ export function usePricePolling() {
             clearInterval(globalPollingInterval);
             globalPollingInterval = null;
         }
-    }, []);
+    }, []); // No dependencies - stable function
+
+    // Keep refs updated
+    useEffect(() => {
+        priceFetchingSettingsRef.current = priceFetchingSettings;
+        updatePriceFetchingSettingsRef.current = updatePriceFetchingSettings;
+        fetchAndUpdatePricesRef.current = fetchAndUpdatePrices;
+    }, [priceFetchingSettings, updatePriceFetchingSettings, fetchAndUpdatePrices]);
 
     // Effect to manage polling based on enabled state
     useEffect(() => {
@@ -161,21 +173,18 @@ export function usePricePolling() {
             } else {
                 logInfo(logger, "Stopping price polling from effect");
                 stopPolling();
-                // Clear cached prices when disabled
-                updatePriceFetchingSettings({
-                    cachedPrices: undefined,
-                    lastFetched: undefined,
-                });
+                // Clear cached prices when disabled - use a separate effect to avoid dependency loop
+                setTimeout(() => {
+                    updatePriceFetchingSettingsRef.current({
+                        cachedPrices: undefined,
+                        lastFetched: undefined,
+                    });
+                }, 0);
             }
         }
 
         previousEnabledRef.current = currentEnabled;
-    }, [
-        priceFetchingSettings,
-        startPolling,
-        stopPolling,
-        updatePriceFetchingSettings,
-    ]);
+    }, [priceFetchingSettings, startPolling, stopPolling]); // Include all dependencies
 
     // Cleanup on unmount
     useEffect(() => {
