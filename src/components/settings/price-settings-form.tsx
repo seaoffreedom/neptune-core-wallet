@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 import { usePriceConfig, useSetPriceConfig, usePriceData, useClearPriceCache } from '@/store/price.store';
 import { priceAPI } from '@/preload/api/price-api';
@@ -34,7 +34,6 @@ const priceSettingsSchema = z.object({
 type PriceSettingsFormData = z.infer<typeof priceSettingsSchema>;
 
 export function PriceSettingsForm() {
-    const { toast } = useToast();
     const config = usePriceConfig();
     const setConfig = useSetPriceConfig();
     const cachedPrices = usePriceData();
@@ -74,8 +73,7 @@ export function PriceSettingsForm() {
             const result = await priceAPI.updateConfig(data);
             
             if (result.success) {
-                toast({
-                    title: 'Price settings updated',
+                toast.success('Price settings updated', {
                     description: 'Your price fetching preferences have been saved.',
                 });
             } else {
@@ -83,10 +81,8 @@ export function PriceSettingsForm() {
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            toast({
-                title: 'Error updating settings',
+            toast.error('Error updating settings', {
                 description: errorMessage,
-                variant: 'destructive',
             });
         } finally {
             setIsSaving(false);
@@ -100,8 +96,7 @@ export function PriceSettingsForm() {
             const result = await priceAPI.refreshPrices();
             
             if (result.success) {
-                toast({
-                    title: 'Prices refreshed',
+                toast.success('Prices refreshed', {
                     description: 'Latest price data has been fetched from CoinGecko.',
                 });
             } else {
@@ -109,10 +104,8 @@ export function PriceSettingsForm() {
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            toast({
-                title: 'Error refreshing prices',
+            toast.error('Error refreshing prices', {
                 description: errorMessage,
-                variant: 'destructive',
             });
         } finally {
             setIsRefreshing(false);
@@ -126,8 +119,7 @@ export function PriceSettingsForm() {
             
             if (result.success) {
                 clearCache();
-                toast({
-                    title: 'Cache cleared',
+                toast.success('Cache cleared', {
                     description: 'Price cache has been cleared successfully.',
                 });
             } else {
@@ -135,10 +127,8 @@ export function PriceSettingsForm() {
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            toast({
-                title: 'Error clearing cache',
+            toast.error('Error clearing cache', {
                 description: errorMessage,
-                variant: 'destructive',
             });
         }
     };
