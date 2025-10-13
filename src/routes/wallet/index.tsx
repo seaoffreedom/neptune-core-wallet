@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { BalanceCard, QuickActions, RecentActivity } from "@/components/wallet";
+import { BalanceCard, QuickActions } from "@/components/wallet";
 import { CardSkeleton, TableSkeleton } from "@/components/ui/skeleton-enhanced";
 import { MempoolOverviewCompact } from "@/components/mempool";
 import { useOnchainStore } from "@/store/onchain.store";
@@ -19,9 +19,6 @@ function WalletOverview() {
         (state) => state.unconfirmedBalance,
     );
     const blockHeight = useOnchainStore((state) => state.blockHeight);
-    const transactionHistory = useOnchainStore(
-        (state) => state.transactionHistory,
-    );
 
     // Get mempool data
     const {
@@ -119,13 +116,6 @@ function WalletOverview() {
                             isRefreshing={isMempoolLoading}
                         />
 
-                        {/* Recent Activity */}
-                        <RecentActivity
-                            transactions={transactionHistory}
-                            blockHeight={blockHeight}
-                            confirmations={dashboardData?.confirmations}
-                            isLoading={false}
-                        />
                     </>
                 )}
 

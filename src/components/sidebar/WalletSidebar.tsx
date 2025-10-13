@@ -91,7 +91,7 @@ export function WalletSidebar() {
                       icon: Zap,
                       label: "Mining",
                       href: "/wallet/mining",
-                      badge: "Experiment",
+                      badge: "Experimental",
                   },
               ]
             : []),
@@ -307,8 +307,6 @@ export function WalletSidebar() {
                                 })}
                             </div>
                         </div>
-
-                        <Separator />
 
                         {/* Recent Transactions */}
                         {/* <div className="space-y-2">

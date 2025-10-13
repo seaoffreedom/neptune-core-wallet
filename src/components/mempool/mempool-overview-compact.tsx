@@ -298,37 +298,6 @@ export function MempoolOverviewCompact({
 
             <Separator />
 
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="space-y-2">
-                <h4 className="font-medium text-sm">Fee Economics</h4>
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <div>
-                    • <strong>Proof Collections:</strong> Higher fees (≥0.05
-                    NPT)
-                  </div>
-                  <div>
-                    • <strong>Single Proofs:</strong> Lower fees (0.02 NPT)
-                  </div>
-                  <div>
-                    • <strong>Direct inclusion:</strong> No third-party fees
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-medium text-sm">Block Structure</h4>
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <div>
-                    • <strong>One transaction per block</strong>
-                  </div>
-                  <div>
-                    • <strong>Throughput via merging</strong>
-                  </div>
-                  <div>
-                    • <strong>Privacy-preserving</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
@@ -721,42 +690,6 @@ export function MempoolOverviewCompact({
           </div>
         )}
 
-        {/* Neptune Mining Process Info */}
-        <Separator />
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Neptune Mining Process
-          </h4>
-          <div className="grid grid-cols-1 gap-2 text-xs">
-            <div className="flex items-center gap-2 p-2 rounded bg-muted/30">
-              <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-              <div>
-                <strong>Proof Upgrading:</strong> Proof Collections → Single
-                Proofs (≥0.05 NPT fee)
-              </div>
-            </div>
-            <div className="flex items-center gap-2 p-2 rounded bg-muted/30">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <div>
-                <strong>Composition:</strong> Single Proofs → Block Proofs
-                (composers include in blocks)
-              </div>
-            </div>
-            <div className="flex items-center gap-2 p-2 rounded bg-muted/30">
-              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-              <div>
-                <strong>Guessing:</strong> Proof-of-Work validation (miners
-                secure the blockchain)
-              </div>
-            </div>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            <strong>Key Insight:</strong> More powerful hardware = lower fees.
-            Users with 64GB+ RAM can generate Single Proofs locally and pay the
-            lowest fees.
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
