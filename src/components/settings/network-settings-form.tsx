@@ -8,7 +8,6 @@
 import type { UseFormReturn } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Form,
   FormControl,
   FormDescription,
   FormField,
@@ -26,28 +25,20 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import { BaseSettingsForm } from './base-settings-form';
+import { useFormLogger } from '@/lib/logger';
 import type { NetworkSettingsFormData } from '@/lib/validation/settings-schemas';
 import { useUpdateNetworkSettings } from '@/store/neptune-core-settings.store';
 
-interface NetworkSettingsFormProps {
-  form: UseFormReturn<NetworkSettingsFormData>;
-}
-
-export function NetworkSettingsForm({ form }: NetworkSettingsFormProps) {
+export function NetworkSettingsForm({ form }: { form: UseFormReturn<NetworkSettingsFormData> }) {
   const updateNetworkSettings = useUpdateNetworkSettings();
-
-  // Helper to update both form and Zustand
-  const handleFieldChange = (field: string, value: unknown) => {
-    // Update Zustand store immediately
-    updateNetworkSettings({
-      [field]: value,
-    } as Partial<NetworkSettingsFormData>);
-  };
+  const { fieldChange } = useFormLogger('network-settings');
 
   return (
-    <Form {...form}>
-      <form className="space-y-6">
-        {/* Basic Network Configuration */}
+    <BaseSettingsForm form={form} updateSettings={updateNetworkSettings}>
+      {(handleFieldChange) => (
+        <>
+          {/* Basic Network Configuration */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Basic Configuration</CardTitle>
@@ -64,6 +55,7 @@ export function NetworkSettingsForm({ form }: NetworkSettingsFormProps) {
                     onValueChange={(value) => {
                       field.onChange(value);
                       handleFieldChange('network', value);
+                      fieldChange('network', value);
                     }}
                     value={field.value}
                   >
@@ -307,7 +299,8 @@ export function NetworkSettingsForm({ form }: NetworkSettingsFormProps) {
             />
           </CardContent>
         </Card>
-      </form>
-    </Form>
+        </>
+      )}
+    </BaseSettingsForm>
   );
 }
