@@ -213,8 +213,17 @@ export function useCacheExpiryTime(): Date | null {
 
     if (!priceFetchingSettings?.lastFetched) return null;
 
+    const lastFetchedDate = typeof priceFetchingSettings.lastFetched === 'string' 
+        ? new Date(priceFetchingSettings.lastFetched) 
+        : priceFetchingSettings.lastFetched;
+    
+    // Check if the date is valid
+    if (Number.isNaN(lastFetchedDate.getTime())) {
+        return null;
+    }
+
     return new Date(
-        priceFetchingSettings.lastFetched.getTime() +
+        lastFetchedDate.getTime() +
             priceFetchingSettings.cacheTtl * 60 * 1000,
     );
 }

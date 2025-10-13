@@ -82,12 +82,21 @@ export async function fetchNeptunePrices(): Promise<PriceData | null> {
  * @returns boolean - True if cache is still valid
  */
 export function isPriceCacheValid(
-    lastFetched: Date,
+    lastFetched: Date | string,
     cacheTtlMinutes: number,
 ): boolean {
     const now = new Date();
+    const lastFetchedDate = typeof lastFetched === 'string' 
+        ? new Date(lastFetched) 
+        : lastFetched;
+    
+    // Check if the date is valid
+    if (Number.isNaN(lastFetchedDate.getTime())) {
+        return false;
+    }
+    
     const cacheExpiry = new Date(
-        lastFetched.getTime() + cacheTtlMinutes * 60 * 1000,
+        lastFetchedDate.getTime() + cacheTtlMinutes * 60 * 1000,
     );
     return now < cacheExpiry;
 }

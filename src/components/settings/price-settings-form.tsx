@@ -144,7 +144,7 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                                                     setCurrency(value);
                                                 }
                                             }}
-                                             value={field.value || "USD"}
+                                            value={field.value || "USD"}
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
