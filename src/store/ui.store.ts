@@ -61,6 +61,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Available currencies for price display
+export const AVAILABLE_CURRENCIES: Currency[] = [
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GBP', symbol: '£', name: 'British Pound' },
+];
+
 interface SidebarState {
   isOpen: boolean;
   variant: 'icon' | 'full';
@@ -70,12 +77,21 @@ interface NavigationState {
   lastClickedRoute: string | null;
 }
 
+export interface Currency {
+  code: string;
+  symbol: string;
+  name: string;
+}
+
 interface UIStore {
   // Sidebar state
   sidebar: SidebarState;
 
   // Navigation state
   navigation: NavigationState;
+
+  // Currency state
+  selectedCurrency: Currency;
 
   // Experimental features
   experimentalMode: boolean;
@@ -91,6 +107,9 @@ interface UIStore {
   // Navigation actions
   setLastClickedRoute: (route: string | null) => void;
   handleNavigationClick: (route: string, currentRoute: string) => boolean;
+
+  // Currency actions
+  setCurrency: (currencyCode: string) => void;
 
   // Experimental actions
   toggleExperimentalMode: () => void;
@@ -113,6 +132,9 @@ export const useUIStore = create<UIStore>()(
       navigation: {
         lastClickedRoute: null,
       },
+
+      // Initial currency state
+      selectedCurrency: AVAILABLE_CURRENCIES[0] || { code: 'USD', symbol: '$', name: 'US Dollar' }, // Default to USD
 
       // Initial experimental state
       experimentalMode: false,
@@ -170,6 +192,16 @@ export const useUIStore = create<UIStore>()(
         return true; // Should navigate
       },
 
+      // Currency actions
+      setCurrency: (currencyCode: string) => {
+        const newCurrency = AVAILABLE_CURRENCIES.find(
+          (c) => c.code === currencyCode
+        );
+        if (newCurrency) {
+          set({ selectedCurrency: newCurrency });
+        }
+      },
+
       // Experimental actions
       toggleExperimentalMode: () =>
         set((state) => ({
@@ -187,8 +219,16 @@ export const useUIStore = create<UIStore>()(
       partialize: (state) => ({
         sidebar: state.sidebar,
         navigation: state.navigation,
+        selectedCurrency: state.selectedCurrency,
         experimentalMode: state.experimentalMode,
       }),
     }
   )
 );
+
+// Selector hooks for currency
+export const useSelectedCurrency = () =>
+  useUIStore((state) => state.selectedCurrency);
+
+export const useSetCurrency = () =>
+  useUIStore((state) => state.setCurrency);

@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PriceDisplay } from '@/components/ui/price-display';
 import { Field } from '@/components/ui/field';
 import {
   Form,
@@ -43,7 +44,6 @@ import {
   InputGroupInput,
   InputGroupText,
 } from '@/components/ui/input-group';
-import { PriceDisplay } from '@/components/ui/price-display';
 import { Separator } from '@/components/ui/separator';
 import {
   useAddressValidation,
@@ -466,44 +466,52 @@ export function SendFormEnhanced() {
 
             {/* Total Summary */}
             <div className="p-4 bg-primary/5 rounded-lg space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Total Amount:</span>
-                <span className="font-mono font-semibold">
-                  {totalAmount.toFixed(2)} $NPT
-                </span>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Total Amount:</span>
+                  <span className="font-mono font-semibold">
+                    {totalAmount.toFixed(2)} $NPT
+                  </span>
+                </div>
+                <div className="flex justify-end">
+                  <PriceDisplay nptAmount={totalAmount} />
+                </div>
               </div>
               {fee > 0 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Fee:</span>
-                  <span className="font-mono">{fee.toFixed(2)} $NPT</span>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Fee:</span>
+                    <span className="font-mono">{fee.toFixed(2)} $NPT</span>
+                  </div>
+                  <div className="flex justify-end">
+                    <PriceDisplay nptAmount={fee} />
+                  </div>
                 </div>
               )}
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Grand Total:</span>
-                <div className="flex flex-col items-end">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Grand Total:</span>
                   <span className="font-mono font-bold text-lg">
                     {grandTotal.toFixed(2)} $NPT
                   </span>
-                  <PriceDisplay 
-                    nptAmount={grandTotal} 
-                    className="text-xs"
-                  />
+                </div>
+                <div className="flex justify-end">
+                  <PriceDisplay nptAmount={grandTotal} />
                 </div>
               </div>
               {confirmedBalance && (
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">
-                    Available Balance:
-                  </span>
-                  <div className="flex flex-col items-end">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">
+                      Available Balance:
+                    </span>
                     <span className="font-mono text-muted-foreground">
                       {parseFloat(confirmedBalance).toFixed(2)} $NPT
                     </span>
-                    <PriceDisplay 
-                      nptAmount={parseFloat(confirmedBalance)} 
-                      className="text-xs"
-                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <PriceDisplay nptAmount={parseFloat(confirmedBalance)} />
                   </div>
                 </div>
               )}

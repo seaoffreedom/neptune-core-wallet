@@ -6,6 +6,7 @@ import type {
   NeptuneCoreSettings,
   NetworkSettings,
   PerformanceSettings,
+  PriceFetchingSettings,
   SecuritySettings,
 } from '@/shared/types/neptune-core-settings';
 
@@ -22,6 +23,7 @@ interface NeptuneCoreSettingsState {
   updateSecuritySettings: (settings: Partial<SecuritySettings>) => void;
   updateDataSettings: (settings: Partial<DataSettings>) => void;
   updateAdvancedSettings: (settings: Partial<AdvancedSettings>) => void;
+  updatePriceFetchingSettings: (settings: Partial<PriceFetchingSettings>) => void;
 
   // Global actions
   loadSettings: () => Promise<void>;
@@ -125,6 +127,20 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
       console.log('🔧 Advanced settings updated:', newSettings);
     },
 
+    updatePriceFetchingSettings: (newSettings) => {
+      const { settings } = get();
+      if (!settings) return;
+
+      set({
+        settings: {
+          ...settings,
+          priceFetching: { ...settings.priceFetching, ...newSettings },
+        },
+      });
+
+      console.log('💰 Price fetching settings updated:', newSettings);
+    },
+
     // Load settings from IPC
     loadSettings: async () => {
       set({ isLoading: true, error: null });
@@ -226,6 +242,9 @@ export const useDataSettings = () =>
 export const useAdvancedSettings = () =>
   useNeptuneCoreSettingsStore((state) => state.settings?.advanced);
 
+export const usePriceFetchingSettings = () =>
+  useNeptuneCoreSettingsStore((state) => state.settings?.priceFetching);
+
 // Selector hooks for update actions
 export const useUpdateNetworkSettings = () =>
   useNeptuneCoreSettingsStore((state) => state.updateNetworkSettings);
@@ -244,6 +263,9 @@ export const useUpdateDataSettings = () =>
 
 export const useUpdateAdvancedSettings = () =>
   useNeptuneCoreSettingsStore((state) => state.updateAdvancedSettings);
+
+export const useUpdatePriceFetchingSettings = () =>
+  useNeptuneCoreSettingsStore((state) => state.updatePriceFetchingSettings);
 
 // Global action hooks
 export const useLoadSettings = () =>

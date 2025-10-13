@@ -105,6 +105,20 @@ export interface AdvancedSettings {
   blockNotifyCommand?: string; // Execute command when best block changes
 }
 
+// Price Fetching Settings
+export interface PriceFetchingSettings {
+  enabled: boolean;
+  currency: 'USD' | 'EUR' | 'GBP';
+  cacheTtl: number; // Cache TTL in minutes (1-60)
+  lastFetched?: Date;
+  cachedPrices?: {
+    usd: number;
+    eur: number;
+    gbp: number;
+    timestamp: Date;
+  };
+}
+
 // Complete Settings Structure
 export interface NeptuneCoreSettings {
   network: NetworkSettings;
@@ -113,6 +127,7 @@ export interface NeptuneCoreSettings {
   security: SecuritySettings;
   data: DataSettings;
   advanced: AdvancedSettings;
+  priceFetching: PriceFetchingSettings;
 }
 
 // Default values
@@ -178,6 +193,14 @@ export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
   blockNotifyCommand: undefined,
 };
 
+export const DEFAULT_PRICE_FETCHING_SETTINGS: PriceFetchingSettings = {
+  enabled: false,
+  currency: 'USD',
+  cacheTtl: 5, // 5 minutes default
+  lastFetched: undefined,
+  cachedPrices: undefined,
+};
+
 export const DEFAULT_NEPTUNE_CORE_SETTINGS: NeptuneCoreSettings = {
   network: DEFAULT_NETWORK_SETTINGS,
   mining: DEFAULT_MINING_SETTINGS,
@@ -185,4 +208,5 @@ export const DEFAULT_NEPTUNE_CORE_SETTINGS: NeptuneCoreSettings = {
   security: DEFAULT_SECURITY_SETTINGS,
   data: DEFAULT_DATA_SETTINGS,
   advanced: DEFAULT_ADVANCED_SETTINGS,
+  priceFetching: DEFAULT_PRICE_FETCHING_SETTINGS,
 };

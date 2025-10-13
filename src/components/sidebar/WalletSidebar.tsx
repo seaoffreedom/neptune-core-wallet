@@ -17,10 +17,10 @@ import {
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { PriceDisplay } from '@/components/ui/price-display';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PriceDisplay } from '@/components/ui/price-display';
 import { cn } from '@/lib/utils';
 import {
   useCurrentDifficulty,
@@ -115,29 +115,33 @@ export function WalletSidebar() {
                 Quick Stats
               </h3>
               <div className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Available</span>
-                  {isLoading ? (
-                    <Skeleton className="h-4 w-24" />
-                  ) : (
-                    <div className="flex flex-col items-end">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Available</span>
+                    {isLoading ? (
+                      <Skeleton className="h-4 w-24" />
+                    ) : (
                       <span className="font-mono">
                         {formatBalance(confirmedBalance)} $NPT
                       </span>
+                    )}
+                  </div>
+                  {!isLoading && confirmedBalance && (
+                    <div className="flex justify-end">
                       <PriceDisplay 
-                        nptAmount={parseFloat(confirmedBalance || '0')} 
-                        className="text-xs"
+                        nptAmount={parseFloat(confirmedBalance)} 
+                        isLoading={isLoading}
                       />
                     </div>
                   )}
                 </div>
                 {hasPending && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Pending</span>
-                    {isLoading ? (
-                      <Skeleton className="h-4 w-24" />
-                    ) : (
-                      <div className="flex flex-col items-end">
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Pending</span>
+                      {isLoading ? (
+                        <Skeleton className="h-4 w-24" />
+                      ) : (
                         <span className="font-mono text-warning">
                           {pendingAmount > 0 ? '+' : ''}
                           {formatBalance(pendingAmount.toString())} $NPT
@@ -147,9 +151,13 @@ export function WalletSidebar() {
                             )
                           </span>
                         </span>
+                      )}
+                    </div>
+                    {!isLoading && pendingAmount !== 0 && (
+                      <div className="flex justify-end">
                         <PriceDisplay 
                           nptAmount={Math.abs(pendingAmount)} 
-                          className="text-xs"
+                          isLoading={isLoading}
                         />
                       </div>
                     )}

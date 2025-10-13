@@ -6,7 +6,7 @@ import {
   Pickaxe,
   Settings2,
   Shield,
-  TrendingUp,
+  DollarSign,
 } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import {
@@ -55,16 +55,16 @@ function SettingsOverview() {
       href: '/settings/data',
     },
     {
-      icon: TrendingUp,
-      title: 'Price Settings',
-      description: 'Configure live price fetching and fiat currency display',
-      href: '/settings/price',
-    },
-    {
       icon: Settings2,
       title: 'Advanced',
       description: 'Development tools, debugging, and system notifications',
       href: '/settings/advanced',
+    },
+    {
+      icon: DollarSign,
+      title: 'Price & Currency',
+      description: 'Configure price fetching, currency display, and market data',
+      href: '/settings/price',
     },
   ];
 

@@ -92,13 +92,12 @@ export function UTXOSummaryCard({
           <div className="space-y-1">
             <div className="text-sm text-muted-foreground">Total UTXOs</div>
             <div className="text-2xl font-bold">{summary.totalCount}</div>
-            <div className="text-xs text-muted-foreground font-mono">
-              {formatBalance(summary.totalValue)} $NPT
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground font-mono">
+                {formatBalance(summary.totalValue)} $NPT
+              </div>
+              <PriceDisplay nptAmount={summary.totalValue} />
             </div>
-            <PriceDisplay 
-              nptAmount={summary.totalValue} 
-              className="text-xs"
-            />
           </div>
 
           {/* Confirmed */}
@@ -107,13 +106,12 @@ export function UTXOSummaryCard({
             <div className="text-2xl font-bold text-green-500">
               {summary.confirmedCount}
             </div>
-            <div className="text-xs text-muted-foreground font-mono">
-              {formatBalance(summary.confirmedValue)} $NPT
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground font-mono">
+                {formatBalance(summary.confirmedValue)} $NPT
+              </div>
+              <PriceDisplay nptAmount={summary.confirmedValue} />
             </div>
-            <PriceDisplay 
-              nptAmount={summary.confirmedValue} 
-              className="text-xs"
-            />
           </div>
 
           {/* Unconfirmed */}
@@ -123,13 +121,12 @@ export function UTXOSummaryCard({
               <div className="text-2xl font-bold text-warning">
                 {summary.unconfirmedCount}
               </div>
-              <div className="text-xs text-muted-foreground font-mono">
-                {formatBalance(summary.unconfirmedValue)} $NPT
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground font-mono">
+                  {formatBalance(summary.unconfirmedValue)} $NPT
+                </div>
+                <PriceDisplay nptAmount={summary.unconfirmedValue} />
               </div>
-              <PriceDisplay 
-                nptAmount={summary.unconfirmedValue} 
-                className="text-xs"
-              />
             </div>
           )}
 
@@ -140,13 +137,12 @@ export function UTXOSummaryCard({
               <div className="text-2xl font-bold">
                 {summary.timeLockedCount}
               </div>
-              <div className="text-xs text-muted-foreground font-mono">
-                {formatBalance(summary.timeLockedValue)} $NPT
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground font-mono">
+                  {formatBalance(summary.timeLockedValue)} $NPT
+                </div>
+                <PriceDisplay nptAmount={summary.timeLockedValue} />
               </div>
-              <PriceDisplay 
-                nptAmount={summary.timeLockedValue} 
-                className="text-xs"
-              />
             </div>
           )}
 

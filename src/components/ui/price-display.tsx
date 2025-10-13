@@ -1,154 +1,92 @@
 /**
  * Price Display Component
  *
- * Displays fiat price conversion for NPT amounts.
- * Shows price in the selected currency when price fetching is enabled.
+ * Reusable component that shows fiat price conversion for NPT amounts.
+ * Uses balance data from onchain store and price data from price fetching settings.
+ * Conditionally renders based on price fetching enabled state.
  */
 
-import { useEffect, useState } from 'react';
-import { usePriceDisplay, usePriceConfig, usePriceData } from '@/store/price.store';
-import { priceAPI } from '@/preload/api/price-api';
-import { Skeleton } from '@/components/ui/skeleton';
+import { usePriceFetchingSettings } from '@/store/neptune-core-settings.store';
+import { useSelectedCurrency } from '@/store/ui.store';
 
 interface PriceDisplayProps {
-    nptAmount: number;
-    currency?: 'usd' | 'eur' | 'gbp';
-    className?: string;
-    showCurrency?: boolean;
-    precision?: number;
+  /** NPT amount to convert to fiat */
+  nptAmount: number;
+  /** Additional CSS classes */
+  className?: string;
+  /** Whether to show loading state */
+  isLoading?: boolean;
 }
 
+/**
+ * PriceDisplay component for showing fiat conversions of NPT amounts
+ */
 export function PriceDisplay({ 
-    nptAmount, 
-    currency, 
-    className = '', 
-    showCurrency = true,
-    precision = 2 
+  nptAmount, 
+  className = '', 
+  isLoading = false 
 }: PriceDisplayProps) {
-    // Note: precision parameter is reserved for future use
-    void precision;
-    const config = usePriceConfig();
-    const cachedPrices = usePriceData();
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const { selectedCurrency } = useSelectedCurrency();
+  const priceFetchingSettings = usePriceFetchingSettings();
 
-    // Get formatted price from store
-    const formattedPrice = usePriceDisplay(nptAmount, currency);
+  // Don't render if price fetching is disabled
+  if (!priceFetchingSettings?.enabled) {
+    return null;
+  }
 
-    // Fetch prices if enabled and no cached data
-    useEffect(() => {
-        if (!config.enabled || cachedPrices || isLoading) return;
-
-        const fetchPrices = async () => {
-            setIsLoading(true);
-            setError(null);
-            
-            try {
-                const result = await priceAPI.getCurrentPrices();
-                if (!result.success) {
-                    setError(result.error || 'Failed to fetch prices');
-                }
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Unknown error');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchPrices();
-    }, [config.enabled, cachedPrices, isLoading]);
-
-    // Don't render if price fetching is disabled
-    if (!config.enabled) {
-        return null;
-    }
-
-    // Show loading skeleton
-    if (isLoading) {
-        return (
-            <Skeleton className={`h-4 w-16 ${className}`} />
-        );
-    }
-
-    // Show error state
-    if (error) {
-        return (
-            <span className={`text-xs text-muted-foreground ${className}`} title={error}>
-                Price unavailable
-            </span>
-        );
-    }
-
-    // Show formatted price
-    if (formattedPrice) {
-        const targetCurrency = currency || config.selectedCurrency;
-        const currencySymbol = showCurrency ? getCurrencySymbol(targetCurrency) : '';
-        
-        return (
-            <span className={`text-xs text-muted-foreground ${className}`}>
-                {currencySymbol}{formattedPrice}
-            </span>
-        );
-    }
-
-    // No price data available
+  // Don't render if loading
+  if (isLoading) {
     return (
-        <span className={`text-xs text-muted-foreground ${className}`}>
-            Price unavailable
-        </span>
+      <span className={`text-xs text-muted-foreground animate-pulse ${className}`}>
+        Loading...
+      </span>
     );
-}
+  }
 
-/**
- * Get currency symbol for display
- */
-function getCurrencySymbol(currency: 'usd' | 'eur' | 'gbp'): string {
-    switch (currency) {
-        case 'usd':
-            return '$';
-        case 'eur':
-            return '€';
-        case 'gbp':
-            return '£';
-        default:
-            return '';
-    }
-}
+  // Don't render if no amount or invalid amount
+  if (!nptAmount || nptAmount <= 0) {
+    return null;
+  }
 
-/**
- * Compact price display for small spaces
- */
-export function CompactPriceDisplay({ 
-    nptAmount, 
-    currency, 
-    className = '' 
-}: Omit<PriceDisplayProps, 'showCurrency' | 'precision'>) {
+  // Get cached prices
+  const cachedPrices = priceFetchingSettings.cachedPrices;
+
+  // Don't render if no cached prices
+  if (!cachedPrices) {
     return (
-        <PriceDisplay
-            nptAmount={nptAmount}
-            currency={currency}
-            className={className}
-            showCurrency={false}
-            precision={2}
-        />
+      <span className={`text-xs text-muted-foreground ${className}`}>
+        No price data
+      </span>
     );
-}
+  }
 
-/**
- * Full price display with currency symbol
- */
-export function FullPriceDisplay({ 
-    nptAmount, 
-    currency, 
-    className = '' 
-}: Omit<PriceDisplayProps, 'showCurrency' | 'precision'>) {
+  // Get the price for the selected currency
+  const priceKey = selectedCurrency.code.toLowerCase() as 'usd' | 'eur' | 'gbp';
+  const price = cachedPrices[priceKey];
+
+  // Don't render if no price for selected currency
+  if (!price || price <= 0) {
     return (
-        <PriceDisplay
-            nptAmount={nptAmount}
-            currency={currency}
-            className={className}
-            showCurrency={true}
-            precision={2}
-        />
+      <span className={`text-xs text-muted-foreground ${className}`}>
+        No {selectedCurrency.code} price
+      </span>
     );
+  }
+
+  // Calculate fiat amount
+  const fiatAmount = nptAmount * price;
+
+  // Format the amount
+  const formatted = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: selectedCurrency.code,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(fiatAmount);
+
+  return (
+    <span className={`text-xs text-muted-foreground ${className}`}>
+      {formatted}
+    </span>
+  );
 }
