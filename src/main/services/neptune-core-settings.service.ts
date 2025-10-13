@@ -8,13 +8,7 @@
 import Store from 'electron-store';
 import pino from 'pino';
 import type {
-  AdvancedSettings,
-  DataSettings,
-  MiningSettings,
   NeptuneCoreSettings,
-  NetworkSettings,
-  PerformanceSettings,
-  SecuritySettings,
 } from '@/shared/types/neptune-core-settings';
 
 // Logger
@@ -28,6 +22,7 @@ import {
   DEFAULT_NETWORK_SETTINGS,
   DEFAULT_PERFORMANCE_SETTINGS,
   DEFAULT_SECURITY_SETTINGS,
+  DEFAULT_PRICE_FETCHING_SETTINGS,
 } from '@/shared/types/neptune-core-settings';
 
 // Store schema
@@ -234,7 +229,8 @@ export class NeptuneCoreSettingsService {
         !settings.performance ||
         !settings.security ||
         !settings.data ||
-        !settings.advanced
+        !settings.advanced ||
+        !settings.priceFetching
       ) {
         throw new Error('Invalid settings structure');
       }
@@ -255,6 +251,10 @@ export class NeptuneCoreSettingsService {
         advanced: {
           ...DEFAULT_ADVANCED_SETTINGS,
           ...settings.advanced,
+        },
+        priceFetching: {
+          ...DEFAULT_PRICE_FETCHING_SETTINGS,
+          ...settings.priceFetching,
         },
       };
 

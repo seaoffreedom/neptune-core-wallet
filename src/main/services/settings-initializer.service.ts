@@ -39,7 +39,8 @@ export class SettingsInitializerService {
         existingSettings?.performance &&
         existingSettings?.security &&
         existingSettings?.data &&
-        existingSettings?.advanced;
+        existingSettings?.advanced &&
+        existingSettings?.priceFetching;
 
       if (!hasValidSettings) {
         logger.info('No valid settings found, initializing with defaults...');

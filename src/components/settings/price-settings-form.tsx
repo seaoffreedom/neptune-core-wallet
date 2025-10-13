@@ -37,7 +37,7 @@ import {
     useUpdatePriceFetchingSettings,
 } from "@/store/neptune-core-settings.store";
 import {
-    useSelectedCurrency,
+    useSelectedCurrencySafe,
     useSetCurrency,
     AVAILABLE_CURRENCIES,
 } from "@/store/ui.store";
@@ -56,7 +56,7 @@ interface PriceSettingsFormProps {
 export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
     const priceFetchingSettings = usePriceFetchingSettings();
     const updatePriceFetchingSettings = useUpdatePriceFetchingSettings();
-    const { selectedCurrency } = useSelectedCurrency();
+    const selectedCurrency = useSelectedCurrencySafe();
     const setCurrency = useSetCurrency();
     const { isPollingActive, fetchAndUpdatePrices } = usePricePolling();
     const isCacheValid = useIsPriceCacheValid();
@@ -73,7 +73,7 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
         });
 
         // Update UI currency if different
-        if (selectedCurrency?.code !== data.currency) {
+        if (selectedCurrency.code !== data.currency) {
             setCurrency(data.currency);
         }
     };

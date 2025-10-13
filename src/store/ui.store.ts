@@ -235,3 +235,9 @@ export const useSelectedCurrency = () =>
     useUIStore((state) => state.selectedCurrency);
 
 export const useSetCurrency = () => useUIStore((state) => state.setCurrency);
+
+// Hook to get currency with fallback
+export const useSelectedCurrencySafe = () => {
+    const currency = useSelectedCurrency();
+    return currency || AVAILABLE_CURRENCIES[0];
+};

@@ -7,7 +7,7 @@
  */
 
 import { usePriceFetchingSettings } from "@/store/neptune-core-settings.store";
-import { useSelectedCurrency } from "@/store/ui.store";
+import { useSelectedCurrencySafe } from "@/store/ui.store";
 
 interface PriceDisplayProps {
     /** NPT amount to convert to fiat */
@@ -26,7 +26,7 @@ export function PriceDisplay({
     className = "",
     isLoading = false,
 }: PriceDisplayProps) {
-    const { selectedCurrency } = useSelectedCurrency();
+    const selectedCurrency = useSelectedCurrencySafe();
     const priceFetchingSettings = usePriceFetchingSettings();
 
     // Don't render if price fetching is disabled
@@ -62,13 +62,9 @@ export function PriceDisplay({
         );
     }
 
-    // Don't render if no selected currency
+    // Don't render if no selected currency (should not happen with safe hook)
     if (!selectedCurrency?.code) {
-        return (
-            <span className={`text-xs text-muted-foreground ${className}`}>
-                No currency selected
-            </span>
-        );
+        return null;
     }
 
     // Get the price for the selected currency
