@@ -15,6 +15,7 @@ import type {
   MiningSettings,
   NetworkSettings,
   PerformanceSettings,
+  PriceFetchingSettings,
   SecuritySettings,
 } from '@/shared/types/neptune-core-settings';
 
@@ -24,7 +25,8 @@ type SettingsCategory =
   | 'performance'
   | 'security'
   | 'data'
-  | 'advanced';
+  | 'advanced'
+  | 'priceFetching';
 
 type CategorySettingsMap = {
   network: NetworkSettings;
@@ -33,6 +35,7 @@ type CategorySettingsMap = {
   security: SecuritySettings;
   data: DataSettings;
   advanced: AdvancedSettings;
+  priceFetching: PriceFetchingSettings;
 };
 
 interface UseSettingsFormOptions<T extends FieldValues> {
