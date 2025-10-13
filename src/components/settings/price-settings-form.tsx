@@ -25,7 +25,6 @@ import type { PriceSettingsFormProps } from "@/shared/types/settings-forms";
 import { DollarSign, RefreshCw } from "lucide-react";
 import { rendererLoggers, logInfo } from "@/renderer/utils/logger";
 
-
 export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
     const priceFetchingSettings = usePriceFetchingSettings();
     const updatePriceFetchingSettings = useUpdatePriceFetchingSettings();
@@ -56,7 +55,7 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                         <DollarSign className="h-5 w-5" />
                         <span className="font-medium">Price Fetching</span>
                     </div>
-                    
+
                     <SettingsFormFields.Switch
                         form={form}
                         name="enabled"
@@ -71,9 +70,9 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                         label="Display Currency"
                         description="Currency to display for price conversions"
                         placeholder="Select currency"
-                        options={AVAILABLE_CURRENCIES.map(currency => ({
+                        options={AVAILABLE_CURRENCIES.map((currency) => ({
                             value: currency.code,
-                            label: `${currency.symbol} ${currency.name} (${currency.code})`
+                            label: `${currency.symbol} ${currency.name} (${currency.code})`,
                         }))}
                         updateSettings={updatePriceFetchingSettings}
                         onValueChange={(value) => {
@@ -101,9 +100,9 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                         updateSettings={(settings) => {
                             // Convert string value to number for cacheTtl
                             const cacheTtlValue = settings.cacheTtl;
-                            if (typeof cacheTtlValue === 'string') {
+                            if (typeof cacheTtlValue === "string") {
                                 updatePriceFetchingSettings({
-                                    cacheTtl: parseInt(cacheTtlValue)
+                                    cacheTtl: parseInt(cacheTtlValue),
                                 });
                             } else {
                                 updatePriceFetchingSettings(settings);

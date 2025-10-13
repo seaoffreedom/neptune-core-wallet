@@ -21,7 +21,13 @@ export interface BaseSettingsFormProps<T extends Record<string, unknown>> {
 /**
  * Common form field types
  */
-export type FormFieldType = "text" | "number" | "email" | "password" | "url" | "tel";
+export type FormFieldType =
+    | "text"
+    | "number"
+    | "email"
+    | "password"
+    | "url"
+    | "tel";
 
 /**
  * Common validation rules
@@ -87,7 +93,8 @@ export interface SettingsValidationResult {
 /**
  * Base props for all settings form components
  */
-export interface SettingsFormProps<T extends BaseSettings> extends BaseSettingsFormProps<T> {
+export interface SettingsFormProps<T extends BaseSettings>
+    extends BaseSettingsFormProps<T> {
     className?: string;
     onSubmit?: (data: T) => void | Promise<void>;
     onReset?: () => void;
@@ -200,7 +207,8 @@ export type RequireFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
 /**
  * Make specific properties optional
  */
-export type OptionalFields<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type OptionalFields<T, K extends keyof T> = Omit<T, K> &
+    Partial<Pick<T, K>>;
 
 /**
  * Extract the value type from a record

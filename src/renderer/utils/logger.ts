@@ -135,3 +135,102 @@ export const rendererLoggers = {
  * Default renderer logger
  */
 export const logger = rendererLoggers.app;
+
+// ============================================================================
+// Logging Helper Functions
+// ============================================================================
+
+/**
+ * Helper function to log with context
+ */
+export function logWithContext(
+    logger: RendererLogger,
+    level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal',
+    message: string,
+    context?: LogData,
+): void {
+    if (context) {
+        logger[level](context, message);
+    } else {
+        logger[level](message);
+    }
+}
+
+/**
+ * Performance logging helper
+ */
+export function logPerformance(
+    logger: RendererLogger,
+    operation: string,
+    duration: number,
+    context?: LogData,
+): void {
+    logWithContext(logger, 'info', `Performance: ${operation}`, {
+        operation,
+        duration: `${duration}ms`,
+        ...context,
+    });
+}
+
+/**
+ * Error logging helper with stack trace
+ */
+export function logError(
+    logger: RendererLogger,
+    message: string,
+    error: Error,
+    context?: LogData,
+): void {
+    logWithContext(logger, 'error', message, {
+        error: {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+        },
+        ...context,
+    });
+}
+
+/**
+ * Success logging helper
+ */
+export function logSuccess(
+    logger: RendererLogger,
+    message: string,
+    context?: LogData,
+): void {
+    logWithContext(logger, 'info', `✅ ${message}`, context);
+}
+
+/**
+ * Warning logging helper
+ */
+export function logWarning(
+    logger: RendererLogger,
+    message: string,
+    context?: LogData,
+): void {
+    logWithContext(logger, 'warn', `⚠️ ${message}`, context);
+}
+
+/**
+ * Info logging helper
+ */
+export function logInfo(
+    logger: RendererLogger,
+    message: string,
+    context?: LogData,
+): void {
+    logWithContext(logger, 'info', `ℹ️ ${message}`, context);
+}
+
+/**
+ * Debug logging helper
+ */
+export function logDebug(
+    logger: RendererLogger,
+    message: string,
+    context?: LogData,
+): void {
+    logWithContext(logger, 'debug', `🔍 ${message}`, context);
+}

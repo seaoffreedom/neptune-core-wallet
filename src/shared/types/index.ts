@@ -6,11 +6,11 @@
  */
 
 // Common types
-export * from './common';
+export * from "./common";
 
 // Settings forms types
-export * from './settings-forms';
+export * from "./settings-forms";
 
 // Existing types
-export * from './neptune-core-settings';
-export * from './api-types';
+export * from "./neptune-core-settings";
+export * from "./api-types";

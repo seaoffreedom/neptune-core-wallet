@@ -327,37 +327,44 @@ export interface PriceSettingsFormData {
 /**
  * Network settings form props
  */
-export interface NetworkSettingsFormProps extends BaseSettingsFormProps<NetworkSettingsFormData> {}
+export interface NetworkSettingsFormProps
+    extends BaseSettingsFormProps<NetworkSettingsFormData> {}
 
 /**
  * Mining settings form props
  */
-export interface MiningSettingsFormProps extends BaseSettingsFormProps<MiningSettingsFormData> {}
+export interface MiningSettingsFormProps
+    extends BaseSettingsFormProps<MiningSettingsFormData> {}
 
 /**
  * Performance settings form props
  */
-export interface PerformanceSettingsFormProps extends BaseSettingsFormProps<PerformanceSettingsFormData> {}
+export interface PerformanceSettingsFormProps
+    extends BaseSettingsFormProps<PerformanceSettingsFormData> {}
 
 /**
  * Security settings form props
  */
-export interface SecuritySettingsFormProps extends BaseSettingsFormProps<SecuritySettingsFormData> {}
+export interface SecuritySettingsFormProps
+    extends BaseSettingsFormProps<SecuritySettingsFormData> {}
 
 /**
  * Data settings form props
  */
-export interface DataSettingsFormProps extends BaseSettingsFormProps<DataSettingsFormData> {}
+export interface DataSettingsFormProps
+    extends BaseSettingsFormProps<DataSettingsFormData> {}
 
 /**
  * Advanced settings form props
  */
-export interface AdvancedSettingsFormProps extends BaseSettingsFormProps<AdvancedSettingsFormData> {}
+export interface AdvancedSettingsFormProps
+    extends BaseSettingsFormProps<AdvancedSettingsFormData> {}
 
 /**
  * Price settings form props
  */
-export interface PriceSettingsFormProps extends BaseSettingsFormProps<PriceSettingsFormData> {}
+export interface PriceSettingsFormProps
+    extends BaseSettingsFormProps<PriceSettingsFormData> {}
 
 // ============================================================================
 // Settings Form Component Types
@@ -366,7 +373,7 @@ export interface PriceSettingsFormProps extends BaseSettingsFormProps<PriceSetti
 /**
  * All settings form data types union
  */
-export type AllSettingsFormData = 
+export type AllSettingsFormData =
     | NetworkSettingsFormData
     | MiningSettingsFormData
     | PerformanceSettingsFormData
@@ -378,7 +385,7 @@ export type AllSettingsFormData =
 /**
  * All settings form props types union
  */
-export type AllSettingsFormProps = 
+export type AllSettingsFormProps =
     | NetworkSettingsFormProps
     | MiningSettingsFormProps
     | PerformanceSettingsFormProps
@@ -420,7 +427,8 @@ export interface SettingsFormPropsMap {
 /**
  * Extract form data type from form props
  */
-export type ExtractFormData<T> = T extends BaseSettingsFormProps<infer U> ? U : never;
+export type ExtractFormData<T> =
+    T extends BaseSettingsFormProps<infer U> ? U : never;
 
 /**
  * Create form props type from form data
@@ -435,9 +443,11 @@ export type SettingsCategory = keyof SettingsFormDataMap;
 /**
  * Get form data type by category
  */
-export type GetFormDataByCategory<T extends SettingsCategory> = SettingsFormDataMap[T];
+export type GetFormDataByCategory<T extends SettingsCategory> =
+    SettingsFormDataMap[T];
 
 /**
  * Get form props type by category
  */
-export type GetFormPropsByCategory<T extends SettingsCategory> = SettingsFormPropsMap[T];
+export type GetFormPropsByCategory<T extends SettingsCategory> =
+    SettingsFormPropsMap[T];
