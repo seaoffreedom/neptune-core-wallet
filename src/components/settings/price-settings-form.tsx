@@ -5,7 +5,6 @@
  * currency selection, and cache TTL configuration.
  */
 
-import type { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { BaseSettingsForm, SettingsFormFields } from "./base-settings-form";
 import {
@@ -22,13 +21,10 @@ import {
     useIsPriceCacheValid,
     useCacheExpiryTime,
 } from "@/hooks/use-price-polling";
-import type { PriceSettingsFormData } from "@/lib/validation/settings-schemas";
+import type { PriceSettingsFormProps } from "@/shared/types/settings-forms";
 import { DollarSign, RefreshCw } from "lucide-react";
 import { rendererLoggers, logInfo } from "@/renderer/utils/logger";
 
-interface PriceSettingsFormProps {
-    form: ReturnType<typeof useForm<PriceSettingsFormData>>;
-}
 
 export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
     const priceFetchingSettings = usePriceFetchingSettings();

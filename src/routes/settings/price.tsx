@@ -6,13 +6,7 @@ import { useSettingsForm } from "@/renderer/hooks/use-settings-form";
 import { usePriceFetchingSettings } from "@/store/neptune-core-settings.store";
 import { PriceSettingsForm } from "@/components/settings/price-settings-form";
 import { priceSettingsSchema } from "@/lib/validation/settings-schemas";
-
-// Form data interface
-interface PriceSettingsFormData {
-    enabled: boolean;
-    currency: "USD" | "EUR" | "GBP";
-    cacheTtl: number;
-}
+import type { PriceSettingsFormData } from "@/shared/types/settings-forms";
 
 export const Route = createFileRoute("/settings/price")({
     component: PriceSettings,
