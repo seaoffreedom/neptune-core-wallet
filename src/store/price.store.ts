@@ -178,6 +178,7 @@ export const useSetPriceConfig = () => usePriceStore((state) => state.setConfig)
 export const useSetCachedPrices = () => usePriceStore((state) => state.setCachedPrices);
 export const useSetPriceLoading = () => usePriceStore((state) => state.setLoading);
 export const useSetPriceError = () => usePriceStore((state) => state.setError);
+export const useSetLastFetchAttempt = () => usePriceStore((state) => state.setLastFetchAttempt);
 export const useClearPriceCache = () => usePriceStore((state) => state.clearCache);
 
 // Utility hooks
