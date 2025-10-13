@@ -6,10 +6,14 @@ import { SidebarWrapper } from '@/components/layout/SidebarWrapper';
 import { SplashScreen } from '@/components/splash/SplashScreen';
 import { Toaster } from '@/components/ui/sonner';
 import { useAutoPolling } from '@/renderer/hooks/use-onchain-data';
+import { usePricePolling } from '@/renderer/hooks/use-price-polling';
 
 const MainApp = () => {
   // Start auto-polling blockchain data every 10 seconds
   useAutoPolling(10000);
+  
+  // Start price polling for live price updates
+  usePricePolling();
 
   return (
     <div className="h-screen flex flex-col">

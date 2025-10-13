@@ -11,6 +11,7 @@ export { fileAPI } from './file-api';
 export { neptuneAPI } from './neptune-api';
 export { neptuneCoreSettingsAPI } from './neptune-core-settings-api';
 export { peerAPI } from './peer-api';
+export { priceAPI } from './price-api';
 export { processAPI } from './process-api';
 export { settingsAPI } from './settings-api';
 export { systemAPI } from './system-api';

@@ -208,7 +208,9 @@ export class NeptuneProcessManager {
             await access(corePath);
             logger.debug(`Binary validation successful: ${corePath}`);
         } catch (error) {
-            throw new Error(`neptune-core binary not found at ${corePath}: ${error}`);
+            throw new Error(
+                `neptune-core binary not found at ${corePath}: ${error}`,
+            );
         }
 
         // Validate neptune-cli binary
@@ -216,7 +218,9 @@ export class NeptuneProcessManager {
             await access(cliPath);
             logger.debug(`Binary validation successful: ${cliPath}`);
         } catch (error) {
-            throw new Error(`neptune-cli binary not found at ${cliPath}: ${error}`);
+            throw new Error(
+                `neptune-cli binary not found at ${cliPath}: ${error}`,
+            );
         }
 
         logger.info("All required binaries validated successfully");
@@ -304,19 +308,20 @@ export class NeptuneProcessManager {
             logger.info("Starting Neptune initialization sequence...");
 
             // Wrap entire initialization in a timeout
-            await pTimeout(
-                this.performInitialization(),
-                {
-                    milliseconds: 120000, // 2 minutes total timeout
-                }
-            );
+            await pTimeout(this.performInitialization(), {
+                milliseconds: 120000, // 2 minutes total timeout
+            });
 
             logger.info("Neptune initialization completed successfully");
         } catch (error) {
             if (error instanceof Error && error.name === "TimeoutError") {
-                logger.error("Neptune initialization timed out after 2 minutes");
+                logger.error(
+                    "Neptune initialization timed out after 2 minutes",
+                );
                 await this.shutdown();
-                throw new Error("Initialization timeout - processes may be unresponsive");
+                throw new Error(
+                    "Initialization timeout - processes may be unresponsive",
+                );
             }
             logger.error({ error }, "Neptune initialization failed");
             await this.shutdown();
@@ -395,12 +400,16 @@ export class NeptuneProcessManager {
 
             // Handle process events
             this.coreProcess.on("error", (error) => {
-                logger.error({ 
-                    error: error.message,
-                    binaryPath,
-                    args: args.join(" "),
-                    suggestion: "Check if neptune-core binary is executable and has required dependencies"
-                }, "neptune-core process error");
+                logger.error(
+                    {
+                        error: error.message,
+                        binaryPath,
+                        args: args.join(" "),
+                        suggestion:
+                            "Check if neptune-core binary is executable and has required dependencies",
+                    },
+                    "neptune-core process error",
+                );
             });
 
             this.coreProcess.on("exit", (code, signal) => {
@@ -464,14 +473,14 @@ export class NeptuneProcessManager {
         logger.info("Waiting for neptune-core to be ready...");
 
         const binaryPath = BINARY_PATHS.NEPTUNE_CLI;
-        
+
         // Get the actual RPC port that neptune-core is configured to use
         const settings = neptuneCoreSettingsService.getAll();
         const actualCoreRpcPort = settings.network.rpcPort;
-        
+
         logger.info(
             { coreRpcPort: actualCoreRpcPort },
-            "Waiting for neptune-core to be ready on configured RPC port"
+            "Waiting for neptune-core to be ready on configured RPC port",
         );
 
         return pRetry(
@@ -525,19 +534,19 @@ export class NeptuneProcessManager {
         logger.info("Starting neptune-cli in RPC mode...");
 
         const binaryPath = BINARY_PATHS.NEPTUNE_CLI;
-        
+
         // Get the actual RPC port that neptune-core is configured to use
         const settings = neptuneCoreSettingsService.getAll();
         const actualCoreRpcPort = settings.network.rpcPort;
-        
+
         logger.info(
-            { 
+            {
                 coreRpcPort: actualCoreRpcPort,
-                cliRpcPort: this.config.cli.rpcPort 
+                cliRpcPort: this.config.cli.rpcPort,
             },
-            "Configuring neptune-cli to connect to neptune-core"
+            "Configuring neptune-cli to connect to neptune-core",
         );
-        
+
         const args = [
             "--port",
             actualCoreRpcPort.toString(), // Connect to neptune-core's actual RPC port

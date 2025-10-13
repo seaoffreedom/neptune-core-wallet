@@ -148,6 +148,13 @@ export const IPC_CHANNELS = {
   NEPTUNE_SETTINGS_RESET_TO_DEFAULTS: 'neptune-settings:reset-to-defaults',
   NEPTUNE_SETTINGS_EXPORT: 'neptune-settings:export',
   NEPTUNE_SETTINGS_IMPORT: 'neptune-settings:import',
+
+  // Price Fetching
+  PRICE_GET_CURRENT: 'price:get-current',
+  PRICE_REFRESH: 'price:refresh',
+  PRICE_GET_CONFIG: 'price:get-config',
+  PRICE_UPDATE_CONFIG: 'price:update-config',
+  PRICE_CLEAR_CACHE: 'price:clear-cache',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

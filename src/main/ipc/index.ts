@@ -28,6 +28,10 @@ import {
     cleanupNeptuneCoreSettingsHandlers,
     registerNeptuneCoreSettingsHandlers,
 } from "./handlers/neptune-core-settings-handlers";
+import {
+    registerPriceHandlers,
+    unregisterPriceHandlers,
+} from "./handlers/price-handlers";
 // Worker handlers temporarily disabled
 // import {
 //     registerWorkerHandlers,
@@ -78,6 +82,7 @@ export function registerAllHandlers() {
     registerAddressBookHandlers();
     registerNeptuneCoreSettingsHandlers();
     registerPeerHandlers();
+    registerPriceHandlers();
     registerSystemHandlers();
 
     logger.info("All IPC handlers registered successfully");
@@ -100,6 +105,7 @@ export function unregisterAllHandlers() {
     unregisterBlockchainHandlers();
     unregisterAddressBookHandlers();
     cleanupNeptuneCoreSettingsHandlers();
+    unregisterPriceHandlers();
     unregisterSystemHandlers();
 
     logger.info("All IPC handlers unregistered successfully");

@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PriceDisplay } from '@/components/ui/price-display';
 import { cn } from '@/lib/utils';
 import {
   useCurrentDifficulty,
@@ -119,9 +120,15 @@ export function WalletSidebar() {
                   {isLoading ? (
                     <Skeleton className="h-4 w-24" />
                   ) : (
-                    <span className="font-mono">
-                      {formatBalance(confirmedBalance)} $NPT
-                    </span>
+                    <div className="flex flex-col items-end">
+                      <span className="font-mono">
+                        {formatBalance(confirmedBalance)} $NPT
+                      </span>
+                      <PriceDisplay 
+                        nptAmount={parseFloat(confirmedBalance || '0')} 
+                        className="text-xs"
+                      />
+                    </div>
                   )}
                 </div>
                 {hasPending && (
@@ -130,15 +137,21 @@ export function WalletSidebar() {
                     {isLoading ? (
                       <Skeleton className="h-4 w-24" />
                     ) : (
-                      <span className="font-mono text-warning">
-                        {pendingAmount > 0 ? '+' : ''}
-                        {formatBalance(pendingAmount.toString())} $NPT
-                        <span className="text-xs ml-1">
-                          ({dashboardData?.mempool_own_tx_count || 0} tx
-                          {dashboardData?.mempool_own_tx_count !== 1 ? 's' : ''}
-                          )
+                      <div className="flex flex-col items-end">
+                        <span className="font-mono text-warning">
+                          {pendingAmount > 0 ? '+' : ''}
+                          {formatBalance(pendingAmount.toString())} $NPT
+                          <span className="text-xs ml-1">
+                            ({dashboardData?.mempool_own_tx_count || 0} tx
+                            {dashboardData?.mempool_own_tx_count !== 1 ? 's' : ''}
+                            )
+                          </span>
                         </span>
-                      </span>
+                        <PriceDisplay 
+                          nptAmount={Math.abs(pendingAmount)} 
+                          className="text-xs"
+                        />
+                      </div>
                     )}
                   </div>
                 )}

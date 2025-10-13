@@ -6,6 +6,7 @@ import {
   Pickaxe,
   Settings2,
   Shield,
+  TrendingUp,
 } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import {
@@ -52,6 +53,12 @@ function SettingsOverview() {
       title: 'Data & Storage',
       description: 'Data directories, block imports, and validation settings',
       href: '/settings/data',
+    },
+    {
+      icon: TrendingUp,
+      title: 'Price Settings',
+      description: 'Configure live price fetching and fiat currency display',
+      href: '/settings/price',
     },
     {
       icon: Settings2,

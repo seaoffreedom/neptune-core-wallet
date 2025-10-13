@@ -19,6 +19,7 @@ import {
   neptuneAPI,
   neptuneCoreSettingsAPI,
   peerAPI,
+  priceAPI,
   processAPI,
   settingsAPI,
   systemAPI,
@@ -102,6 +103,9 @@ const electronAPI: ElectronAPI = {
 
   // Peer management - expose as nested object
   peer: peerAPI,
+
+  // Price fetching - expose as nested object
+  price: priceAPI,
 
   // System resource monitoring - expose as nested object
   system: systemAPI,

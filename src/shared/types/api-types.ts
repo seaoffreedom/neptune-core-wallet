@@ -771,6 +771,33 @@ export interface ElectronAPI {
     validate: (address: string) => Promise<boolean>;
   };
 
+  // Price fetching
+  price: {
+    getCurrentPrices: () => Promise<{
+      success: boolean;
+      prices?: import('../../main/services/price-fetcher.service').CachedPriceData;
+      error?: string;
+    }>;
+    refreshPrices: () => Promise<{
+      success: boolean;
+      prices?: import('../../main/services/price-fetcher.service').CachedPriceData;
+      error?: string;
+    }>;
+    getConfig: () => Promise<{
+      success: boolean;
+      config?: import('../../main/services/price-fetcher.service').PriceFetchingConfig;
+      error?: string;
+    }>;
+    updateConfig: (config: Partial<import('../../main/services/price-fetcher.service').PriceFetchingConfig>) => Promise<{
+      success: boolean;
+      error?: string;
+    }>;
+    clearCache: () => Promise<{
+      success: boolean;
+      error?: string;
+    }>;
+  };
+
   // System resource monitoring
   system: {
     getResourceStats: () => Promise<{

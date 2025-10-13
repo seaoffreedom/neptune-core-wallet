@@ -6,6 +6,7 @@
 
 import { Info } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { PriceDisplay } from '@/components/ui/price-display';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -94,6 +95,10 @@ export function UTXOSummaryCard({
             <div className="text-xs text-muted-foreground font-mono">
               {formatBalance(summary.totalValue)} $NPT
             </div>
+            <PriceDisplay 
+              nptAmount={summary.totalValue} 
+              className="text-xs"
+            />
           </div>
 
           {/* Confirmed */}
@@ -105,6 +110,10 @@ export function UTXOSummaryCard({
             <div className="text-xs text-muted-foreground font-mono">
               {formatBalance(summary.confirmedValue)} $NPT
             </div>
+            <PriceDisplay 
+              nptAmount={summary.confirmedValue} 
+              className="text-xs"
+            />
           </div>
 
           {/* Unconfirmed */}
@@ -117,6 +126,10 @@ export function UTXOSummaryCard({
               <div className="text-xs text-muted-foreground font-mono">
                 {formatBalance(summary.unconfirmedValue)} $NPT
               </div>
+              <PriceDisplay 
+                nptAmount={summary.unconfirmedValue} 
+                className="text-xs"
+              />
             </div>
           )}
 
@@ -130,6 +143,10 @@ export function UTXOSummaryCard({
               <div className="text-xs text-muted-foreground font-mono">
                 {formatBalance(summary.timeLockedValue)} $NPT
               </div>
+              <PriceDisplay 
+                nptAmount={summary.timeLockedValue} 
+                className="text-xs"
+              />
             </div>
           )}
 
