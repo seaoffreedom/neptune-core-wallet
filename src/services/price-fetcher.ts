@@ -5,9 +5,14 @@
  * Provides a simple interface for price data retrieval with error handling.
  */
 
+import { loggers, logInfo, logError } from "@/shared/utils/logger";
+
 // CoinGecko API configuration
 const COINGECKO_API_BASE = "https://api.coingecko.com/api/v3";
 const NEPTUNE_COIN_ID = "neptune-cash";
+
+// Logger for price fetching operations
+const logger = loggers.price;
 
 // Price data interface
 export interface PriceData {
@@ -34,7 +39,7 @@ export async function fetchNeptunePrices(): Promise<PriceData | null> {
     try {
         const url = `${COINGECKO_API_BASE}/simple/price?ids=${NEPTUNE_COIN_ID}&vs_currencies=usd,eur,gbp`;
 
-        console.log(`💰 Fetching Neptune prices from: ${url}`);
+        logInfo(logger, "Fetching Neptune prices", { url });
 
         const response = await fetch(url, {
             method: "GET",
@@ -62,15 +67,19 @@ export async function fetchNeptunePrices(): Promise<PriceData | null> {
             timestamp: new Date(),
         };
 
-        console.log(
-            `✅ Successfully fetched Neptune prices: $${priceData.usd.toFixed(4)} USD, €${priceData.eur.toFixed(4)} EUR, £${priceData.gbp.toFixed(4)} GBP`,
-        );
+        logInfo(logger, "Successfully fetched Neptune prices", {
+            usd: priceData.usd.toFixed(4),
+            eur: priceData.eur.toFixed(4),
+            gbp: priceData.gbp.toFixed(4),
+        });
 
         return priceData;
     } catch (error) {
         const errorMessage =
             error instanceof Error ? error.message : String(error);
-        console.error(`❌ Failed to fetch Neptune prices: ${errorMessage}`);
+        logError(logger, "Failed to fetch Neptune prices", error as Error, {
+            errorMessage,
+        });
         return null;
     }
 }

@@ -24,6 +24,7 @@ import {
 } from "@/hooks/use-price-polling";
 import type { PriceSettingsFormData } from "@/lib/validation/settings-schemas";
 import { DollarSign, RefreshCw } from "lucide-react";
+import { rendererLoggers, logInfo } from "@/renderer/utils/logger";
 
 interface PriceSettingsFormProps {
     form: ReturnType<typeof useForm<PriceSettingsFormData>>;
@@ -38,8 +39,10 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
     const isCacheValid = useIsPriceCacheValid();
     const cacheExpiryTime = useCacheExpiryTime();
 
+    const logger = rendererLoggers.price;
+
     const handleRefreshPrices = async () => {
-        console.log("🔄 Manually refreshing prices...");
+        logInfo(logger, "Manually refreshing prices");
         await fetchAndUpdatePrices();
     };
 
