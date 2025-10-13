@@ -464,6 +464,15 @@ export class NeptuneProcessManager {
         logger.info("Waiting for neptune-core to be ready...");
 
         const binaryPath = BINARY_PATHS.NEPTUNE_CLI;
+        
+        // Get the actual RPC port that neptune-core is configured to use
+        const settings = neptuneCoreSettingsService.getAll();
+        const actualCoreRpcPort = settings.network.rpcPort;
+        
+        logger.info(
+            { coreRpcPort: actualCoreRpcPort },
+            "Waiting for neptune-core to be ready on configured RPC port"
+        );
 
         return pRetry(
             async () => {
@@ -471,7 +480,7 @@ export class NeptuneProcessManager {
                     const result = await pTimeout(
                         execa(binaryPath, [
                             "--port",
-                            this.config.cli.port.toString(),
+                            actualCoreRpcPort.toString(),
                             "--get-cookie",
                         ]),
                         {
@@ -516,9 +525,22 @@ export class NeptuneProcessManager {
         logger.info("Starting neptune-cli in RPC mode...");
 
         const binaryPath = BINARY_PATHS.NEPTUNE_CLI;
+        
+        // Get the actual RPC port that neptune-core is configured to use
+        const settings = neptuneCoreSettingsService.getAll();
+        const actualCoreRpcPort = settings.network.rpcPort;
+        
+        logger.info(
+            { 
+                coreRpcPort: actualCoreRpcPort,
+                cliRpcPort: this.config.cli.rpcPort 
+            },
+            "Configuring neptune-cli to connect to neptune-core"
+        );
+        
         const args = [
             "--port",
-            this.config.core.rpcPort.toString(), // Connect to neptune-core
+            actualCoreRpcPort.toString(), // Connect to neptune-core's actual RPC port
             "--rpc-mode",
             "--rpc-port",
             this.config.cli.rpcPort.toString(), // CLI's own HTTP server port
