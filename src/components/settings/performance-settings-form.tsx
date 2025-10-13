@@ -5,47 +5,42 @@
  * proof parameters, sync mode, mempool size, and UTXO settings.
  */
 
-import type { UseFormReturn } from 'react-hook-form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { UseFormReturn } from "react-hook-form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import type { PerformanceSettingsFormData } from '@/lib/validation/settings-schemas';
-import { useUpdatePerformanceSettings } from '@/store/neptune-core-settings.store';
-
-interface PerformanceSettingsFormProps {
-  form: UseFormReturn<PerformanceSettingsFormData>;
-}
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { BaseSettingsForm } from "./base-settings-form";
+import { useFormLogger } from "@/lib/logger";
+import type { PerformanceSettingsFormData } from "@/lib/validation/settings-schemas";
+import { useUpdatePerformanceSettings } from "@/store/neptune-core-settings.store";
 
 export function PerformanceSettingsForm({
-  form,
-}: PerformanceSettingsFormProps) {
-  const updatePerformanceSettings = useUpdatePerformanceSettings();
+    form,
+}: {
+    form: UseFormReturn<PerformanceSettingsFormData>;
+}) {
+    const updatePerformanceSettings = useUpdatePerformanceSettings();
+    const { fieldChange } = useFormLogger("performance-settings");
 
-  const handleFieldChange = (field: string, value: unknown) => {
-    updatePerformanceSettings({
-      [field]: value,
-    } as Partial<PerformanceSettingsFormData>);
-  };
-
-  return (
-    <Form {...form}>
-      <form className="space-y-6">
+    return (
+        <BaseSettingsForm form={form} updateSettings={updatePerformanceSettings}>
+            {(handleFieldChange) => (
+                <>
         {/* Proof Configuration */}
         <Card>
           <CardHeader>
@@ -278,7 +273,8 @@ export function PerformanceSettingsForm({
             />
           </CardContent>
         </Card>
-      </form>
-    </Form>
-  );
+                </>
+            )}
+        </BaseSettingsForm>
+    );
 }
