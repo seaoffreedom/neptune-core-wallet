@@ -134,10 +134,10 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Display Currency</FormLabel>
-                                         <Select
-                                             onValueChange={field.onChange}
-                                             defaultValue={field.value || "USD"}
-                                         >
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value || "USD"}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select currency" />
@@ -179,12 +179,14 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                                             <Clock className="h-4 w-4" />
                                             Cache Duration
                                         </FormLabel>
-                                         <Select
-                                             onValueChange={(value) =>
-                                                 field.onChange(parseInt(value))
-                                             }
-                                             defaultValue={field.value?.toString() || "5"}
-                                         >
+                                        <Select
+                                            onValueChange={(value) =>
+                                                field.onChange(parseInt(value))
+                                            }
+                                            defaultValue={
+                                                field.value?.toString() || "5"
+                                            }
+                                        >
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select cache duration" />

@@ -14,6 +14,7 @@ import type {
   NetworkSettings,
   PerformanceSettings,
   SecuritySettings,
+  PriceFetchingSettings,
 } from '@/shared/types/neptune-core-settings';
 
 export const neptuneCoreSettingsAPI = {
@@ -133,6 +134,22 @@ export const neptuneCoreSettingsAPI = {
   }> => {
     return ipcRenderer.invoke(
       IPC_CHANNELS.NEPTUNE_SETTINGS_UPDATE_ADVANCED,
+      settings
+    );
+  },
+
+  /**
+   * Update price fetching settings
+   */
+  updatePriceFetching: (
+    settings: Partial<PriceFetchingSettings>
+  ): Promise<{
+    success: boolean;
+    settings?: NeptuneCoreSettings;
+    error?: string;
+  }> => {
+    return ipcRenderer.invoke(
+      IPC_CHANNELS.NEPTUNE_SETTINGS_UPDATE_PRICE_FETCHING,
       settings
     );
   },

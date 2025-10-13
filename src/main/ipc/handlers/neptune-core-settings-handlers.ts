@@ -20,6 +20,7 @@ import type {
   NetworkSettings,
   PerformanceSettings,
   SecuritySettings,
+  PriceFetchingSettings,
 } from '@/shared/types/neptune-core-settings';
 
 /**
@@ -207,6 +208,29 @@ export function registerNeptuneCoreSettingsHandlers(): void {
     }
   );
 
+  // Update price fetching settings
+  ipcMain.handle(
+    IPC_CHANNELS.NEPTUNE_SETTINGS_UPDATE_PRICE_FETCHING,
+    async (_event, settings: Partial<PriceFetchingSettings>) => {
+      try {
+        const updated = neptuneCoreSettingsService.updatePriceFetching(settings);
+        return {
+          success: true,
+          settings: updated,
+        };
+      } catch (error) {
+        logger.error(
+          { error: (error as Error).message },
+          'Failed to update price fetching settings'
+        );
+        return {
+          success: false,
+          error: (error as Error).message,
+        };
+      }
+    }
+  );
+
   // Reset to defaults
   ipcMain.handle(IPC_CHANNELS.NEPTUNE_SETTINGS_RESET_TO_DEFAULTS, async () => {
     try {
@@ -285,6 +309,7 @@ export function cleanupNeptuneCoreSettingsHandlers(): void {
   ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_SETTINGS_UPDATE_SECURITY);
   ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_SETTINGS_UPDATE_DATA);
   ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_SETTINGS_UPDATE_ADVANCED);
+  ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_SETTINGS_UPDATE_PRICE_FETCHING);
   ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_SETTINGS_RESET_TO_DEFAULTS);
   ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_SETTINGS_EXPORT);
   ipcMain.removeHandler(IPC_CHANNELS.NEPTUNE_SETTINGS_IMPORT);

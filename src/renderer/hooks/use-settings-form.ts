@@ -111,6 +111,7 @@ export function useSettingsForm<
       security: 'updateSecurity',
       data: 'updateData',
       advanced: 'updateAdvanced',
+      priceFetching: 'updatePriceFetching',
     } as const;
 
     return methodMap[cat];

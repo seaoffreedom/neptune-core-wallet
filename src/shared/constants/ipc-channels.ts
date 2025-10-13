@@ -145,6 +145,7 @@ export const IPC_CHANNELS = {
   NEPTUNE_SETTINGS_UPDATE_SECURITY: 'neptune-settings:update-security',
   NEPTUNE_SETTINGS_UPDATE_DATA: 'neptune-settings:update-data',
   NEPTUNE_SETTINGS_UPDATE_ADVANCED: 'neptune-settings:update-advanced',
+  NEPTUNE_SETTINGS_UPDATE_PRICE_FETCHING: 'neptune-settings:update-price-fetching',
   NEPTUNE_SETTINGS_RESET_TO_DEFAULTS: 'neptune-settings:reset-to-defaults',
   NEPTUNE_SETTINGS_EXPORT: 'neptune-settings:export',
   NEPTUNE_SETTINGS_IMPORT: 'neptune-settings:import',
