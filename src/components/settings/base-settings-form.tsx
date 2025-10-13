@@ -6,95 +6,232 @@
  */
 
 import type { UseFormReturn } from "react-hook-form";
-import { Form } from "@/components/ui/form";
-import type { FieldValues } from "react-hook-form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import type { ReactNode } from "react";
 
-interface BaseSettingsFormProps<T extends FieldValues> {
+/**
+ * Base props for all settings forms
+ */
+export interface BaseSettingsFormProps<T extends Record<string, unknown>> {
     form: UseFormReturn<T>;
     updateSettings: (settings: Partial<T>) => void;
-    children: React.ReactNode;
-    className?: string;
+    children: ReactNode;
 }
 
 /**
- * Base Settings Form Component
- *
- * Provides common functionality for all settings forms:
- * - handleFieldChange helper for immediate Zustand updates
- * - Consistent form structure
- * - Type-safe field updates
+ * Base settings form component that provides common functionality
  */
-export function BaseSettingsForm<T extends FieldValues>({
+export function BaseSettingsForm<T extends Record<string, unknown>>({
     form,
-    updateSettings,
     children,
-    className = "space-y-6",
 }: BaseSettingsFormProps<T>) {
-    // Helper to update both form and Zustand store immediately
-    const handleFieldChange = (field: keyof T, value: unknown) => {
-        // Update Zustand store immediately for real-time updates
-        updateSettings({
-            [field]: value,
-        } as Partial<T>);
-    };
-
     return (
         <Form {...form}>
-            <form className={className}>
-                {/* Render children with handleFieldChange available via context or props */}
-                {typeof children === "function"
-                    ? children(handleFieldChange)
-                    : children}
+            <form className="space-y-6">
+                {children}
             </form>
         </Form>
     );
 }
 
 /**
- * Hook to use the base settings form functionality
- *
- * @param updateSettings - Function to update settings in Zustand store
- * @returns handleFieldChange function for immediate store updates
+ * Reusable form field components for common input types
  */
-export function useBaseSettingsForm<T extends FieldValues>(
-    updateSettings: (settings: Partial<T>) => void,
-) {
-    const handleFieldChange = (field: keyof T, value: unknown) => {
-        updateSettings({
-            [field]: value,
-        } as Partial<T>);
-    };
-
-    return { handleFieldChange };
-}
-
-/**
- * Higher-order component for settings forms
- *
- * Wraps a settings form component with common functionality
- */
-export function withBaseSettingsForm<T extends FieldValues>(
-    Component: React.ComponentType<{
-        form: UseFormReturn<T>;
-        handleFieldChange: (field: keyof T, value: unknown) => void;
-    }>,
-) {
-    return function WrappedSettingsForm({
+export const SettingsFormFields = {
+    /**
+     * Switch field for boolean values
+     */
+    Switch: <T extends Record<string, unknown>>({
         form,
+        name,
+        label,
+        description,
         updateSettings,
-        ...props
+        onValueChange,
     }: {
         form: UseFormReturn<T>;
+        name: keyof T;
+        label: string;
+        description?: string;
         updateSettings: (settings: Partial<T>) => void;
-    } & Omit<React.ComponentProps<typeof Component>, "handleFieldChange">) {
-        const { handleFieldChange } = useBaseSettingsForm(updateSettings);
+        onValueChange?: (value: boolean) => void;
+    }) => (
+        <FormField
+            control={form.control}
+            name={name as string}
+            render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <FormLabel className="text-base">{label}</FormLabel>
+                        {description && (
+                            <FormDescription>{description}</FormDescription>
+                        )}
+                    </div>
+                    <FormControl>
+                        <Switch
+                            checked={field.value ?? false}
+                            onCheckedChange={(checked) => {
+                                field.onChange(checked);
+                                updateSettings({ [name]: checked } as Partial<T>);
+                                onValueChange?.(checked);
+                            }}
+                        />
+                    </FormControl>
+                </FormItem>
+            )}
+        />
+    ),
 
-        return (
-            <Component
-                form={form}
-                handleFieldChange={handleFieldChange}
-                {...props}
-            />
-        );
-    };
-}
+    /**
+     * Select field for dropdown values
+     */
+    Select: <T extends Record<string, unknown>>({
+        form,
+        name,
+        label,
+        description,
+        placeholder,
+        options,
+        updateSettings,
+        onValueChange,
+    }: {
+        form: UseFormReturn<T>;
+        name: keyof T;
+        label: string;
+        description?: string;
+        placeholder?: string;
+        options: Array<{ value: string; label: string }>;
+        updateSettings: (settings: Partial<T>) => void;
+        onValueChange?: (value: string) => void;
+    }) => (
+        <FormField
+            control={form.control}
+            name={name as string}
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>{label}</FormLabel>
+                    <Select
+                        onValueChange={(value) => {
+                            field.onChange(value);
+                            updateSettings({ [name]: value } as Partial<T>);
+                            onValueChange?.(value);
+                        }}
+                        value={field.value as string}
+                    >
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder={placeholder} />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {options.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {description && (
+                        <FormDescription>{description}</FormDescription>
+                    )}
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+    ),
+
+    /**
+     * Input field for text/number values
+     */
+    Input: <T extends Record<string, unknown>>({
+        form,
+        name,
+        label,
+        description,
+        type = "text",
+        placeholder,
+        onValueChange,
+    }: {
+        form: UseFormReturn<T>;
+        name: keyof T;
+        label: string;
+        description?: string;
+        type?: "text" | "number" | "email" | "password";
+        placeholder?: string;
+        onValueChange?: (value: string) => void;
+    }) => (
+        <FormField
+            control={form.control}
+            name={name as string}
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>{label}</FormLabel>
+                    <FormControl>
+                        <Input
+                            type={type}
+                            placeholder={placeholder}
+                            {...field}
+                            onChange={(e) => {
+                                field.onChange(e);
+                                onValueChange?.(e.target.value);
+                            }}
+                        />
+                    </FormControl>
+                    {description && (
+                        <FormDescription>{description}</FormDescription>
+                    )}
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+    ),
+
+    /**
+     * Card wrapper for form sections
+     */
+    Card: ({
+        title,
+        description,
+        children,
+    }: {
+        title: string;
+        description?: string;
+        children: ReactNode;
+    }) => (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-base">{title}</CardTitle>
+                {description && (
+                    <p className="text-sm text-muted-foreground">{description}</p>
+                )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {children}
+            </CardContent>
+        </Card>
+    ),
+
+    /**
+     * Separator for visual grouping
+     */
+    Separator: () => <Separator />,
+};

@@ -6,32 +6,8 @@
  */
 
 import type { useForm } from "react-hook-form";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { BaseSettingsForm, SettingsFormFields } from "./base-settings-form";
 import {
     usePriceFetchingSettings,
     useUpdatePriceFetchingSettings,
@@ -47,7 +23,7 @@ import {
     useCacheExpiryTime,
 } from "@/hooks/use-price-polling";
 import type { PriceSettingsFormData } from "@/lib/validation/settings-schemas";
-import { DollarSign, Clock, RefreshCw } from "@/lib/icons";
+import { DollarSign, RefreshCw } from "lucide-react";
 
 interface PriceSettingsFormProps {
     form: ReturnType<typeof useForm<PriceSettingsFormData>>;
@@ -62,14 +38,6 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
     const isCacheValid = useIsPriceCacheValid();
     const cacheExpiryTime = useCacheExpiryTime();
 
-    // Helper to update both form and Zustand
-    const handleFieldChange = (field: string, value: unknown) => {
-        // Update Zustand store immediately
-        updatePriceFetchingSettings({
-            [field]: value,
-        } as Partial<PriceSettingsFormData>);
-    };
-
     const handleRefreshPrices = async () => {
         console.log("🔄 Manually refreshing prices...");
         await fetchAndUpdatePrices();
@@ -77,170 +45,76 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
 
     return (
         <div className="space-y-6">
-            {/* Price Fetching Configuration */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+            <BaseSettingsForm
+                form={form}
+                updateSettings={updatePriceFetchingSettings}
+            >
+                <SettingsFormFields.Card
+                    title="Price Fetching"
+                    description="Configure automatic price fetching from CoinGecko API"
+                >
+                    <div className="flex items-center gap-2 mb-4">
                         <DollarSign className="h-5 w-5" />
-                        Price Fetching
-                    </CardTitle>
-                    <CardDescription>
-                        Configure automatic price fetching from CoinGecko API
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <Form {...form}>
-                        <form className="space-y-6">
-                            {/* Enable Price Fetching */}
-                            <FormField
-                                control={form.control}
-                                name="enabled"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                        <div className="space-y-0.5">
-                                            <FormLabel className="text-base">
-                                                Enable Price Fetching
-                                            </FormLabel>
-                                            <FormDescription>
-                                                Automatically fetch Neptune
-                                                prices from CoinGecko API
-                                            </FormDescription>
-                                        </div>
-                                        <FormControl>
-                                            <Switch
-                                                checked={field.value ?? false}
-                                                onCheckedChange={(checked) => {
-                                                    field.onChange(checked);
-                                                    handleFieldChange(
-                                                        "enabled",
-                                                        checked,
-                                                    );
-                                                }}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
-                            />
+                        <span className="font-medium">Price Fetching</span>
+                    </div>
+                    
+                    <SettingsFormFields.Switch
+                        form={form}
+                        name="enabled"
+                        label="Enable Price Fetching"
+                        description="Automatically fetch Neptune prices from CoinGecko API"
+                        updateSettings={updatePriceFetchingSettings}
+                    />
 
-                            {/* Currency Selection */}
-                            <FormField
-                                control={form.control}
-                                name="currency"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Display Currency</FormLabel>
-                                        <Select
-                                            onValueChange={(value) => {
-                                                field.onChange(value);
-                                                handleFieldChange(
-                                                    "currency",
-                                                    value,
-                                                );
-                                                // Also update UI currency if different
-                                                if (
-                                                    selectedCurrency.code !==
-                                                    value
-                                                ) {
-                                                    setCurrency(value);
-                                                }
-                                            }}
-                                            value={field.value || "USD"}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select currency" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {AVAILABLE_CURRENCIES.map(
-                                                    (currency) => (
-                                                        <SelectItem
-                                                            key={currency.code}
-                                                            value={
-                                                                currency.code
-                                                            }
-                                                        >
-                                                            {currency.symbol}{" "}
-                                                            {currency.name} (
-                                                            {currency.code})
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormDescription>
-                                            Currency to display for price
-                                            conversions
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                    <SettingsFormFields.Select
+                        form={form}
+                        name="currency"
+                        label="Display Currency"
+                        description="Currency to display for price conversions"
+                        placeholder="Select currency"
+                        options={AVAILABLE_CURRENCIES.map(currency => ({
+                            value: currency.code,
+                            label: `${currency.symbol} ${currency.name} (${currency.code})`
+                        }))}
+                        updateSettings={updatePriceFetchingSettings}
+                        onValueChange={(value) => {
+                            // Also update UI currency if different
+                            if (selectedCurrency.code !== value) {
+                                setCurrency(value);
+                            }
+                        }}
+                    />
 
-                            {/* Cache TTL */}
-                            <FormField
-                                control={form.control}
-                                name="cacheTtl"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="flex items-center gap-2">
-                                            <Clock className="h-4 w-4" />
-                                            Cache Duration
-                                        </FormLabel>
-                                        <Select
-                                            onValueChange={(value) => {
-                                                const intValue =
-                                                    parseInt(value);
-                                                field.onChange(intValue);
-                                                handleFieldChange(
-                                                    "cacheTtl",
-                                                    intValue,
-                                                );
-                                            }}
-                                            value={
-                                                field.value?.toString() || "5"
-                                            }
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select cache duration" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="1">
-                                                    1 minute
-                                                </SelectItem>
-                                                <SelectItem value="5">
-                                                    5 minutes
-                                                </SelectItem>
-                                                <SelectItem value="10">
-                                                    10 minutes
-                                                </SelectItem>
-                                                <SelectItem value="15">
-                                                    15 minutes
-                                                </SelectItem>
-                                                <SelectItem value="30">
-                                                    30 minutes
-                                                </SelectItem>
-                                                <SelectItem value="60">
-                                                    60 minutes
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormDescription>
-                                            How often to refresh price data from
-                                            CoinGecko
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                    <SettingsFormFields.Select
+                        form={form}
+                        name="cacheTtl"
+                        label="Cache Duration"
+                        description="How often to refresh price data from CoinGecko"
+                        placeholder="Select cache duration"
+                        options={[
+                            { value: "1", label: "1 minute" },
+                            { value: "5", label: "5 minutes" },
+                            { value: "10", label: "10 minutes" },
+                            { value: "15", label: "15 minutes" },
+                            { value: "30", label: "30 minutes" },
+                            { value: "60", label: "60 minutes" },
+                        ]}
+                        updateSettings={(settings) => {
+                            // Convert string value to number for cacheTtl
+                            const cacheTtlValue = settings.cacheTtl;
+                            if (typeof cacheTtlValue === 'string') {
+                                updatePriceFetchingSettings({
+                                    cacheTtl: parseInt(cacheTtlValue)
+                                });
+                            } else {
+                                updatePriceFetchingSettings(settings);
+                            }
+                        }}
+                    />
 
-                            <Separator />
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
+                    <SettingsFormFields.Separator />
+                </SettingsFormFields.Card>
+            </BaseSettingsForm>
 
             {/* Price Status */}
             {priceFetchingSettings?.enabled && (

@@ -9,7 +9,6 @@ import type {
     PriceFetchingSettings,
     SecuritySettings,
 } from "@/shared/types/neptune-core-settings";
-import { Logger } from "@/lib/logger";
 
 interface NeptuneCoreSettingsState {
     // Settings state
@@ -57,7 +56,7 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
                 },
             });
 
-            Logger.settings.info({ category: "network", settings: newSettings }, "Network settings updated");
+            console.log("📡 Network settings updated:", newSettings);
         },
 
         updateMiningSettings: (newSettings) => {
@@ -71,7 +70,7 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
                 },
             });
 
-            Logger.settings.info({ category: "mining", settings: newSettings }, "Mining settings updated");
+            console.log("⛏️  Mining settings updated:", newSettings);
         },
 
         updatePerformanceSettings: (newSettings) => {
@@ -85,7 +84,7 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
                 },
             });
 
-            Logger.settings.info({ category: "performance", settings: newSettings }, "Performance settings updated");
+            console.log("⚡ Performance settings updated:", newSettings);
         },
 
         updateSecuritySettings: (newSettings) => {
@@ -99,7 +98,7 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
                 },
             });
 
-            Logger.settings.info({ category: "security", settings: newSettings }, "Security settings updated");
+            console.log("🔒 Security settings updated:", newSettings);
         },
 
         updateDataSettings: (newSettings) => {
@@ -113,7 +112,7 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
                 },
             });
 
-            Logger.settings.info({ category: "data", settings: newSettings }, "Data settings updated");
+            console.log("💾 Data settings updated:", newSettings);
         },
 
         updateAdvancedSettings: (newSettings) => {
@@ -127,7 +126,7 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
                 },
             });
 
-            Logger.settings.info({ category: "advanced", settings: newSettings }, "Advanced settings updated");
+            console.log("🔧 Advanced settings updated:", newSettings);
         },
 
         updatePriceFetchingSettings: (newSettings) => {
@@ -144,7 +143,7 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
                 },
             });
 
-            Logger.settings.info({ category: "priceFetching", settings: newSettings }, "Price fetching settings updated");
+            console.log("💰 Price fetching settings updated:", newSettings);
         },
 
         // Load settings from IPC
@@ -159,7 +158,7 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
                         settings: result.settings,
                         isLoading: false,
                     });
-                    Logger.settings.info({ settings: result.settings }, "Settings loaded");
+                    console.log("✅ Settings loaded:", result.settings);
                 } else {
                     throw new Error(result.error || "Failed to load settings");
                 }
@@ -190,7 +189,7 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
 
                 if (result.success) {
                     set({ isLoading: false });
-                    Logger.settings.info("Settings saved successfully");
+                    console.log("✅ Settings saved successfully");
                 } else {
                     throw new Error(result.error || "Failed to save settings");
                 }
@@ -216,7 +215,7 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
                         settings: result.settings,
                         isLoading: false,
                     });
-                    Logger.settings.info("Settings reset to defaults");
+                    console.log("✅ Settings reset to defaults");
                 } else {
                     throw new Error(result.error || "Failed to reset settings");
                 }

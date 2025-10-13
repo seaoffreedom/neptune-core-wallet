@@ -4,7 +4,7 @@
  * Displays summary statistics for UTXOs
  */
 
-import { Info } from "@/lib/icons";
+import { Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Skeleton } from "@/components/ui/skeleton";

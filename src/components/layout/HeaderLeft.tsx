@@ -1,4 +1,4 @@
-import { Waves } from "@/lib/icons";
+import { Waves } from "lucide-react";
 
 export function HeaderLeft() {
     return (
