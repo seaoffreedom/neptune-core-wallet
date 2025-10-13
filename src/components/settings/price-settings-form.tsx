@@ -73,7 +73,7 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
         });
 
         // Update UI currency if different
-        if (selectedCurrency.code !== data.currency) {
+        if (selectedCurrency?.code !== data.currency) {
             setCurrency(data.currency);
         }
     };
@@ -119,7 +119,7 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                                         </div>
                                         <FormControl>
                                             <Switch
-                                                checked={field.value}
+                                                checked={field.value ?? false}
                                                 onCheckedChange={field.onChange}
                                             />
                                         </FormControl>

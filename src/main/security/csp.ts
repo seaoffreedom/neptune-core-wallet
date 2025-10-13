@@ -12,7 +12,7 @@ export const CSP_POLICY_DEV = `
   style-src 'self' 'unsafe-inline';
   img-src 'self' data: https:;
   font-src 'self' data:;
-  connect-src 'self' http://localhost:* ws://localhost:*;
+  connect-src 'self' http://localhost:* ws://localhost:* https://api.coingecko.com;
   media-src 'self';
   object-src 'none';
   child-src 'none';
@@ -33,7 +33,7 @@ export const CSP_POLICY_PROD = `
   style-src 'self';
   img-src 'self' data:;
   font-src 'self' data:;
-  connect-src 'self';
+  connect-src 'self' https://api.coingecko.com;
   media-src 'self';
   object-src 'none';
   child-src 'none';
