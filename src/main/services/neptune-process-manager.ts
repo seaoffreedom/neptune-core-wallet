@@ -202,39 +202,45 @@ export class NeptuneProcessManager {
      * Validate that required binaries exist and are executable
      */
     private async validateBinaries(): Promise<void> {
-        // Try production paths first, fall back to development paths
+        // Try auto-selected paths first, fall back to explicit dev/prod paths
         let corePath = BINARY_PATHS.NEPTUNE_CORE;
         let cliPath = BINARY_PATHS.NEPTUNE_CLI;
 
-        // Check if production binaries exist, fall back to development if not
+        // Check if auto-selected binaries exist
         try {
             await access(corePath);
-            logger.debug(`Using production neptune-core: ${corePath}`);
+            logger.debug(`Using neptune-core: ${corePath}`);
         } catch {
-            logger.warn(`Production neptune-core not found, trying development path`);
+            // Fall back to explicit development path
+            logger.warn(
+                `Auto-selected neptune-core not found, trying development path`,
+            );
             corePath = BINARY_PATHS.DEV_NEPTUNE_CORE;
             try {
                 await access(corePath);
                 logger.debug(`Using development neptune-core: ${corePath}`);
             } catch {
                 throw new Error(
-                    `neptune-core binary not found at production path ${BINARY_PATHS.NEPTUNE_CORE} or development path ${corePath}. Please ensure binaries are available.`,
+                    `neptune-core binary not found at ${BINARY_PATHS.NEPTUNE_CORE} or ${corePath}. Please ensure binaries are available.`,
                 );
             }
         }
 
         try {
             await access(cliPath);
-            logger.debug(`Using production neptune-cli: ${cliPath}`);
+            logger.debug(`Using neptune-cli: ${cliPath}`);
         } catch {
-            logger.warn(`Production neptune-cli not found, trying development path`);
+            // Fall back to explicit development path
+            logger.warn(
+                `Auto-selected neptune-cli not found, trying development path`,
+            );
             cliPath = BINARY_PATHS.DEV_NEPTUNE_CLI;
             try {
                 await access(cliPath);
                 logger.debug(`Using development neptune-cli: ${cliPath}`);
             } catch {
                 throw new Error(
-                    `neptune-cli binary not found at production path ${BINARY_PATHS.NEPTUNE_CLI} or development path ${cliPath}. Please ensure binaries are available.`,
+                    `neptune-cli binary not found at ${BINARY_PATHS.NEPTUNE_CLI} or ${cliPath}. Please ensure binaries are available.`,
                 );
             }
         }
@@ -343,7 +349,14 @@ export class NeptuneProcessManager {
                     "Initialization timeout - processes may be unresponsive",
                 );
             }
-            logger.error({ error }, "Neptune initialization failed");
+            logger.error(
+                {
+                    error:
+                        error instanceof Error ? error.message : String(error),
+                    stack: error instanceof Error ? error.stack : undefined,
+                },
+                "Neptune initialization failed",
+            );
             await this.shutdown();
             throw error;
         } finally {
@@ -355,44 +368,71 @@ export class NeptuneProcessManager {
      * Perform the actual initialization steps
      */
     private async performInitialization(): Promise<void> {
-        // Step 0: Check if we can skip initialization
-        if (await this.canSkipInitialization()) {
-            logger.info(
-                "Skipping initialization - processes may already be running",
-            );
-            // Verify processes are actually running
-            const status = this.getStatus();
-            if (status.core.running && status.cli.running) {
-                this.isInitialized = true;
+        try {
+            // Step 0: Check if we can skip initialization
+            if (await this.canSkipInitialization()) {
                 logger.info(
-                    "Processes already running, initialization skipped",
+                    "Skipping initialization - processes may already be running",
                 );
-                return;
+                // Verify processes are actually running
+                const status = this.getStatus();
+                if (status.core.running && status.cli.running) {
+                    this.isInitialized = true;
+                    logger.info(
+                        "Processes already running, initialization skipped",
+                    );
+                    return;
+                }
             }
+
+            // Step 1: Validate binaries exist
+            logger.info("Step 1: Validating binaries...");
+            await this.validateBinaries();
+            logger.info("✅ Binaries validated successfully");
+
+            // Step 2: Start neptune-core
+            logger.info("Step 2: Starting neptune-core...");
+            await this.startCore();
+            logger.info("✅ neptune-core started successfully");
+
+            // Step 3: Start neptune-cli in parallel while waiting for core
+            logger.info(
+                "Step 3: Starting neptune-cli and waiting for core readiness...",
+            );
+            const [cookie] = await Promise.all([
+                this.waitForCoreReady(),
+                this.startCli(), // Start CLI in parallel
+            ]);
+            logger.info("✅ neptune-cli started and core is ready");
+
+            // Store the cookie
+            this.cookie = cookie;
+            logger.info("✅ Cookie obtained and stored");
+
+            // Step 4: Start data polling
+            logger.info("Step 4: Starting data polling...");
+            this.startDataPolling(cookie);
+            logger.info("✅ Data polling started");
+
+            this.isInitialized = true;
+            logger.info(
+                "✅ Initialization completed - isInitialized set to true",
+            );
+
+            // Cache the successful state
+            await this.cacheProcessState();
+            logger.info("✅ Process state cached");
+        } catch (error) {
+            logger.error(
+                {
+                    error:
+                        error instanceof Error ? error.message : String(error),
+                    stack: error instanceof Error ? error.stack : undefined,
+                },
+                "Initialization step failed",
+            );
+            throw error;
         }
-
-        // Step 1: Validate binaries exist
-        await this.validateBinaries();
-
-        // Step 2: Start neptune-core
-        await this.startCore();
-
-        // Step 3: Start neptune-cli in parallel while waiting for core
-        const [cookie] = await Promise.all([
-            this.waitForCoreReady(),
-            this.startCli(), // Start CLI in parallel
-        ]);
-
-        // Store the cookie
-        this.cookie = cookie;
-
-        // Step 4: Start data polling
-        this.startDataPolling(cookie);
-
-        this.isInitialized = true;
-
-        // Cache the successful state
-        await this.cacheProcessState();
     }
 
     /**
@@ -402,7 +442,9 @@ export class NeptuneProcessManager {
         logger.info("Starting neptune-core...");
 
         if (!this.validatedCorePath) {
-            throw new Error("neptune-core binary path not validated. Call validateBinaries() first.");
+            throw new Error(
+                "neptune-core binary path not validated. Call validateBinaries() first.",
+            );
         }
         const binaryPath = this.validatedCorePath;
         // Build CLI args from settings
@@ -495,14 +537,27 @@ export class NeptuneProcessManager {
     private async waitForCoreReady(): Promise<string> {
         logger.info("Waiting for neptune-core to be ready...");
 
-        const binaryPath = BINARY_PATHS.NEPTUNE_CLI;
+        if (!this.validatedCliPath) {
+            throw new Error(
+                "neptune-cli binary path not validated. Call validateBinaries() first.",
+            );
+        }
+        const binaryPath = this.validatedCliPath;
 
         // Get the actual RPC port that neptune-core is configured to use
         const settings = neptuneCoreSettingsService.getAll();
         const actualCoreRpcPort = settings.network.rpcPort;
 
         logger.info(
-            { coreRpcPort: actualCoreRpcPort },
+            {
+                coreRpcPort: actualCoreRpcPort,
+                binaryPath,
+                settings: {
+                    network: settings.network.network,
+                    peerPort: settings.network.peerPort,
+                    rpcPort: settings.network.rpcPort,
+                },
+            },
             "Waiting for neptune-core to be ready on configured RPC port",
         );
 
@@ -542,7 +597,12 @@ export class NeptuneProcessManager {
                 minTimeout: 200, // Faster initial checks
                 maxTimeout: 1000, // Cap at 1 second
                 onFailedAttempt: (error) => {
-                    logger.debug(
+                    logger.warn(
+                        {
+                            attempt: error.attemptNumber,
+                            error: error.message,
+                            remainingAttempts: 30 - error.attemptNumber,
+                        },
                         `Core readiness check attempt ${error.attemptNumber} failed`,
                     );
                 },
@@ -557,7 +617,9 @@ export class NeptuneProcessManager {
         logger.info("Starting neptune-cli in RPC mode...");
 
         if (!this.validatedCliPath) {
-            throw new Error("neptune-cli binary path not validated. Call validateBinaries() first.");
+            throw new Error(
+                "neptune-cli binary path not validated. Call validateBinaries() first.",
+            );
         }
         const binaryPath = this.validatedCliPath;
 

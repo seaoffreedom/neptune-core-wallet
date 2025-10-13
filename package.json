@@ -28,6 +28,12 @@
     "test:e2e:debug": "playwright test --debug",
     "test:all": "pnpm test:run && pnpm test:e2e",
     "test:ci": "pnpm test:run --coverage && pnpm test:e2e",
+    "build:appimage": "electron-builder --linux AppImage",
+    "build:deb": "electron-builder --linux deb",
+    "build:linux": "electron-builder --linux",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:all": "electron-builder --linux --mac --win",
     "playwright:install": "playwright install",
     "playwright:install-deps": "playwright install-deps"
   },
@@ -72,7 +78,9 @@
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
     "electron": "38.2.2",
+    "electron-builder": "^26.0.12",
     "jsdom": "^25.0.1",
+    "terser": "^5.44.0",
     "typescript": "~5.9.3",
     "vite": "^5.4.20",
     "vitest": "^3.2.4"
@@ -138,5 +146,70 @@
     "vitest": "^3.2.4",
     "zod": "^4.1.12",
     "zustand": "^5.0.8"
+  },
+  "build": {
+    "appId": "com.neptune.core.wallet",
+    "productName": "Neptune Core Wallet",
+    "directories": {
+      "output": "dist-electron-builder"
+    },
+    "files": [
+      ".vite/build/**/*",
+      "public/**/*",
+      "resources/**/*",
+      "node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "resources/binaries/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/binaries",
+        "to": "binaries"
+      }
+    ],
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Finance",
+      "description": "Desktop wallet for Neptune blockchain",
+      "icon": "public/assets/logos/neptune.svg"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.finance",
+      "icon": "public/assets/logos/neptune.svg"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/assets/logos/neptune.svg"
+    }
   }
 }

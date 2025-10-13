@@ -19,7 +19,7 @@ import {
     Trash2,
     Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useId } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -29,6 +29,17 @@ import { ButtonGroup } from "@/components/ui/button-group";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Field } from "@/components/ui/field";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Form,
     FormControl,
@@ -103,6 +114,11 @@ export function SendFormEnhanced() {
     const [isValidating, setIsValidating] = useState(false);
     const [copied, setCopied] = useState(false);
     const [showMultiple, setShowMultiple] = useState(false);
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [confirmChecked, setConfirmChecked] = useState(false);
+    const [pendingTransaction, setPendingTransaction] =
+        useState<SendFormValues | null>(null);
+    const confirmId = useId();
 
     const form = useForm<SendFormValues>({
         resolver: zodResolver(sendFormSchema),
@@ -166,17 +182,26 @@ export function SendFormEnhanced() {
             }
         }
 
+        // Show confirmation dialog instead of immediately sending
+        setPendingTransaction(values);
+        setShowConfirmDialog(true);
+        setConfirmChecked(false);
+    };
+
+    const handleConfirmSend = async () => {
+        if (!pendingTransaction) return;
+
         // Send transaction
         const result = await sendTransaction({
-            outputs: values.recipients.map((r) => ({
+            outputs: pendingTransaction.recipients.map((r) => ({
                 address: r.address,
                 amount: r.amount,
             })),
-            fee: values.fee || undefined,
+            fee: pendingTransaction.fee || undefined,
         });
 
         if (result) {
-            const recipientCount = values.recipients.length;
+            const recipientCount = pendingTransaction.recipients.length;
             toast.success("Transaction sent successfully!", {
                 description: `Sent to ${recipientCount} recipient${recipientCount > 1 ? "s" : ""}. Transaction ID: ${result.substring(0, 8)}...`,
             });
@@ -186,6 +211,17 @@ export function SendFormEnhanced() {
                 description: error || "Unknown error occurred",
             });
         }
+
+        // Close dialog and reset state
+        setShowConfirmDialog(false);
+        setPendingTransaction(null);
+        setConfirmChecked(false);
+    };
+
+    const handleCancelSend = () => {
+        setShowConfirmDialog(false);
+        setPendingTransaction(null);
+        setConfirmChecked(false);
     };
 
     const handleCopyTxId = () => {
@@ -330,284 +366,431 @@ export function SendFormEnhanced() {
     }
 
     return (
-        <Card className="bg-primary/2">
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <CardTitle>Send Transaction</CardTitle>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleToggleMultiple}
-                    >
-                        <Users className="h-4 w-4" />
-                        {showMultiple ? "Single Recipient" : "Send to Many"}
-                    </Button>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <Form {...form}>
-                    <form
-                        onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-6"
-                    >
-                        {/* Recipients */}
-                        <div className="space-y-4">
-                            {fields.map((field, index) => (
-                                <div
-                                    key={field.id}
-                                    className="space-y-4 p-4 border rounded-lg bg-background/50"
-                                >
-                                    {/* Header */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="outline">
-                                                Recipient {index + 1}
-                                            </Badge>
-                                            {showMultiple && (
-                                                <span className="text-xs text-muted-foreground">
-                                                    of {fields.length}
-                                                </span>
+        <>
+            <Card className="bg-primary/2">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CardTitle>Send Transaction</CardTitle>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleToggleMultiple}
+                        >
+                            <Users className="h-4 w-4" />
+                            {showMultiple ? "Single Recipient" : "Send to Many"}
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                        <form
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="space-y-6"
+                        >
+                            {/* Recipients */}
+                            <div className="space-y-4">
+                                {fields.map((field, index) => (
+                                    <div
+                                        key={field.id}
+                                        className="space-y-4 p-4 border rounded-lg bg-background/50"
+                                    >
+                                        {/* Header */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="outline">
+                                                    Recipient {index + 1}
+                                                </Badge>
+                                                {showMultiple && (
+                                                    <span className="text-xs text-muted-foreground">
+                                                        of {fields.length}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {fields.length > 1 && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        handleRemoveRecipient(
+                                                            index,
+                                                        )
+                                                    }
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
                                             )}
                                         </div>
-                                        {fields.length > 1 && (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    handleRemoveRecipient(index)
-                                                }
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
-                                        )}
-                                    </div>
 
-                                    {/* Address Field with Address Book */}
-                                    <FormField
-                                        control={form.control}
-                                        name={`recipients.${index}.address`}
-                                        render={({ field: addressField }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    Recipient Address
-                                                </FormLabel>
-                                                <div className="space-y-2">
-                                                    <FormControl>
-                                                        <Field>
-                                                            <Input
-                                                                placeholder="nolgam1..."
-                                                                className="font-mono"
-                                                                {...addressField}
-                                                            />
-                                                        </Field>
-                                                    </FormControl>
-                                                    <AddressBookSelect
-                                                        value={
-                                                            addressField.value
-                                                        }
-                                                        onSelect={(address) =>
-                                                            addressField.onChange(
+                                        {/* Address Field with Address Book */}
+                                        <FormField
+                                            control={form.control}
+                                            name={`recipients.${index}.address`}
+                                            render={({
+                                                field: addressField,
+                                            }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        Recipient Address
+                                                    </FormLabel>
+                                                    <div className="space-y-2">
+                                                        <FormControl>
+                                                            <Field>
+                                                                <Input
+                                                                    placeholder="nolgam1..."
+                                                                    className="font-mono"
+                                                                    {...addressField}
+                                                                />
+                                                            </Field>
+                                                        </FormControl>
+                                                        <AddressBookSelect
+                                                            value={
+                                                                addressField.value
+                                                            }
+                                                            onSelect={(
                                                                 address,
-                                                            )
-                                                        }
-                                                    />
-                                                </div>
-                                                <FormDescription>
-                                                    Enter address or select from
-                                                    address book
-                                                </FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {/* Amount Field */}
-                                    <FormField
-                                        control={form.control}
-                                        name={`recipients.${index}.amount`}
-                                        render={({ field: amountField }) => (
-                                            <FormItem>
-                                                <FormLabel>Amount</FormLabel>
-                                                <FormControl>
-                                                    <InputGroup>
-                                                        <InputGroupInput
-                                                            type="text"
-                                                            placeholder="0.00"
-                                                            {...amountField}
+                                                            ) =>
+                                                                addressField.onChange(
+                                                                    address,
+                                                                )
+                                                            }
                                                         />
-                                                        <InputGroupText>
-                                                            $NPT
-                                                        </InputGroupText>
-                                                    </InputGroup>
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            ))}
+                                                    </div>
+                                                    <FormDescription>
+                                                        Enter address or select
+                                                        from address book
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
 
-                            {/* Add Recipient Button */}
-                            {showMultiple && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={handleAddRecipient}
-                                    className="w-full"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    Add Recipient
-                                </Button>
-                            )}
-                        </div>
-
-                        {/* Fee Field */}
-                        <FormField
-                            control={form.control}
-                            name="fee"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>
-                                        Transaction Fee{" "}
-                                        <span className="text-muted-foreground">
-                                            (Optional)
-                                        </span>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <InputGroup>
-                                            <InputGroupInput
-                                                type="text"
-                                                placeholder="0.001"
-                                                {...field}
-                                            />
-                                            <InputGroupText>
-                                                $NPT
-                                            </InputGroupText>
-                                        </InputGroup>
-                                    </FormControl>
-                                    <FormDescription>
-                                        Leave empty to use the default network
-                                        fee
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Total Summary */}
-                        <div className="p-4 bg-primary/5 rounded-lg space-y-2">
-                            <div className="space-y-1">
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-muted-foreground">
-                                        Total Amount:
-                                    </span>
-                                    <span className="font-mono font-semibold">
-                                        {totalAmount.toFixed(2)} $NPT
-                                    </span>
-                                </div>
-                                <div className="flex justify-end">
-                                    <PriceDisplay nptAmount={totalAmount} />
-                                </div>
-                            </div>
-                            {fee > 0 && (
-                                <div className="space-y-1">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">
-                                            Fee:
-                                        </span>
-                                        <span className="font-mono">
-                                            {fee.toFixed(2)} $NPT
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-end">
-                                        <PriceDisplay nptAmount={fee} />
-                                    </div>
-                                </div>
-                            )}
-                            <Separator />
-                            <div className="space-y-1">
-                                <div className="flex items-center justify-between">
-                                    <span className="font-medium">
-                                        Grand Total:
-                                    </span>
-                                    <span className="font-mono font-bold text-lg">
-                                        {grandTotal.toFixed(2)} $NPT
-                                    </span>
-                                </div>
-                                <div className="flex justify-end">
-                                    <PriceDisplay nptAmount={grandTotal} />
-                                </div>
-                            </div>
-                            {confirmedBalance && (
-                                <div className="space-y-1">
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="text-muted-foreground">
-                                            Available Balance:
-                                        </span>
-                                        <span className="font-mono text-muted-foreground">
-                                            {parseFloat(
-                                                confirmedBalance,
-                                            ).toFixed(2)}{" "}
-                                            $NPT
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-end">
-                                        <PriceDisplay
-                                            nptAmount={parseFloat(
-                                                confirmedBalance,
+                                        {/* Amount Field */}
+                                        <FormField
+                                            control={form.control}
+                                            name={`recipients.${index}.amount`}
+                                            render={({
+                                                field: amountField,
+                                            }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        Amount
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <InputGroup>
+                                                            <InputGroupInput
+                                                                type="text"
+                                                                placeholder="0.00"
+                                                                {...amountField}
+                                                            />
+                                                            <InputGroupText>
+                                                                $NPT
+                                                            </InputGroupText>
+                                                        </InputGroup>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
                                             )}
                                         />
                                     </div>
+                                ))}
+
+                                {/* Add Recipient Button */}
+                                {showMultiple && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleAddRecipient}
+                                        className="w-full"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        Add Recipient
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* Fee Field */}
+                            <FormField
+                                control={form.control}
+                                name="fee"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Transaction Fee{" "}
+                                            <span className="text-muted-foreground">
+                                                (Optional)
+                                            </span>
+                                        </FormLabel>
+                                        <FormControl>
+                                            <InputGroup>
+                                                <InputGroupInput
+                                                    type="text"
+                                                    placeholder="0.001"
+                                                    {...field}
+                                                />
+                                                <InputGroupText>
+                                                    $NPT
+                                                </InputGroupText>
+                                            </InputGroup>
+                                        </FormControl>
+                                        <FormDescription>
+                                            Leave empty to use the default
+                                            network fee
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Total Summary */}
+                            <div className="p-4 bg-primary/5 rounded-lg space-y-2">
+                                <div className="space-y-1">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">
+                                            Total Amount:
+                                        </span>
+                                        <span className="font-mono font-semibold">
+                                            {totalAmount.toFixed(2)} $NPT
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <PriceDisplay nptAmount={totalAmount} />
+                                    </div>
+                                </div>
+                                {fee > 0 && (
+                                    <div className="space-y-1">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-muted-foreground">
+                                                Fee:
+                                            </span>
+                                            <span className="font-mono">
+                                                {fee.toFixed(2)} $NPT
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-end">
+                                            <PriceDisplay nptAmount={fee} />
+                                        </div>
+                                    </div>
+                                )}
+                                <Separator />
+                                <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-medium">
+                                            Grand Total:
+                                        </span>
+                                        <span className="font-mono font-bold text-lg">
+                                            {grandTotal.toFixed(2)} $NPT
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <PriceDisplay nptAmount={grandTotal} />
+                                    </div>
+                                </div>
+                                {confirmedBalance && (
+                                    <div className="space-y-1">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-muted-foreground">
+                                                Available Balance:
+                                            </span>
+                                            <span className="font-mono text-muted-foreground">
+                                                {parseFloat(
+                                                    confirmedBalance,
+                                                ).toFixed(2)}{" "}
+                                                $NPT
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-end">
+                                            <PriceDisplay
+                                                nptAmount={parseFloat(
+                                                    confirmedBalance,
+                                                )}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Error Display */}
+                            {error && (
+                                <div className="flex items-center gap-2 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
+                                    <AlertCircle className="h-5 w-5 shrink-0" />
+                                    <p className="text-sm">{error}</p>
                                 </div>
                             )}
-                        </div>
 
-                        {/* Error Display */}
-                        {error && (
-                            <div className="flex items-center gap-2 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
-                                <AlertCircle className="h-5 w-5 shrink-0" />
-                                <p className="text-sm">{error}</p>
-                            </div>
-                        )}
+                            <Separator />
 
-                        <Separator />
+                            {/* Submit Button */}
+                            <ButtonGroup className="w-full">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => form.reset()}
+                                    disabled={isSending}
+                                    className="flex-1"
+                                >
+                                    Clear
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={isSending || isValidating}
+                                    className="flex-1"
+                                >
+                                    {isSending || isValidating ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            {isValidating
+                                                ? "Validating..."
+                                                : "Sending..."}
+                                        </>
+                                    ) : (
+                                        <>
+                                            Send Transaction
+                                            <ArrowRight className="h-4 w-4" />
+                                        </>
+                                    )}
+                                </Button>
+                            </ButtonGroup>
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
 
-                        {/* Submit Button */}
-                        <ButtonGroup className="w-full">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => form.reset()}
-                                disabled={isSending}
-                                className="flex-1"
-                            >
-                                Clear
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={isSending || isValidating}
-                                className="flex-1"
-                            >
-                                {isSending || isValidating ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        {isValidating
-                                            ? "Validating..."
-                                            : "Sending..."}
-                                    </>
-                                ) : (
-                                    <>
-                                        Send Transaction
-                                        <ArrowRight className="h-4 w-4" />
-                                    </>
+            {/* Confirmation Dialog */}
+            <AlertDialog
+                open={showConfirmDialog}
+                onOpenChange={setShowConfirmDialog}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Transaction</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Please review the transaction details before
+                            sending:
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    {pendingTransaction && (
+                        <div className="space-y-4">
+                            {/* Transaction Summary */}
+                            <div className="space-y-3">
+                                <div className="text-sm font-medium">
+                                    Recipients:
+                                </div>
+                                {pendingTransaction.recipients.map(
+                                    (recipient, index) => (
+                                        <div
+                                            key={`recipient-${index}-${recipient.address}`}
+                                            className="flex justify-between items-center p-3 bg-muted/50 rounded-lg"
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-mono text-sm truncate">
+                                                    {recipient.address}
+                                                </div>
+                                            </div>
+                                            <div className="ml-4 text-right">
+                                                <div className="font-mono font-medium">
+                                                    {parseFloat(
+                                                        recipient.amount,
+                                                    ).toFixed(2)}{" "}
+                                                    NPT
+                                                </div>
+                                                <PriceDisplay
+                                                    nptAmount={parseFloat(
+                                                        recipient.amount,
+                                                    )}
+                                                    className="text-xs"
+                                                />
+                                            </div>
+                                        </div>
+                                    ),
                                 )}
-                            </Button>
-                        </ButtonGroup>
-                    </form>
-                </Form>
-            </CardContent>
-        </Card>
+                            </div>
+
+                            {/* Total Amount */}
+                            <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg border border-primary/20">
+                                <span className="font-medium">
+                                    Total Amount:
+                                </span>
+                                <div className="text-right">
+                                    <div className="font-mono font-bold text-lg">
+                                        {pendingTransaction.recipients
+                                            .reduce(
+                                                (sum, r) =>
+                                                    sum + parseFloat(r.amount),
+                                                0,
+                                            )
+                                            .toFixed(2)}{" "}
+                                        NPT
+                                    </div>
+                                    <PriceDisplay
+                                        nptAmount={pendingTransaction.recipients.reduce(
+                                            (sum, r) =>
+                                                sum + parseFloat(r.amount),
+                                            0,
+                                        )}
+                                        className="text-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Fee */}
+                            {pendingTransaction.fee && (
+                                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                                    <span className="text-sm text-muted-foreground">
+                                        Transaction Fee:
+                                    </span>
+                                    <span className="font-mono text-sm">
+                                        {parseFloat(
+                                            pendingTransaction.fee,
+                                        ).toFixed(2)}{" "}
+                                        NPT
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Security Checkbox */}
+                            <div className="flex items-center space-x-2 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                                <Checkbox
+                                    id={confirmId}
+                                    checked={confirmChecked}
+                                    onCheckedChange={(checked) =>
+                                        setConfirmChecked(checked as boolean)
+                                    }
+                                />
+                                <label
+                                    htmlFor={confirmId}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    I confirm that I want to send this
+                                    transaction
+                                </label>
+                            </div>
+                        </div>
+                    )}
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={handleCancelSend}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmSend}
+                            disabled={!confirmChecked || isSending}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {isSending ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    Sending...
+                                </>
+                            ) : (
+                                "Send Transaction"
+                            )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }

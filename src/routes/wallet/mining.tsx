@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { useOnchainStore } from "@/store/onchain.store";
@@ -35,6 +35,7 @@ import { useMiningEndpoints } from "@/renderer/hooks/use-mining-endpoints";
 import { useMiningSettings } from "@/renderer/hooks/use-mining-settings";
 import { MiningRoleExplanation } from "@/components/mining/mining-role-explanation";
 import { SystemResourceCards } from "@/components/mining/system-resource-cards";
+import { useUIStore } from "@/store/ui.store";
 
 interface MiningData {
     blockDifficulties: Array<[number, number[]]>;
@@ -78,6 +79,9 @@ interface MiningData {
 }
 
 function MiningPage() {
+    const navigate = useNavigate();
+    const experimentalMode = useUIStore((state) => state.experimentalMode);
+
     const [miningData, setMiningData] = useState<MiningData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -111,6 +115,13 @@ function MiningPage() {
         providePowSolution,
         provideNewTip,
     } = useMiningEndpoints();
+
+    // Redirect to wallet if experimental mode is disabled
+    useEffect(() => {
+        if (!experimentalMode) {
+            navigate({ to: "/wallet" });
+        }
+    }, [experimentalMode, navigate]);
 
     // Derive mining state from store
     const isMining = minerStatus === "active";
@@ -268,6 +279,33 @@ function MiningPage() {
         if (difficulty.length === 0) return "0";
         return difficulty[0].toLocaleString();
     };
+
+    // Show warning if experimental mode is disabled
+    if (!experimentalMode) {
+        return (
+            <PageContainer>
+                <div className="space-y-6">
+                    {/* Header */}
+                    <div>
+                        <h3 className="text-2xl font-bold">Mining Dashboard</h3>
+                        <p className="text-muted-foreground">
+                            Monitor network mining statistics and performance.
+                        </p>
+                    </div>
+
+                    <Alert>
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Experimental Mode Required</AlertTitle>
+                        <AlertDescription>
+                            Mining features are only available in experimental
+                            mode. Enable experimental mode in the sidebar to
+                            access this feature.
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            </PageContainer>
+        );
+    }
 
     if (isLoading || isSettingsLoading) {
         return (

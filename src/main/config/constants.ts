@@ -7,20 +7,55 @@
 import path from "node:path";
 
 /**
+ * Detect if we're running in development or production mode
+ */
+const isDevelopment =
+    process.env.NODE_ENV === "development" ||
+    process.env.ELECTRON_IS_DEV === "1" ||
+    !process.resourcesPath ||
+    process.resourcesPath.includes("node_modules");
+
+/**
  * Binary paths for Neptune executables
- * 
- * In production, binaries are bundled in resources/binaries/
- * In development, we can fall back to local build paths
+ *
+ * Automatically detects development vs production mode and uses appropriate paths
  */
 export const BINARY_PATHS = {
-    // Production paths - bundled binaries
-    NEPTUNE_CORE: path.join(process.resourcesPath, "binaries", "neptune-core"),
-    NEPTUNE_CLI: path.join(process.resourcesPath, "binaries", "neptune-cli"),
-    TRITON_VM_PROVER: path.join(process.resourcesPath, "binaries", "triton-vm-prover"),
+    // Development paths (local neptune-core build)
+    DEV_NEPTUNE_CORE:
+        "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-core",
+    DEV_NEPTUNE_CLI:
+        "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-cli",
+    DEV_TRITON_VM_PROVER:
+        "/home/anon/Documents/GitHub/neptune-core/target/release/triton-vm-prover",
 
-    // Development fallback paths (for local development)
-    DEV_NEPTUNE_CORE: "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-core",
-    DEV_NEPTUNE_CLI: "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-cli",
+    // Production paths (bundled binaries in packaged app)
+    PROD_NEPTUNE_CORE: path.join(
+        process.resourcesPath,
+        "binaries",
+        "neptune-core",
+    ),
+    PROD_NEPTUNE_CLI: path.join(
+        process.resourcesPath,
+        "binaries",
+        "neptune-cli",
+    ),
+    PROD_TRITON_VM_PROVER: path.join(
+        process.resourcesPath,
+        "binaries",
+        "triton-vm-prover",
+    ),
+
+    // Auto-selected paths based on environment
+    NEPTUNE_CORE: isDevelopment
+        ? "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-core"
+        : path.join(process.resourcesPath, "binaries", "neptune-core"),
+    NEPTUNE_CLI: isDevelopment
+        ? "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-cli"
+        : path.join(process.resourcesPath, "binaries", "neptune-cli"),
+    TRITON_VM_PROVER: isDevelopment
+        ? "/home/anon/Documents/GitHub/neptune-core/target/release/triton-vm-prover"
+        : path.join(process.resourcesPath, "binaries", "triton-vm-prover"),
 } as const;
 
 /**

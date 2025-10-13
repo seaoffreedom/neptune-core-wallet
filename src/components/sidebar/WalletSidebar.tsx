@@ -8,6 +8,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
     BookUser,
     Coins,
+    DollarSign,
     History,
     LayoutDashboard,
     Network,
@@ -28,6 +29,7 @@ import {
 } from "@/renderer/hooks/use-onchain-data";
 import { useOnchainStore } from "@/store/onchain.store";
 import { useUIStore } from "@/store/ui.store";
+import { usePriceFetchingSettings } from "@/store/neptune-core-settings.store";
 
 export function WalletSidebar() {
     const location = useLocation();
@@ -40,6 +42,7 @@ export function WalletSidebar() {
     const blockHeight = useOnchainStore((state) => state.blockHeight);
     const peerInfo = useOnchainStore((state) => state.peerInfo);
     const experimentalMode = useUIStore((state) => state.experimentalMode);
+    const priceFetchingSettings = usePriceFetchingSettings();
 
     // Get UTXO data
     const { utxos, fetchUtxos } = useUtxos();
@@ -202,6 +205,61 @@ export function WalletSidebar() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Market Price */}
+                        {priceFetchingSettings?.enabled && (
+                            <>
+                                <Separator />
+                                <div className="space-y-2">
+                                    <h3 className="text-sm font-medium text-muted-foreground">
+                                        Market Price
+                                    </h3>
+                                    <div className="space-y-1">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                                <span className="text-muted-foreground">
+                                                    Neptune (NPT)
+                                                </span>
+                                            </div>
+                                            {priceFetchingSettings.cachedPrices ? (
+                                                <div className="text-right">
+                                                    <div className="font-mono">
+                                                        {new Intl.NumberFormat(
+                                                            "en-US",
+                                                            {
+                                                                style: "currency",
+                                                                currency:
+                                                                    priceFetchingSettings.currency,
+                                                                minimumFractionDigits: 4,
+                                                                maximumFractionDigits: 4,
+                                                            },
+                                                        ).format(
+                                                            priceFetchingSettings
+                                                                .cachedPrices[
+                                                                priceFetchingSettings.currency.toLowerCase() as
+                                                                    | "usd"
+                                                                    | "eur"
+                                                                    | "gbp"
+                                                            ],
+                                                        )}
+                                                    </div>
+                                                    {priceFetchingSettings.lastFetched && (
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {new Date(
+                                                                priceFetchingSettings.lastFetched,
+                                                            ).toLocaleTimeString()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <Skeleton className="h-4 w-16" />
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         <Separator />
 
