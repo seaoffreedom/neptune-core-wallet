@@ -5,32 +5,36 @@
  * Supports both main process and renderer process logging with appropriate transports.
  */
 
-import pino from 'pino';
+import pino from "pino";
 
 /**
  * Logger configuration for different environments
  */
 const createLoggerConfig = (component?: string) => {
-    const isDevelopment = typeof process !== 'undefined' && process.env?.NODE_ENV === 'development';
-    const isRenderer = typeof window !== 'undefined';
+    const isDevelopment =
+        typeof process !== "undefined" &&
+        process.env?.NODE_ENV === "development";
+    const isRenderer = typeof window !== "undefined";
 
     // Base configuration
     const config: pino.LoggerOptions = {
-        level: isDevelopment ? 'debug' : 'info',
+        level: isDevelopment ? "debug" : "info",
         base: {
-            component: component || 'app',
-            ...(typeof process !== 'undefined' && process.pid ? { pid: process.pid } : {}),
+            component: component || "app",
+            ...(typeof process !== "undefined" && process.pid
+                ? { pid: process.pid }
+                : {}),
         },
     };
 
     // Add transport for development
     if (isDevelopment && !isRenderer) {
         config.transport = {
-            target: 'pino-pretty',
+            target: "pino-pretty",
             options: {
                 colorize: true,
-                translateTime: 'SYS:standard',
-                ignore: 'pid,hostname',
+                translateTime: "SYS:standard",
+                ignore: "pid,hostname",
                 singleLine: true,
             },
         };
@@ -49,33 +53,33 @@ export function createLogger(component: string): pino.Logger {
 /**
  * Default application logger
  */
-export const logger = createLogger('app');
+export const logger = createLogger("app");
 
 /**
  * Pre-configured loggers for common components
  */
 export const loggers = {
     app: logger,
-    main: createLogger('main'),
-    renderer: createLogger('renderer'),
-    wallet: createLogger('wallet'),
-    settings: createLogger('settings'),
-    price: createLogger('price'),
-    network: createLogger('network'),
-    mining: createLogger('mining'),
-    performance: createLogger('performance'),
-    security: createLogger('security'),
-    data: createLogger('data'),
-    advanced: createLogger('advanced'),
-    neptune: createLogger('neptune'),
-    rpc: createLogger('rpc'),
-    ipc: createLogger('ipc'),
-    ui: createLogger('ui'),
-    store: createLogger('store'),
-    hooks: createLogger('hooks'),
-    components: createLogger('components'),
-    services: createLogger('services'),
-    utils: createLogger('utils'),
+    main: createLogger("main"),
+    renderer: createLogger("renderer"),
+    wallet: createLogger("wallet"),
+    settings: createLogger("settings"),
+    price: createLogger("price"),
+    network: createLogger("network"),
+    mining: createLogger("mining"),
+    performance: createLogger("performance"),
+    security: createLogger("security"),
+    data: createLogger("data"),
+    advanced: createLogger("advanced"),
+    neptune: createLogger("neptune"),
+    rpc: createLogger("rpc"),
+    ipc: createLogger("ipc"),
+    ui: createLogger("ui"),
+    store: createLogger("store"),
+    hooks: createLogger("hooks"),
+    components: createLogger("components"),
+    services: createLogger("services"),
+    utils: createLogger("utils"),
 } as const;
 
 /**
@@ -86,7 +90,7 @@ export type Logger = pino.Logger;
 /**
  * Log levels for type safety
  */
-export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
 
 /**
  * Structured log data interface
@@ -127,7 +131,7 @@ export function logPerformance(
     duration: number,
     context?: LogData,
 ): void {
-    logWithContext(logger, 'info', `Performance: ${operation}`, {
+    logWithContext(logger, "info", `Performance: ${operation}`, {
         operation,
         duration: `${duration}ms`,
         ...context,
@@ -143,7 +147,7 @@ export function logError(
     error: Error,
     context?: LogData,
 ): void {
-    logWithContext(logger, 'error', message, {
+    logWithContext(logger, "error", message, {
         error: {
             name: error.name,
             message: error.message,
@@ -161,7 +165,7 @@ export function logSuccess(
     message: string,
     context?: LogData,
 ): void {
-    logWithContext(logger, 'info', `✅ ${message}`, context);
+    logWithContext(logger, "info", `✅ ${message}`, context);
 }
 
 /**
@@ -172,7 +176,7 @@ export function logWarning(
     message: string,
     context?: LogData,
 ): void {
-    logWithContext(logger, 'warn', `⚠️ ${message}`, context);
+    logWithContext(logger, "warn", `⚠️ ${message}`, context);
 }
 
 /**
@@ -183,7 +187,7 @@ export function logInfo(
     message: string,
     context?: LogData,
 ): void {
-    logWithContext(logger, 'info', `ℹ️ ${message}`, context);
+    logWithContext(logger, "info", `ℹ️ ${message}`, context);
 }
 
 /**
@@ -194,5 +198,5 @@ export function logDebug(
     message: string,
     context?: LogData,
 ): void {
-    logWithContext(logger, 'debug', `🔍 ${message}`, context);
+    logWithContext(logger, "debug", `🔍 ${message}`, context);
 }
