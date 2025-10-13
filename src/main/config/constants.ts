@@ -10,11 +10,11 @@ import path from "node:path";
  * Binary paths for Neptune executables
  */
 export const BINARY_PATHS = {
-    // Use the working binaries from neptune-core_alt (confirmed working)
+    // Updated to use the correct neptune-core repository path
     NEPTUNE_CORE:
-        "/home/anon/Documents/GitHub_alt/neptune-core_alt/target/release/neptune-core",
+        "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-core",
     NEPTUNE_CLI:
-        "/home/anon/Documents/GitHub_alt/neptune-core_alt/target/release/neptune-cli",
+        "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-cli",
 
     // Alternative paths (commented out for reference)
     // NEPTUNE_CORE: path.join(PROJECT_ROOT, "resources", "binaries", "neptune-core"),
