@@ -158,7 +158,9 @@ export class NeptuneCoreSettingsService {
     /**
      * Update price fetching settings
      */
-    updatePriceFetching(settings: Partial<PriceFetchingSettings>): NeptuneCoreSettings {
+    updatePriceFetching(
+        settings: Partial<PriceFetchingSettings>,
+    ): NeptuneCoreSettings {
         const current = this.getAll();
         const updated: NeptuneCoreSettings = {
             ...current,

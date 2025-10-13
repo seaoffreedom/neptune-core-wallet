@@ -20,7 +20,8 @@ type SettingsCategory =
   | 'performance'
   | 'security'
   | 'data'
-  | 'advanced';
+  | 'advanced'
+  | 'priceFetching';
 
 interface CategoryState {
   isDirty: boolean;
@@ -99,6 +100,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       handleReset: null,
     },
     advanced: {
+      isDirty: false,
+      dirtyCount: 0,
+      form: null,
+      handleSave: null,
+      handleReset: null,
+    },
+    priceFetching: {
       isDirty: false,
       dirtyCount: 0,
       form: null,

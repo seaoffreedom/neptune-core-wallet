@@ -62,20 +62,12 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
     const isCacheValid = useIsPriceCacheValid();
     const cacheExpiryTime = useCacheExpiryTime();
 
-    const onSubmit = (data: PriceSettingsFormData) => {
-        console.log("💰 Price settings form submitted:", data);
-
-        // Update price fetching settings
+    // Helper to update both form and Zustand
+    const handleFieldChange = (field: string, value: unknown) => {
+        // Update Zustand store immediately
         updatePriceFetchingSettings({
-            enabled: data.enabled,
-            currency: data.currency,
-            cacheTtl: data.cacheTtl,
-        });
-
-        // Update UI currency if different
-        if (selectedCurrency.code !== data.currency) {
-            setCurrency(data.currency);
-        }
+            [field]: value,
+        } as Partial<PriceSettingsFormData>);
     };
 
     const handleRefreshPrices = async () => {
@@ -98,10 +90,7 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <Form {...form}>
-                        <form
-                            onSubmit={form.handleSubmit(onSubmit)}
-                            className="space-y-6"
-                        >
+                        <form className="space-y-6">
                             {/* Enable Price Fetching */}
                             <FormField
                                 control={form.control}
@@ -120,7 +109,10 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                                         <FormControl>
                                             <Switch
                                                 checked={field.value ?? false}
-                                                onCheckedChange={field.onChange}
+                                                onCheckedChange={(checked) => {
+                                                    field.onChange(checked);
+                                                    handleFieldChange('enabled', checked);
+                                                }}
                                             />
                                         </FormControl>
                                     </FormItem>
@@ -134,10 +126,17 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Display Currency</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value || "USD"}
-                                        >
+                                         <Select
+                                             onValueChange={(value) => {
+                                                 field.onChange(value);
+                                                 handleFieldChange('currency', value);
+                                                 // Also update UI currency if different
+                                                 if (selectedCurrency.code !== value) {
+                                                     setCurrency(value);
+                                                 }
+                                             }}
+                                             defaultValue={field.value || "USD"}
+                                         >
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select currency" />
@@ -180,9 +179,11 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                                             Cache Duration
                                         </FormLabel>
                                         <Select
-                                            onValueChange={(value) =>
-                                                field.onChange(parseInt(value))
-                                            }
+                                            onValueChange={(value) => {
+                                                const intValue = parseInt(value);
+                                                field.onChange(intValue);
+                                                handleFieldChange('cacheTtl', intValue);
+                                            }}
                                             defaultValue={
                                                 field.value?.toString() || "5"
                                             }
@@ -223,11 +224,6 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                             />
 
                             <Separator />
-
-                            {/* Submit Button */}
-                            <Button type="submit" className="w-full">
-                                Save Price Settings
-                            </Button>
                         </form>
                     </Form>
                 </CardContent>
