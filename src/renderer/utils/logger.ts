@@ -5,7 +5,7 @@
  * Falls back to console methods when Pino is not available in browser context.
  */
 
-import { loggers, type Logger, type LogData } from '@/shared/utils/logger';
+import type { Logger, LogData } from '@/shared/utils/logger';
 
 /**
  * Renderer-safe logger that falls back to console when needed
@@ -14,13 +14,9 @@ class RendererLogger {
     private logger: Logger;
 
     constructor(component: string) {
-        try {
-            // Try to use Pino logger
-            this.logger = loggers[component as keyof typeof loggers] || loggers.app;
-        } catch {
-            // Fallback to console-based logger
-            this.logger = this.createConsoleLogger(component);
-        }
+        // Always use console-based logger in renderer process
+        // Pino doesn't work reliably in browser environments
+        this.logger = this.createConsoleLogger(component);
     }
 
     private createConsoleLogger(component: string): Logger {

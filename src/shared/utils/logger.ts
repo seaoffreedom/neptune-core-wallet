@@ -11,7 +11,7 @@ import pino from 'pino';
  * Logger configuration for different environments
  */
 const createLoggerConfig = (component?: string) => {
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isDevelopment = typeof process !== 'undefined' && process.env?.NODE_ENV === 'development';
     const isRenderer = typeof window !== 'undefined';
 
     // Base configuration
@@ -19,7 +19,7 @@ const createLoggerConfig = (component?: string) => {
         level: isDevelopment ? 'debug' : 'info',
         base: {
             component: component || 'app',
-            pid: process.pid,
+            ...(typeof process !== 'undefined' && process.pid ? { pid: process.pid } : {}),
         },
     };
 
