@@ -111,7 +111,7 @@
     "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^11.0.2",
     "execa": "^9.6.0",
-    "framer-motion": "^12.23.22",
+    "framer-motion": "^12.23.24",
     "fs-extra": "^11.3.2",
     "is-running": "^2.1.0",
     "ky": "^1.11.0",
