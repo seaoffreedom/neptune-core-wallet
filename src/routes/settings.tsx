@@ -78,6 +78,7 @@ function SettingsLayout() {
         'security',
         'data',
         'advanced',
+        'priceFetching',
       ] as const;
 
       for (const category of categories) {

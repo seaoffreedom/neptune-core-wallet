@@ -111,7 +111,10 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                                                 checked={field.value ?? false}
                                                 onCheckedChange={(checked) => {
                                                     field.onChange(checked);
-                                                    handleFieldChange('enabled', checked);
+                                                    handleFieldChange(
+                                                        "enabled",
+                                                        checked,
+                                                    );
                                                 }}
                                             />
                                         </FormControl>
@@ -126,17 +129,23 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Display Currency</FormLabel>
-                                         <Select
-                                             onValueChange={(value) => {
-                                                 field.onChange(value);
-                                                 handleFieldChange('currency', value);
-                                                 // Also update UI currency if different
-                                                 if (selectedCurrency.code !== value) {
-                                                     setCurrency(value);
-                                                 }
-                                             }}
-                                             defaultValue={field.value || "USD"}
-                                         >
+                                        <Select
+                                            onValueChange={(value) => {
+                                                field.onChange(value);
+                                                handleFieldChange(
+                                                    "currency",
+                                                    value,
+                                                );
+                                                // Also update UI currency if different
+                                                if (
+                                                    selectedCurrency.code !==
+                                                    value
+                                                ) {
+                                                    setCurrency(value);
+                                                }
+                                            }}
+                                             value={field.value || "USD"}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select currency" />
@@ -180,11 +189,15 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                                         </FormLabel>
                                         <Select
                                             onValueChange={(value) => {
-                                                const intValue = parseInt(value);
+                                                const intValue =
+                                                    parseInt(value);
                                                 field.onChange(intValue);
-                                                handleFieldChange('cacheTtl', intValue);
+                                                handleFieldChange(
+                                                    "cacheTtl",
+                                                    intValue,
+                                                );
                                             }}
-                                            defaultValue={
+                                            value={
                                                 field.value?.toString() || "5"
                                             }
                                         >

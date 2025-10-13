@@ -29,13 +29,6 @@ function PriceSettings() {
     useEffect(() => {
         if (priceFetchingSettings && !isLoading) {
             form.reset(priceFetchingSettings);
-        } else if (!priceFetchingSettings && !isLoading) {
-            // Set default values if no settings are loaded
-            form.reset({
-                enabled: false,
-                currency: "USD",
-                cacheTtl: 5,
-            });
         }
     }, [priceFetchingSettings, form, isLoading]);
 
