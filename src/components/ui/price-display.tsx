@@ -62,6 +62,15 @@ export function PriceDisplay({
         );
     }
 
+    // Don't render if no selected currency
+    if (!selectedCurrency?.code) {
+        return (
+            <span className={`text-xs text-muted-foreground ${className}`}>
+                No currency selected
+            </span>
+        );
+    }
+
     // Get the price for the selected currency
     const priceKey = selectedCurrency.code.toLowerCase() as
         | "usd"
