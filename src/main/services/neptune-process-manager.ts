@@ -69,7 +69,7 @@ const DEFAULT_CONFIG: ProcessConfig = {
         rpcPort: RPC_PORTS.CLI,
     },
     logging: {
-        level: (process.env.NEPTUNE_LOG_LEVEL as LogLevel) || "errors-only", // Show errors by default to help debug issues
+        level: (process.env.NEPTUNE_LOG_LEVEL as LogLevel) || "info", // Show info level by default for better debugging
         logDir: path.join(PROJECT_ROOT, "logs"),
     },
 };
@@ -203,13 +203,23 @@ export class NeptuneProcessManager {
         const corePath = BINARY_PATHS.NEPTUNE_CORE;
         const cliPath = BINARY_PATHS.NEPTUNE_CLI;
 
+        // Validate neptune-core binary
         try {
             await access(corePath);
-            await access(cliPath);
-            logger.debug("Binary validation successful");
+            logger.debug(`Binary validation successful: ${corePath}`);
         } catch (error) {
-            throw new Error(`Required binaries not found: ${error}`);
+            throw new Error(`neptune-core binary not found at ${corePath}: ${error}`);
         }
+
+        // Validate neptune-cli binary
+        try {
+            await access(cliPath);
+            logger.debug(`Binary validation successful: ${cliPath}`);
+        } catch (error) {
+            throw new Error(`neptune-cli binary not found at ${cliPath}: ${error}`);
+        }
+
+        logger.info("All required binaries validated successfully");
     }
 
     /**
@@ -293,54 +303,71 @@ export class NeptuneProcessManager {
         try {
             logger.info("Starting Neptune initialization sequence...");
 
-            // Step 0: Check if we can skip initialization
-            if (await this.canSkipInitialization()) {
-                logger.info(
-                    "Skipping initialization - processes may already be running",
-                );
-                // Verify processes are actually running
-                const status = this.getStatus();
-                if (status.core.running && status.cli.running) {
-                    this.isInitialized = true;
-                    this.initializing = false;
-                    logger.info(
-                        "Processes already running, initialization skipped",
-                    );
-                    return;
+            // Wrap entire initialization in a timeout
+            await pTimeout(
+                this.performInitialization(),
+                {
+                    milliseconds: 120000, // 2 minutes total timeout
                 }
-            }
-
-            // Step 1: Validate binaries exist
-            await this.validateBinaries();
-
-            // Step 2: Start neptune-core
-            await this.startCore();
-
-            // Step 3: Start neptune-cli in parallel while waiting for core
-            const [cookie] = await Promise.all([
-                this.waitForCoreReady(),
-                this.startCli(), // Start CLI in parallel
-            ]);
-
-            // Store the cookie
-            this.cookie = cookie;
-
-            // Step 4: Start data polling
-            this.startDataPolling(cookie);
-
-            this.isInitialized = true;
-
-            // Cache the successful state
-            await this.cacheProcessState();
+            );
 
             logger.info("Neptune initialization completed successfully");
         } catch (error) {
+            if (error instanceof Error && error.name === "TimeoutError") {
+                logger.error("Neptune initialization timed out after 2 minutes");
+                await this.shutdown();
+                throw new Error("Initialization timeout - processes may be unresponsive");
+            }
             logger.error({ error }, "Neptune initialization failed");
             await this.shutdown();
             throw error;
         } finally {
             this.initializing = false;
         }
+    }
+
+    /**
+     * Perform the actual initialization steps
+     */
+    private async performInitialization(): Promise<void> {
+        // Step 0: Check if we can skip initialization
+        if (await this.canSkipInitialization()) {
+            logger.info(
+                "Skipping initialization - processes may already be running",
+            );
+            // Verify processes are actually running
+            const status = this.getStatus();
+            if (status.core.running && status.cli.running) {
+                this.isInitialized = true;
+                logger.info(
+                    "Processes already running, initialization skipped",
+                );
+                return;
+            }
+        }
+
+        // Step 1: Validate binaries exist
+        await this.validateBinaries();
+
+        // Step 2: Start neptune-core
+        await this.startCore();
+
+        // Step 3: Start neptune-cli in parallel while waiting for core
+        const [cookie] = await Promise.all([
+            this.waitForCoreReady(),
+            this.startCli(), // Start CLI in parallel
+        ]);
+
+        // Store the cookie
+        this.cookie = cookie;
+
+        // Step 4: Start data polling
+        this.startDataPolling(cookie);
+
+        this.isInitialized = true;
+
+        // Cache the successful state
+        await this.cacheProcessState();
     }
 
     /**
@@ -368,7 +395,12 @@ export class NeptuneProcessManager {
 
             // Handle process events
             this.coreProcess.on("error", (error) => {
-                logger.error({ error }, "neptune-core process error");
+                logger.error({ 
+                    error: error.message,
+                    binaryPath,
+                    args: args.join(" "),
+                    suggestion: "Check if neptune-core binary is executable and has required dependencies"
+                }, "neptune-core process error");
             });
 
             this.coreProcess.on("exit", (code, signal) => {
