@@ -89,7 +89,17 @@ export function useSettingsForm<
                 if (result.success && result.settings) {
                     const categoryData = result.settings[category] as T;
                     setInitialData(categoryData);
-                    reset(categoryData); // Initialize form with loaded data
+                    
+                    // Transform data for form initialization if needed
+                    let formData = categoryData;
+                    if (category === "priceFetching") {
+                        formData = {
+                            ...categoryData,
+                            cacheTtl: String((categoryData as { cacheTtl: number }).cacheTtl),
+                        } as T;
+                    }
+                    
+                    reset(formData); // Initialize form with loaded data
                 } else {
                     console.error("Failed to load settings:", result.error);
                 }
@@ -124,10 +134,20 @@ export function useSettingsForm<
         try {
             await handleSubmit(async (data) => {
                 console.log(`💾 Saving ${category} settings:`, data);
+                
+                // Transform form data for specific categories
+                let transformedData = data;
+                if (category === "priceFetching") {
+                    transformedData = {
+                        ...data,
+                        cacheTtl: parseInt((data as { cacheTtl: string }).cacheTtl, 10),
+                    };
+                }
+                
                 const updateMethod = getUpdateMethod(category);
                 const result = await window.electronAPI.neptuneCoreSettings[
                     updateMethod
-                ](data as never);
+                ](transformedData as never);
 
                 console.log(`✅ Save result for ${category}:`, result);
 
@@ -143,7 +163,17 @@ export function useSettingsForm<
                     console.log(
                         `🔄 Resetting ${category} form to clear isDirty...`,
                     );
-                    reset(updatedCategoryData); // Reset form state, clears isDirty
+                    
+                    // Transform data for form reset if needed
+                    let formData = updatedCategoryData;
+                    if (category === "priceFetching") {
+                        formData = {
+                            ...updatedCategoryData,
+                            cacheTtl: String((updatedCategoryData as { cacheTtl: number }).cacheTtl),
+                        } as T;
+                    }
+                    
+                    reset(formData); // Reset form state, clears isDirty
                 } else {
                     throw new Error(result.error || "Failed to save settings");
                 }
@@ -159,9 +189,17 @@ export function useSettingsForm<
     // Reset handler
     const handleReset = useCallback(() => {
         if (initialData) {
-            reset(initialData); // Revert to initial loaded data
+            // Transform data for form reset if needed
+            let formData = initialData;
+            if (category === "priceFetching") {
+                formData = {
+                    ...initialData,
+                    cacheTtl: String((initialData as { cacheTtl: number }).cacheTtl),
+                } as T;
+            }
+            reset(formData); // Revert to initial loaded data
         }
-    }, [initialData, reset]);
+    }, [initialData, reset, category]);
 
     return {
         form: form as unknown as UseFormReturn<T>,

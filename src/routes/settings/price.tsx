@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSettingsForm } from "@/renderer/hooks/use-settings-form";
-import { usePriceFetchingSettings } from "@/store/neptune-core-settings.store";
 import { PriceSettingsForm } from "@/components/settings/price-settings-form";
 import { priceSettingsSchema } from "@/lib/validation/settings-schemas";
 import type { PriceSettingsFormData } from "@/shared/types/settings-forms";
@@ -18,13 +16,7 @@ function PriceSettings() {
         schema: priceSettingsSchema,
     });
 
-    // Watch for Zustand store changes and reset form accordingly
-    const priceFetchingSettings = usePriceFetchingSettings();
-    useEffect(() => {
-        if (priceFetchingSettings && !isLoading) {
-            form.reset(priceFetchingSettings);
-        }
-    }, [priceFetchingSettings, form, isLoading]);
+    // The useSettingsForm hook now handles form initialization and data conversion
 
     return (
         <PageContainer>

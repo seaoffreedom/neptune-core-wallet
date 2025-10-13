@@ -16,7 +16,12 @@ import {
     usePriceFetchingSettings,
     useUpdatePriceFetchingSettings,
 } from "@/store/neptune-core-settings.store";
-import { rendererLoggers, logInfo, logError, logWarning } from "@/renderer/utils/logger";
+import {
+    rendererLoggers,
+    logInfo,
+    logError,
+    logWarning,
+} from "@/renderer/utils/logger";
 
 // Global polling state to prevent multiple instances
 let globalPollingInterval: NodeJS.Timeout | null = null;
@@ -36,7 +41,7 @@ export function usePricePolling() {
     const priceFetchingSettingsRef = useRef(priceFetchingSettings);
     const updatePriceFetchingSettingsRef = useRef(updatePriceFetchingSettings);
     const fetchAndUpdatePricesRef = useRef<() => Promise<void>>();
-    
+
     // Function to fetch and update prices
     const fetchAndUpdatePrices = useCallback(async () => {
         const currentSettings = priceFetchingSettingsRef.current;
@@ -77,7 +82,10 @@ export function usePricePolling() {
                         },
                     });
 
-                    logInfo(logger, "Prices updated in store - changes detected");
+                    logInfo(
+                        logger,
+                        "Prices updated in store - changes detected",
+                    );
                 } else {
                     // Prices haven't changed - only update timestamp
                     updatePriceFetchingSettingsRef.current({
@@ -88,7 +96,11 @@ export function usePricePolling() {
                 }
             }
         } catch (error) {
-            logError(logger, "Failed to fetch and update prices", error as Error);
+            logError(
+                logger,
+                "Failed to fetch and update prices",
+                error as Error,
+            );
         }
     }, []); // No dependencies - use refs for current values
 
@@ -150,7 +162,11 @@ export function usePricePolling() {
         priceFetchingSettingsRef.current = priceFetchingSettings;
         updatePriceFetchingSettingsRef.current = updatePriceFetchingSettings;
         fetchAndUpdatePricesRef.current = fetchAndUpdatePrices;
-    }, [priceFetchingSettings, updatePriceFetchingSettings, fetchAndUpdatePrices]);
+    }, [
+        priceFetchingSettings,
+        updatePriceFetchingSettings,
+        fetchAndUpdatePrices,
+    ]);
 
     // Effect to manage polling based on enabled state
     useEffect(() => {

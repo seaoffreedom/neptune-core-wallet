@@ -103,7 +103,7 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                             const cacheTtlValue = settings.cacheTtl;
                             if (typeof cacheTtlValue === "string") {
                                 updatePriceFetchingSettings({
-                                    cacheTtl: parseInt(cacheTtlValue),
+                                    cacheTtl: parseInt(cacheTtlValue, 10),
                                 });
                             } else {
                                 updatePriceFetchingSettings(settings);

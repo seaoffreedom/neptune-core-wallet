@@ -135,7 +135,7 @@ export const SettingsFormFields = {
                             updateSettings({ [name]: value } as Partial<T>);
                             onValueChange?.(value);
                         }}
-                        value={field.value as string}
+                        value={field.value ? String(field.value) : ""}
                     >
                         <FormControl>
                             <SelectTrigger>

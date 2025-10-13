@@ -158,15 +158,18 @@ export const advancedSettingsSchema = z.object({
 
 export type AdvancedSettingsFormData = z.infer<typeof advancedSettingsSchema>;
 
-// Price Fetching Settings Schema
+// Price Fetching Settings Schema (for form - uses strings)
 export const priceSettingsSchema = z.object({
     enabled: z.boolean(),
     currency: z.enum(["USD", "EUR", "GBP"]),
     cacheTtl: z
-        .number()
-        .int()
+        .string()
         .min(1, "Cache TTL must be at least 1 minute")
-        .max(60, "Cache TTL must be at most 60 minutes"),
+        .max(2, "Cache TTL must be at most 60 minutes")
+        .refine((val) => {
+            const num = parseInt(val, 10);
+            return !isNaN(num) && num >= 1 && num <= 60;
+        }, "Cache TTL must be between 1 and 60 minutes"),
 });
 
 export type PriceSettingsFormData = z.infer<typeof priceSettingsSchema>;
