@@ -46,9 +46,7 @@ export function BaseSettingsForm<T extends Record<string, unknown>>({
 }: BaseSettingsFormProps<T>) {
     return (
         <Form {...form}>
-            <form className="space-y-6">
-                {children}
-            </form>
+            <form className="space-y-6">{children}</form>
         </Form>
     );
 }
@@ -91,7 +89,9 @@ export const SettingsFormFields = {
                             checked={field.value ?? false}
                             onCheckedChange={(checked) => {
                                 field.onChange(checked);
-                                updateSettings({ [name]: checked } as Partial<T>);
+                                updateSettings({
+                                    [name]: checked,
+                                } as Partial<T>);
                                 onValueChange?.(checked);
                             }}
                         />
@@ -144,7 +144,10 @@ export const SettingsFormFields = {
                         </FormControl>
                         <SelectContent>
                             {options.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                >
                                     {option.label}
                                 </SelectItem>
                             ))}
@@ -221,12 +224,12 @@ export const SettingsFormFields = {
             <CardHeader>
                 <CardTitle className="text-base">{title}</CardTitle>
                 {description && (
-                    <p className="text-sm text-muted-foreground">{description}</p>
+                    <p className="text-sm text-muted-foreground">
+                        {description}
+                    </p>
                 )}
             </CardHeader>
-            <CardContent className="space-y-4">
-                {children}
-            </CardContent>
+            <CardContent className="space-y-4">{children}</CardContent>
         </Card>
     ),
 

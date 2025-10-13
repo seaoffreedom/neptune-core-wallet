@@ -89,16 +89,18 @@ export function useSettingsForm<
                 if (result.success && result.settings) {
                     const categoryData = result.settings[category] as T;
                     setInitialData(categoryData);
-                    
+
                     // Transform data for form initialization if needed
                     let formData = categoryData;
                     if (category === "priceFetching") {
                         formData = {
                             ...categoryData,
-                            cacheTtl: String((categoryData as { cacheTtl: number }).cacheTtl),
+                            cacheTtl: String(
+                                (categoryData as { cacheTtl: number }).cacheTtl,
+                            ),
                         } as T;
                     }
-                    
+
                     reset(formData); // Initialize form with loaded data
                 } else {
                     console.error("Failed to load settings:", result.error);
@@ -134,16 +136,19 @@ export function useSettingsForm<
         try {
             await handleSubmit(async (data) => {
                 console.log(`💾 Saving ${category} settings:`, data);
-                
+
                 // Transform form data for specific categories
                 let transformedData = data;
                 if (category === "priceFetching") {
                     transformedData = {
                         ...data,
-                        cacheTtl: parseInt((data as { cacheTtl: string }).cacheTtl, 10),
+                        cacheTtl: parseInt(
+                            (data as { cacheTtl: string }).cacheTtl,
+                            10,
+                        ),
                     };
                 }
-                
+
                 const updateMethod = getUpdateMethod(category);
                 const result = await window.electronAPI.neptuneCoreSettings[
                     updateMethod
@@ -163,16 +168,19 @@ export function useSettingsForm<
                     console.log(
                         `🔄 Resetting ${category} form to clear isDirty...`,
                     );
-                    
+
                     // Transform data for form reset if needed
                     let formData = updatedCategoryData;
                     if (category === "priceFetching") {
                         formData = {
                             ...updatedCategoryData,
-                            cacheTtl: String((updatedCategoryData as { cacheTtl: number }).cacheTtl),
+                            cacheTtl: String(
+                                (updatedCategoryData as { cacheTtl: number })
+                                    .cacheTtl,
+                            ),
                         } as T;
                     }
-                    
+
                     reset(formData); // Reset form state, clears isDirty
                 } else {
                     throw new Error(result.error || "Failed to save settings");
@@ -194,7 +202,9 @@ export function useSettingsForm<
             if (category === "priceFetching") {
                 formData = {
                     ...initialData,
-                    cacheTtl: String((initialData as { cacheTtl: number }).cacheTtl),
+                    cacheTtl: String(
+                        (initialData as { cacheTtl: number }).cacheTtl,
+                    ),
                 } as T;
             }
             reset(formData); // Revert to initial loaded data

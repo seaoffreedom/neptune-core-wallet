@@ -8,17 +8,19 @@ import path from "node:path";
 
 /**
  * Binary paths for Neptune executables
+ * 
+ * In production, binaries are bundled in resources/binaries/
+ * In development, we can fall back to local build paths
  */
 export const BINARY_PATHS = {
-    // Updated to use the correct neptune-core repository path
-    NEPTUNE_CORE:
-        "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-core",
-    NEPTUNE_CLI:
-        "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-cli",
+    // Production paths - bundled binaries
+    NEPTUNE_CORE: path.join(process.resourcesPath, "binaries", "neptune-core"),
+    NEPTUNE_CLI: path.join(process.resourcesPath, "binaries", "neptune-cli"),
+    TRITON_VM_PROVER: path.join(process.resourcesPath, "binaries", "triton-vm-prover"),
 
-    // Alternative paths (commented out for reference)
-    // NEPTUNE_CORE: path.join(PROJECT_ROOT, "resources", "binaries", "neptune-core"),
-    // NEPTUNE_CLI: path.join(PROJECT_ROOT, "resources", "binaries", "neptune-cli"),
+    // Development fallback paths (for local development)
+    DEV_NEPTUNE_CORE: "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-core",
+    DEV_NEPTUNE_CLI: "/home/anon/Documents/GitHub/neptune-core/target/release/neptune-cli",
 } as const;
 
 /**

@@ -84,6 +84,8 @@ export class NeptuneProcessManager {
     private dataPollingInterval?: NodeJS.Timeout;
     private cookie?: string;
     private argsBuilder: NeptuneCoreArgsBuilder;
+    private validatedCorePath?: string;
+    private validatedCliPath?: string;
 
     constructor(config: Partial<ProcessConfig> = {}) {
         this.config = { ...DEFAULT_CONFIG, ...config };
@@ -200,28 +202,46 @@ export class NeptuneProcessManager {
      * Validate that required binaries exist and are executable
      */
     private async validateBinaries(): Promise<void> {
-        const corePath = BINARY_PATHS.NEPTUNE_CORE;
-        const cliPath = BINARY_PATHS.NEPTUNE_CLI;
+        // Try production paths first, fall back to development paths
+        let corePath = BINARY_PATHS.NEPTUNE_CORE;
+        let cliPath = BINARY_PATHS.NEPTUNE_CLI;
 
-        // Validate neptune-core binary
+        // Check if production binaries exist, fall back to development if not
         try {
             await access(corePath);
-            logger.debug(`Binary validation successful: ${corePath}`);
-        } catch (error) {
-            throw new Error(
-                `neptune-core binary not found at ${corePath}: ${error}`,
-            );
+            logger.debug(`Using production neptune-core: ${corePath}`);
+        } catch {
+            logger.warn(`Production neptune-core not found, trying development path`);
+            corePath = BINARY_PATHS.DEV_NEPTUNE_CORE;
+            try {
+                await access(corePath);
+                logger.debug(`Using development neptune-core: ${corePath}`);
+            } catch {
+                throw new Error(
+                    `neptune-core binary not found at production path ${BINARY_PATHS.NEPTUNE_CORE} or development path ${corePath}. Please ensure binaries are available.`,
+                );
+            }
         }
 
-        // Validate neptune-cli binary
         try {
             await access(cliPath);
-            logger.debug(`Binary validation successful: ${cliPath}`);
-        } catch (error) {
-            throw new Error(
-                `neptune-cli binary not found at ${cliPath}: ${error}`,
-            );
+            logger.debug(`Using production neptune-cli: ${cliPath}`);
+        } catch {
+            logger.warn(`Production neptune-cli not found, trying development path`);
+            cliPath = BINARY_PATHS.DEV_NEPTUNE_CLI;
+            try {
+                await access(cliPath);
+                logger.debug(`Using development neptune-cli: ${cliPath}`);
+            } catch {
+                throw new Error(
+                    `neptune-cli binary not found at production path ${BINARY_PATHS.NEPTUNE_CLI} or development path ${cliPath}. Please ensure binaries are available.`,
+                );
+            }
         }
+
+        // Store the validated paths for use in process spawning
+        this.validatedCorePath = corePath;
+        this.validatedCliPath = cliPath;
 
         logger.info("All required binaries validated successfully");
     }
@@ -381,7 +401,10 @@ export class NeptuneProcessManager {
     private async startCore(): Promise<void> {
         logger.info("Starting neptune-core...");
 
-        const binaryPath = BINARY_PATHS.NEPTUNE_CORE;
+        if (!this.validatedCorePath) {
+            throw new Error("neptune-core binary path not validated. Call validateBinaries() first.");
+        }
+        const binaryPath = this.validatedCorePath;
         // Build CLI args from settings
         const settings = neptuneCoreSettingsService.getAll();
         const args = await this.argsBuilder.buildArgs(settings);
@@ -533,7 +556,10 @@ export class NeptuneProcessManager {
     private async startCli(): Promise<void> {
         logger.info("Starting neptune-cli in RPC mode...");
 
-        const binaryPath = BINARY_PATHS.NEPTUNE_CLI;
+        if (!this.validatedCliPath) {
+            throw new Error("neptune-cli binary path not validated. Call validateBinaries() first.");
+        }
+        const binaryPath = this.validatedCliPath;
 
         // Get the actual RPC port that neptune-core is configured to use
         const settings = neptuneCoreSettingsService.getAll();
