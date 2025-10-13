@@ -47,7 +47,7 @@ import {
     useCacheExpiryTime,
 } from "@/hooks/use-price-polling";
 import type { PriceSettingsFormData } from "@/lib/validation/settings-schemas";
-import { DollarSign, Clock, RefreshCw } from "lucide-react";
+import { DollarSign, Clock, RefreshCw } from "@/lib/icons";
 
 interface PriceSettingsFormProps {
     form: ReturnType<typeof useForm<PriceSettingsFormData>>;

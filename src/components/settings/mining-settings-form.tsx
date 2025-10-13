@@ -5,42 +5,39 @@
  * proof upgrading, block composition, and guessing parameters.
  */
 
-import { Info, Shield, Users, Zap } from 'lucide-react';
-import type { UseFormReturn } from 'react-hook-form';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Info, Shield, Users, Zap } from "@/lib/icons";
+import type { UseFormReturn } from "react-hook-form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import type { MiningSettingsFormData } from '@/lib/validation/settings-schemas';
-import { useUpdateMiningSettings } from '@/store/neptune-core-settings.store';
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { BaseSettingsForm } from "./base-settings-form";
+import { useFormLogger } from "@/lib/logger";
+import type { MiningSettingsFormData } from "@/lib/validation/settings-schemas";
+import { useUpdateMiningSettings } from "@/store/neptune-core-settings.store";
 
-interface MiningSettingsFormProps {
-  form: UseFormReturn<MiningSettingsFormData>;
-}
+export function MiningSettingsForm({
+    form,
+}: {
+    form: UseFormReturn<MiningSettingsFormData>;
+}) {
+    const updateMiningSettings = useUpdateMiningSettings();
+    const { fieldChange } = useFormLogger("mining-settings");
 
-export function MiningSettingsForm({ form }: MiningSettingsFormProps) {
-  const updateMiningSettings = useUpdateMiningSettings();
-
-  const handleFieldChange = (field: string, value: unknown) => {
-    updateMiningSettings({
-      [field]: value,
-    } as Partial<MiningSettingsFormData>);
-  };
-
-  return (
-    <Form {...form}>
-      <form className="space-y-6">
+    return (
+        <BaseSettingsForm form={form} updateSettings={updateMiningSettings}>
+            {(handleFieldChange) => (
+                <>
         {/* Step 1: Proof Upgrading */}
         <Card>
           <CardHeader>
@@ -87,7 +84,8 @@ export function MiningSettingsForm({ form }: MiningSettingsFormProps) {
                       checked={field.value}
                       onCheckedChange={(value) => {
                         field.onChange(value);
-                        handleFieldChange('txProofUpgrading', value);
+                        handleFieldChange("txProofUpgrading", value);
+                        fieldChange("txProofUpgrading", value);
                       }}
                     />
                   </FormControl>
@@ -497,7 +495,8 @@ export function MiningSettingsForm({ form }: MiningSettingsFormProps) {
             />
           </CardContent>
         </Card>
-      </form>
-    </Form>
-  );
+                </>
+            )}
+        </BaseSettingsForm>
+    );
 }

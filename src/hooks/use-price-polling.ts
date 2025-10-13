@@ -16,6 +16,7 @@ import {
     usePriceFetchingSettings,
     useUpdatePriceFetchingSettings,
 } from "@/store/neptune-core-settings.store";
+import { Logger } from "@/lib/logger";
 
 // Global polling state to prevent multiple instances
 let globalPollingInterval: NodeJS.Timeout | null = null;
@@ -35,7 +36,7 @@ export function usePricePolling() {
         if (!priceFetchingSettings) return;
 
         try {
-            console.log("💰 Fetching Neptune prices...");
+            Logger.price.debug("Fetching Neptune prices...");
             const priceData = await fetchNeptunePrices();
 
             if (priceData) {
@@ -69,20 +70,18 @@ export function usePricePolling() {
                         },
                     });
 
-                    console.log(
-                        "✅ Prices updated in store - changes detected",
-                    );
+                    Logger.price.info("Prices updated in store - changes detected");
                 } else {
                     // Prices haven't changed - only update timestamp
                     updatePriceFetchingSettings({
                         lastFetched: priceData.timestamp,
                     });
 
-                    console.log("ℹ️ Prices checked - no changes detected");
+                    Logger.price.debug("Prices checked - no changes detected");
                 }
             }
         } catch (error) {
-            console.error("❌ Failed to fetch and update prices:", error);
+            Logger.price.error({ error }, "Failed to fetch and update prices");
         }
     }, [priceFetchingSettings, updatePriceFetchingSettings]);
 
@@ -90,25 +89,26 @@ export function usePricePolling() {
     const startPolling = useCallback(() => {
         if (!priceFetchingSettings) return;
 
-        console.log(
-            `🔄 Starting price polling: active=${isGlobalPollingActive}, enabled=${priceFetchingSettings.enabled}`,
-        );
+        Logger.price.info({
+            active: isGlobalPollingActive,
+            enabled: priceFetchingSettings.enabled,
+        }, "Starting price polling");
 
         if (isGlobalPollingActive) {
-            console.log("⚠️ Polling already active, skipping start");
+            Logger.price.warn("Polling already active, skipping start");
             return;
         }
 
         if (!priceFetchingSettings.enabled) {
-            console.log("⚠️ Price fetching not enabled, skipping start");
+            Logger.price.warn("Price fetching not enabled, skipping start");
             return;
         }
 
         const pollIntervalMs = priceFetchingSettings.cacheTtl * 60 * 1000;
 
-        console.log(
-            `🚀 Starting price polling every ${priceFetchingSettings.cacheTtl} minutes`,
-        );
+        Logger.price.info({
+            intervalMinutes: priceFetchingSettings.cacheTtl,
+        }, "Starting price polling");
 
         isGlobalPollingActive = true;
 
@@ -127,7 +127,7 @@ export function usePricePolling() {
             return;
         }
 
-        console.log("🛑 Stopping price polling");
+        Logger.price.info("Stopping price polling");
 
         isGlobalPollingActive = false;
 
@@ -144,17 +144,19 @@ export function usePricePolling() {
         const currentEnabled = priceFetchingSettings.enabled;
         const previousEnabled = previousEnabledRef.current;
 
-        console.log(
-            `🔄 Price polling effect: enabled=${currentEnabled}, previous=${previousEnabled}, active=${isGlobalPollingActive}`,
-        );
+        Logger.price.debug({
+            enabled: currentEnabled,
+            previous: previousEnabled,
+            active: isGlobalPollingActive,
+        }, "Price polling effect");
 
         // First time or enabled state changed
         if (previousEnabled === null || previousEnabled !== currentEnabled) {
             if (currentEnabled) {
-                console.log("▶️ Starting price polling from effect");
+                Logger.price.info("Starting price polling from effect");
                 startPolling();
             } else {
-                console.log("⏹️ Stopping price polling from effect");
+                Logger.price.info("Stopping price polling from effect");
                 stopPolling();
                 // Clear cached prices when disabled
                 updatePriceFetchingSettings({

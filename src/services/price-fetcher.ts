@@ -64,17 +64,23 @@ export async function fetchNeptunePrices(): Promise<PriceData | null> {
             timestamp: new Date(),
         };
 
-        Logger.price.info({
-            usd: priceData.usd,
-            eur: priceData.eur,
-            gbp: priceData.gbp,
-        }, "Successfully fetched Neptune prices");
+        Logger.price.info(
+            {
+                usd: priceData.usd,
+                eur: priceData.eur,
+                gbp: priceData.gbp,
+            },
+            "Successfully fetched Neptune prices",
+        );
 
         return priceData;
     } catch (error) {
         const errorMessage =
             error instanceof Error ? error.message : String(error);
-        Logger.price.error({ error: errorMessage }, "Failed to fetch Neptune prices");
+        Logger.price.error(
+            { error: errorMessage },
+            "Failed to fetch Neptune prices",
+        );
         return null;
     }
 }
@@ -90,15 +96,14 @@ export function isPriceCacheValid(
     cacheTtlMinutes: number,
 ): boolean {
     const now = new Date();
-    const lastFetchedDate = typeof lastFetched === 'string' 
-        ? new Date(lastFetched) 
-        : lastFetched;
-    
+    const lastFetchedDate =
+        typeof lastFetched === "string" ? new Date(lastFetched) : lastFetched;
+
     // Check if the date is valid
     if (Number.isNaN(lastFetchedDate.getTime())) {
         return false;
     }
-    
+
     const cacheExpiry = new Date(
         lastFetchedDate.getTime() + cacheTtlMinutes * 60 * 1000,
     );
