@@ -7,21 +7,9 @@
 
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+import type { CachedPriceData } from '../shared/types/price-types';
 
-// Price data types
-export interface PriceData {
-    usd: number;
-    eur: number;
-    gbp: number;
-    timestamp: Date;
-}
-
-export interface CachedPriceData extends PriceData {
-    lastFetched: Date;
-    cacheValid: boolean;
-}
-
-// Price fetching configuration
+// Price fetching configuration (extended for UI)
 export interface PriceFetchingConfig {
     enabled: boolean;
     cacheTtlMinutes: number;

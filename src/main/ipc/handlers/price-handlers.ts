@@ -9,7 +9,7 @@ import { ipcMain } from 'electron';
 import pino from 'pino';
 import { IPC_CHANNELS } from '../../../shared/constants/ipc-channels';
 import { getPriceFetcherService } from '../../services/price-fetcher.service';
-import type { PriceFetchingConfig, CachedPriceData } from '../../services/price-fetcher.service';
+import type { PriceFetchingConfig, CachedPriceData } from '../../../shared/types/price-types';
 
 const logger = pino({ level: 'info' });
 

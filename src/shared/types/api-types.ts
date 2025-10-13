@@ -775,20 +775,20 @@ export interface ElectronAPI {
   price: {
     getCurrentPrices: () => Promise<{
       success: boolean;
-      prices?: import('../../main/services/price-fetcher.service').CachedPriceData;
+      prices?: import('./price-types').CachedPriceData;
       error?: string;
     }>;
     refreshPrices: () => Promise<{
       success: boolean;
-      prices?: import('../../main/services/price-fetcher.service').CachedPriceData;
+      prices?: import('./price-types').CachedPriceData;
       error?: string;
     }>;
     getConfig: () => Promise<{
       success: boolean;
-      config?: import('../../main/services/price-fetcher.service').PriceFetchingConfig;
+      config?: import('./price-types').PriceFetchingConfig;
       error?: string;
     }>;
-    updateConfig: (config: Partial<import('../../main/services/price-fetcher.service').PriceFetchingConfig>) => Promise<{
+    updateConfig: (config: Partial<import('./price-types').PriceFetchingConfig>) => Promise<{
       success: boolean;
       error?: string;
     }>;

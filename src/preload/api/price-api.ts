@@ -6,7 +6,7 @@
 
 import { ipcRenderer } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants/ipc-channels';
-import type { PriceFetchingConfig, CachedPriceData } from '../../../main/services/price-fetcher.service';
+import type { PriceFetchingConfig, CachedPriceData } from '../../shared/types/price-types';
 
 export const priceAPI = {
     /**

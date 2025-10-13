@@ -6,34 +6,13 @@
  */
 
 import pino from 'pino';
+import type { PriceData, CachedPriceData, PriceFetchingConfig } from '../../shared/types/price-types';
 
 const logger = pino({ level: 'info' });
 
 // CoinGecko API configuration
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 const NEPTUNE_COIN_ID = 'neptune-cash'; // Update this to the correct CoinGecko ID for Neptune
-
-// Price data interface
-export interface PriceData {
-    usd: number;
-    eur: number;
-    gbp: number;
-    timestamp: Date;
-}
-
-// Cached price data with metadata
-export interface CachedPriceData extends PriceData {
-    lastFetched: Date;
-    cacheValid: boolean;
-}
-
-// Price fetching configuration
-export interface PriceFetchingConfig {
-    enabled: boolean;
-    cacheTtlMinutes: number;
-    retryAttempts: number;
-    retryDelayMs: number;
-}
 
 // Default configuration
 const DEFAULT_CONFIG: PriceFetchingConfig = {
