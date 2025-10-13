@@ -295,6 +295,9 @@ dist-electron-builder/
 builder-debug.yml
 latest-*.yml
 
+# Documentation notes
+docs/notes/
+
 # ===========================================
 # Archives & Packages
 # ===========================================
