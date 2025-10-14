@@ -87,14 +87,6 @@ function getDevBinaryPath(binaryName: string): string {
  * @returns The full path to the binary for the current platform
  */
 function getBinaryPath(binaryName: string): string {
-    // Check if we're in a packaged app vs development
-    // In development: process.resourcesPath points to node_modules/electron/dist/resources
-    // In production: process.resourcesPath points to the packaged app's resources directory
-    if (!process.resourcesPath || process.resourcesPath.includes('node_modules/electron/dist')) {
-        // Development mode - return empty string to trigger fallback
-        return "";
-    }
-
     // Map Node.js platform names to our directory structure
     const platformMap: Record<string, string> = {
         linux: "linux-x64",
@@ -105,38 +97,49 @@ function getBinaryPath(binaryName: string): string {
     const platformDir = platformMap[platform()] || "linux-x64";
     const extension = platform() === "win32" ? ".exe" : "";
 
-    return path.join(
-        process.resourcesPath,
-        "binaries",
-        platformDir,
-        `${binaryName}${extension}`,
-    );
+    // Check if we're in a packaged app vs development
+    const isPackaged =
+        process.resourcesPath &&
+        !process.resourcesPath.includes("node_modules/electron/dist");
+
+    if (isPackaged) {
+        // Production mode - use process.resourcesPath
+        return path.join(
+            process.resourcesPath,
+            "binaries",
+            platformDir,
+            `${binaryName}${extension}`,
+        );
+    } else {
+        // Development mode - use project root
+        return path.join(
+            process.cwd(),
+            "resources",
+            "binaries",
+            platformDir,
+            `${binaryName}${extension}`,
+        );
+    }
 }
 
 /**
  * Get the correct binary path for the current environment
  * @param binaryName - The name of the binary (without extension)
- * @returns The full path to the binary, with fallback logic
+ * @returns The full path to the binary, always using bundled binaries
  */
 function getValidBinaryPath(binaryName: string): string {
     // Check if we're in a packaged app vs development
-    const isPackaged = process.resourcesPath && !process.resourcesPath.includes('node_modules/electron/dist');
-    
-    if (isPackaged) {
-        // Production mode - use production path
-        const prodPath = getBinaryPath(binaryName);
-        console.log(
-            `[BINARY_PATH] Production mode - using production path for ${binaryName}: ${prodPath}`,
-        );
-        return prodPath;
-    }
+    const isPackaged =
+        process.resourcesPath &&
+        !process.resourcesPath.includes("node_modules/electron/dist");
+    const mode = isPackaged ? "production" : "development";
 
-    // Development mode - use development path
-    const devPath = getDevBinaryPath(binaryName);
+    // Always use bundled binaries from resources/binaries/
+    const bundledPath = getBinaryPath(binaryName);
     console.log(
-        `[BINARY_PATH] Development mode - using development path for ${binaryName}: ${devPath}`,
+        `[BINARY_PATH] ${mode} mode - using bundled path for ${binaryName}: ${bundledPath}`,
     );
-    return devPath;
+    return bundledPath;
 }
 
 /**

@@ -92,8 +92,7 @@ const getMinimumFee = (proofType: string): number => {
         case "proofcollection":
             return 0.05;
         case "singleproof":
-            return 0.02;
-        case "lockscript":
+            return 0.005;
         default:
             return 0; // No minimum for lockscript
     }
