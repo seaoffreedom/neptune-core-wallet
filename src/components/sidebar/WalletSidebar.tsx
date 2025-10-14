@@ -166,7 +166,7 @@ export function WalletSidebar() {
                                                         (
                                                         {dashboardData?.mempool_own_tx_count ||
                                                             0}{" "}
-                                                        tx
+                                                        pending transaction
                                                         {dashboardData?.mempool_own_tx_count !==
                                                         1
                                                             ? "s"
