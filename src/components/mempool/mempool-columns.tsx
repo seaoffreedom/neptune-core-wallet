@@ -118,9 +118,9 @@ export const mempoolColumns: ColumnDef<MempoolTransaction>[] = [
             return (
                 <div className="flex items-center gap-2">
                     {isOwnTransaction && (
-                        <span className="text-xs text-muted-foreground">
-                            Your transaction
-                        </span>
+                        <Badge variant="secondary" className="text-xs">
+                            Your TX
+                        </Badge>
                     )}
                     <Button
                         variant="ghost"

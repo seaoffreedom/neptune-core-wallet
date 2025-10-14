@@ -317,9 +317,14 @@ export function MempoolOverviewCompact({
                 {/* Mempool Summary */}
                 <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
                     <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Mempool Status</span>
+                        <span className="text-sm font-medium">
+                            Mempool Status
+                        </span>
                         <span className="text-xs text-muted-foreground">
-                            Last updated: {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : "Never"}
+                            Last updated:{" "}
+                            {lastUpdated
+                                ? new Date(lastUpdated).toLocaleTimeString()
+                                : "Never"}
                         </span>
                     </div>
                     <div className="text-sm text-muted-foreground">
@@ -327,9 +332,19 @@ export function MempoolOverviewCompact({
                             "No transactions in mempool"
                         ) : (
                             <>
-                                <span className="font-medium text-primary">{totalCount}</span> transaction{totalCount !== 1 ? "s" : ""} pending
+                                <span className="font-medium text-primary">
+                                    {totalCount}
+                                </span>{" "}
+                                transaction{totalCount !== 1 ? "s" : ""} pending
                                 {totalSize > 0 && (
-                                    <> • <span className="font-medium text-blue-500">{formatSize(totalSize)}</span> total size</>
+                                    <>
+                                        {" "}
+                                        •{" "}
+                                        <span className="font-medium text-blue-500">
+                                            {formatSize(totalSize)}
+                                        </span>{" "}
+                                        total size
+                                    </>
                                 )}
                             </>
                         )}

@@ -559,8 +559,16 @@ export function SendFormEnhanced() {
                                                             type="button"
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={() => handleSendMax(index)}
-                                                            disabled={!confirmedBalance || calculateMaxAmount() <= 0}
+                                                            onClick={() =>
+                                                                handleSendMax(
+                                                                    index,
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                !confirmedBalance ||
+                                                                calculateMaxAmount() <=
+                                                                    0
+                                                            }
                                                             className="h-7 px-2 text-xs"
                                                         >
                                                             <Maximize className="h-3 w-3 mr-1" />

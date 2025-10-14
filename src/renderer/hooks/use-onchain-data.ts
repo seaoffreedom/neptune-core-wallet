@@ -124,15 +124,17 @@ export function useCurrentDifficulty() {
                 // result.result[0] is [height, [difficulty_array]]
                 // difficulty_array is [u32, u32, u32, u32, u32] representing a BigUint
                 const difficultyArray = result.result[0][1]; // [difficulty_array]
-                
+
                 // Convert difficulty array to BigUint (same logic as CLI)
                 // Each u32 represents 32 bits, so we shift and add them
                 // Use BigInt to avoid precision loss with large numbers
                 let difficulty = BigInt(0);
                 for (let i = difficultyArray.length - 1; i >= 0; i--) {
-                    difficulty = difficulty * BigInt(2) ** BigInt(32) + BigInt(difficultyArray[i]);
+                    difficulty =
+                        difficulty * BigInt(2) ** BigInt(32) +
+                        BigInt(difficultyArray[i]);
                 }
-                
+
                 // Convert BigInt to number for display (this might lose precision for very large numbers)
                 // But for difficulty values, this should be fine
                 setCurrentDifficulty(Number(difficulty));
