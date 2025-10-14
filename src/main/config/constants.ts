@@ -87,8 +87,13 @@ function getDevBinaryPath(binaryName: string): string {
  * @returns The full path to the binary for the current platform
  */
 function getBinaryPath(binaryName: string): string {
-    // Always use production paths to simulate production environment
-    // This helps catch production issues during development
+    // Check if we're in a packaged app vs development
+    // In development: process.resourcesPath points to node_modules/electron/dist/resources
+    // In production: process.resourcesPath points to the packaged app's resources directory
+    if (!process.resourcesPath || process.resourcesPath.includes('node_modules/electron/dist')) {
+        // Development mode - return empty string to trigger fallback
+        return "";
+    }
 
     // Map Node.js platform names to our directory structure
     const platformMap: Record<string, string> = {
@@ -114,19 +119,22 @@ function getBinaryPath(binaryName: string): string {
  * @returns The full path to the binary, with fallback logic
  */
 function getValidBinaryPath(binaryName: string): string {
-    // First try production path
-    const prodPath = getBinaryPath(binaryName);
-    if (prodPath) {
+    // Check if we're in a packaged app vs development
+    const isPackaged = process.resourcesPath && !process.resourcesPath.includes('node_modules/electron/dist');
+    
+    if (isPackaged) {
+        // Production mode - use production path
+        const prodPath = getBinaryPath(binaryName);
         console.log(
-            `[BINARY_PATH] Using production path for ${binaryName}: ${prodPath}`,
+            `[BINARY_PATH] Production mode - using production path for ${binaryName}: ${prodPath}`,
         );
         return prodPath;
     }
 
-    // Fall back to development path
+    // Development mode - use development path
     const devPath = getDevBinaryPath(binaryName);
     console.log(
-        `[BINARY_PATH] Using development path for ${binaryName}: ${devPath}`,
+        `[BINARY_PATH] Development mode - using development path for ${binaryName}: ${devPath}`,
     );
     return devPath;
 }

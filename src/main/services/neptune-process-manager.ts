@@ -220,42 +220,88 @@ export class NeptuneProcessManager {
             await access(corePath);
             logger.info(`✅ Using neptune-core: ${corePath}`);
         } catch (error) {
-            // Always use production paths to simulate production environment
-            // This helps catch production issues during development
+            // In production mode, don't fall back to development paths
+            const isPackaged = process.resourcesPath && !process.resourcesPath.includes('node_modules/electron/dist');
+            if (isPackaged) {
+                logger.error(
+                    {
+                        error: (error as Error).message,
+                        corePath,
+                        productionPath: BINARY_PATHS.NEPTUNE_CORE,
+                        platform: process.platform,
+                        resourcesPath: process.resourcesPath,
+                    },
+                    `❌ neptune-core binary not found in production package at ${corePath}`,
+                );
+                throw new Error(
+                    `neptune-core binary not found in production package at ${corePath}. The application may not be properly packaged.`,
+                );
+            }
+
+            // In development mode, fall back to development path
             logger.error(
                 {
                     error: (error as Error).message,
                     corePath,
                     productionPath: BINARY_PATHS.NEPTUNE_CORE,
+                    developmentPath: BINARY_PATHS.DEV_NEPTUNE_CORE,
                     platform: process.platform,
                     resourcesPath: process.resourcesPath,
                 },
-                `❌ neptune-core binary not found in production package at ${corePath}`,
+                `❌ Auto-selected neptune-core not found at ${corePath}, trying development path`,
             );
-            throw new Error(
-                `neptune-core binary not found in production package at ${corePath}. The application may not be properly packaged.`,
-            );
+            corePath = BINARY_PATHS.DEV_NEPTUNE_CORE;
+            try {
+                await access(corePath);
+                logger.info(`✅ Using development neptune-core: ${corePath}`);
+            } catch {
+                logger.error(`❌ neptune-core not found at either path:`);
+                logger.error(`  Production: ${BINARY_PATHS.NEPTUNE_CORE}`);
+                logger.error(`  Development: ${corePath}`);
+                throw new Error(
+                    `neptune-core binary not found at ${BINARY_PATHS.NEPTUNE_CORE} or ${corePath}. Please ensure binaries are available.`,
+                );
+            }
         }
 
         try {
             await access(cliPath);
             logger.info(`✅ Using neptune-cli: ${cliPath}`);
         } catch (error) {
-            // Always use production paths to simulate production environment
-            // This helps catch production issues during development
-            logger.error(
-                {
-                    error: (error as Error).message,
-                    cliPath,
-                    productionPath: BINARY_PATHS.NEPTUNE_CLI,
-                    platform: process.platform,
-                    resourcesPath: process.resourcesPath,
-                },
-                `❌ neptune-cli binary not found in production package at ${cliPath}`,
+            // In production mode, don't fall back to development paths
+            const isPackaged = process.resourcesPath && !process.resourcesPath.includes('node_modules/electron/dist');
+            if (isPackaged) {
+                logger.error(
+                    {
+                        error: (error as Error).message,
+                        cliPath,
+                        productionPath: BINARY_PATHS.NEPTUNE_CLI,
+                        platform: process.platform,
+                        resourcesPath: process.resourcesPath,
+                    },
+                    `❌ neptune-cli binary not found in production package at ${cliPath}`,
+                );
+                throw new Error(
+                    `neptune-cli binary not found in production package at ${cliPath}. The application may not be properly packaged.`,
+                );
+            }
+
+            // In development mode, fall back to development path
+            logger.warn(
+                `❌ Auto-selected neptune-cli not found at ${cliPath}, trying development path`,
             );
-            throw new Error(
-                `neptune-cli binary not found in production package at ${cliPath}. The application may not be properly packaged.`,
-            );
+            cliPath = BINARY_PATHS.DEV_NEPTUNE_CLI;
+            try {
+                await access(cliPath);
+                logger.info(`✅ Using development neptune-cli: ${cliPath}`);
+            } catch {
+                logger.error(`❌ neptune-cli not found at either path:`);
+                logger.error(`  Production: ${BINARY_PATHS.NEPTUNE_CLI}`);
+                logger.error(`  Development: ${cliPath}`);
+                throw new Error(
+                    `neptune-cli binary not found at ${BINARY_PATHS.NEPTUNE_CLI} or ${cliPath}. Please ensure binaries are available.`,
+                );
+            }
         }
 
         // Store the validated paths for use in process spawning
@@ -408,20 +454,15 @@ export class NeptuneProcessManager {
             await this.startCore();
             logger.info("✅ neptune-core started successfully");
 
-            // Step 3: Wait for core readiness first, then start CLI with delay
-            logger.info("Step 3: Waiting for neptune-core readiness...");
-            const cookie = await this.waitForCoreReady();
-            logger.info("✅ neptune-core is ready");
-
-            // Add 2-second delay to prevent race condition
+            // Step 3: Start neptune-cli in parallel while waiting for core
             logger.info(
-                "Waiting 2 seconds before starting neptune-cli to prevent race condition...",
+                "Step 3: Starting neptune-cli and waiting for core readiness...",
             );
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
-            logger.info("Starting neptune-cli...");
-            await this.startCli();
-            logger.info("✅ neptune-cli started successfully");
+            const [cookie] = await Promise.all([
+                this.waitForCoreReady(),
+                this.startCli(), // Start CLI in parallel
+            ]);
+            logger.info("✅ neptune-cli started and core is ready");
 
             // Store the cookie
             this.cookie = cookie;
