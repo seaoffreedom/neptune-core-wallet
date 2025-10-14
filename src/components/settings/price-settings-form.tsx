@@ -51,7 +51,7 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
     return (
         <div className="space-y-6">
             <BaseSettingsForm
-                form={form}
+                form={form as any}
                 updateSettings={updatePriceFetchingSettings}
             >
                 <SettingsFormFields.Card
@@ -64,15 +64,15 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                     </div>
 
                     <SettingsFormFields.Switch
-                        form={form}
+                        form={form as any}
                         name="enabled"
                         label="Enable Price Fetching"
                         description="Automatically fetch Neptune prices from CoinGecko API"
-                        updateSettings={updatePriceFetchingSettings}
+                        updateSettings={() => {}} // Don't update store immediately
                     />
 
                     <SettingsFormFields.Select
-                        form={form}
+                        form={form as any}
                         name="currency"
                         label="Display Currency"
                         description="Currency to display for price conversions"
@@ -81,7 +81,7 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                             value: currency.code,
                             label: `${currency.symbol} ${currency.name} (${currency.code})`,
                         }))}
-                        updateSettings={updatePriceFetchingSettings}
+                        updateSettings={() => {}} // Don't update store immediately
                         onValueChange={(value) => {
                             // Also update UI currency if different
                             if (selectedCurrency.code !== value) {
@@ -91,7 +91,7 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                     />
 
                     <SettingsFormFields.Select
-                        form={form}
+                        form={form as any}
                         name="cacheTtl"
                         label="Cache Duration"
                         description="How often to refresh price data from CoinGecko"
@@ -104,17 +104,7 @@ export function PriceSettingsForm({ form }: PriceSettingsFormProps) {
                             { value: "30", label: "30 minutes" },
                             { value: "60", label: "60 minutes" },
                         ]}
-                        updateSettings={(settings) => {
-                            // Convert string value to number for cacheTtl
-                            const cacheTtlValue = settings.cacheTtl;
-                            if (typeof cacheTtlValue === "string") {
-                                updatePriceFetchingSettings({
-                                    cacheTtl: parseInt(cacheTtlValue, 10),
-                                });
-                            } else {
-                                updatePriceFetchingSettings(settings);
-                            }
-                        }}
+                        updateSettings={() => {}} // Don't update store immediately
                     />
 
                     <SettingsFormFields.Separator />

@@ -35,7 +35,7 @@ import { useMiningEndpoints } from "@/renderer/hooks/use-mining-endpoints";
 import { useMiningSettings } from "@/renderer/hooks/use-mining-settings";
 import { MiningRoleExplanation } from "@/components/mining/mining-role-explanation";
 import { SystemResourceCards } from "@/components/mining/system-resource-cards";
-import { useUIStore } from "@/store/ui.store";
+import { useMiningFlags } from "@/renderer/hooks/use-mining-flags";
 
 interface MiningData {
     blockDifficulties: Array<[number, number[]]>;
@@ -80,7 +80,10 @@ interface MiningData {
 
 function MiningPage() {
     const navigate = useNavigate();
-    const experimentalMode = useUIStore((state) => state.experimentalMode);
+    const {
+        hasMiningFlags: miningFlagsEnabled,
+        isLoading: miningFlagsLoading,
+    } = useMiningFlags();
 
     const [miningData, setMiningData] = useState<MiningData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -116,12 +119,12 @@ function MiningPage() {
         provideNewTip,
     } = useMiningEndpoints();
 
-    // Redirect to wallet if experimental mode is disabled
+    // Redirect to wallet if mining flags are not enabled (but wait for loading to complete)
     useEffect(() => {
-        if (!experimentalMode) {
+        if (!miningFlagsLoading && !miningFlagsEnabled) {
             navigate({ to: "/wallet" });
         }
-    }, [experimentalMode, navigate]);
+    }, [miningFlagsEnabled, miningFlagsLoading, navigate]);
 
     // Derive mining state from store
     const isMining = minerStatus === "active";
@@ -280,8 +283,8 @@ function MiningPage() {
         return difficulty[0].toLocaleString();
     };
 
-    // Show warning if experimental mode is disabled
-    if (!experimentalMode) {
+    // Show warning if mining flags are not enabled (but wait for loading to complete)
+    if (!miningFlagsLoading && !miningFlagsEnabled) {
         return (
             <PageContainer>
                 <div className="space-y-6">
@@ -295,11 +298,11 @@ function MiningPage() {
 
                     <Alert>
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Experimental Mode Required</AlertTitle>
+                        <AlertTitle>Mining Flags Required</AlertTitle>
                         <AlertDescription>
-                            Mining features are only available in experimental
-                            mode. Enable experimental mode in the sidebar to
-                            access this feature.
+                            Mining features are only available when mining flags
+                            (--guess, --compose) are enabled. Enable mining
+                            flags in the settings to access this feature.
                         </AlertDescription>
                     </Alert>
                 </div>
@@ -307,7 +310,7 @@ function MiningPage() {
         );
     }
 
-    if (isLoading || isSettingsLoading) {
+    if (isLoading || isSettingsLoading || miningFlagsLoading) {
         return (
             <PageContainer>
                 <div className="space-y-6">

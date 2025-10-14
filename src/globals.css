@@ -203,3 +203,18 @@
     background-clip: content-box;
   }
 }
+
+/* Sonner toast positioning fixes - Minimal and targeted */
+[data-sonner-toaster] {
+  position: fixed !important;
+  top: 1rem !important;
+  right: 1rem !important;
+  bottom: auto !important;
+  left: auto !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+}
+
+[data-sonner-toast] {
+  pointer-events: auto !important;
+}

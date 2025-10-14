@@ -206,20 +206,32 @@ export class NeptuneProcessManager {
         let corePath = BINARY_PATHS.NEPTUNE_CORE;
         let cliPath = BINARY_PATHS.NEPTUNE_CLI;
 
+        console.log(
+            `[BINARY_VALIDATION] Checking neptune-core at: ${corePath}`,
+        );
+        console.log(`[BINARY_VALIDATION] Checking neptune-cli at: ${cliPath}`);
+        console.log(
+            `[BINARY_VALIDATION] process.resourcesPath: ${process.resourcesPath}`,
+        );
+        console.log(`[BINARY_VALIDATION] process.cwd: ${process.cwd()}`);
+
         // Check if auto-selected binaries exist
         try {
             await access(corePath);
-            logger.debug(`Using neptune-core: ${corePath}`);
-        } catch {
+            logger.info(`✅ Using neptune-core: ${corePath}`);
+        } catch (error) {
             // Fall back to explicit development path
             logger.warn(
-                `Auto-selected neptune-core not found, trying development path`,
+                `❌ Auto-selected neptune-core not found at ${corePath}, trying development path`,
             );
             corePath = BINARY_PATHS.DEV_NEPTUNE_CORE;
             try {
                 await access(corePath);
-                logger.debug(`Using development neptune-core: ${corePath}`);
-            } catch {
+                logger.info(`✅ Using development neptune-core: ${corePath}`);
+            } catch (devError) {
+                logger.error(`❌ neptune-core not found at either path:`);
+                logger.error(`  Production: ${BINARY_PATHS.NEPTUNE_CORE}`);
+                logger.error(`  Development: ${corePath}`);
                 throw new Error(
                     `neptune-core binary not found at ${BINARY_PATHS.NEPTUNE_CORE} or ${corePath}. Please ensure binaries are available.`,
                 );
@@ -228,17 +240,20 @@ export class NeptuneProcessManager {
 
         try {
             await access(cliPath);
-            logger.debug(`Using neptune-cli: ${cliPath}`);
-        } catch {
+            logger.info(`✅ Using neptune-cli: ${cliPath}`);
+        } catch (error) {
             // Fall back to explicit development path
             logger.warn(
-                `Auto-selected neptune-cli not found, trying development path`,
+                `❌ Auto-selected neptune-cli not found at ${cliPath}, trying development path`,
             );
             cliPath = BINARY_PATHS.DEV_NEPTUNE_CLI;
             try {
                 await access(cliPath);
-                logger.debug(`Using development neptune-cli: ${cliPath}`);
-            } catch {
+                logger.info(`✅ Using development neptune-cli: ${cliPath}`);
+            } catch (devError) {
+                logger.error(`❌ neptune-cli not found at either path:`);
+                logger.error(`  Production: ${BINARY_PATHS.NEPTUNE_CLI}`);
+                logger.error(`  Development: ${cliPath}`);
                 throw new Error(
                     `neptune-cli binary not found at ${BINARY_PATHS.NEPTUNE_CLI} or ${cliPath}. Please ensure binaries are available.`,
                 );
@@ -249,7 +264,7 @@ export class NeptuneProcessManager {
         this.validatedCorePath = corePath;
         this.validatedCliPath = cliPath;
 
-        logger.info("All required binaries validated successfully");
+        logger.info("✅ All required binaries validated successfully");
     }
 
     /**
@@ -742,11 +757,14 @@ export class NeptuneProcessManager {
      * Fetch wallet data using the CLI
      */
     private async fetchWalletData(_cookie: string): Promise<void> {
-        const binaryPath = BINARY_PATHS.NEPTUNE_CLI;
+        if (!this.validatedCliPath) {
+            logger.error("CLI binary path not validated yet");
+            return;
+        }
 
         try {
             // Fetch balance
-            const balanceResult = await execa(binaryPath, [
+            const balanceResult = await execa(this.validatedCliPath, [
                 "--port",
                 this.config.cli.port.toString(),
                 "confirmed-available-balance",
@@ -754,7 +772,7 @@ export class NeptuneProcessManager {
             const balance = balanceResult.stdout.trim();
 
             // Fetch wallet status
-            // const statusResult = await execa(binaryPath, [
+            // const statusResult = await execa(this.validatedCliPath, [
             //     "--port",
             //     this.config.cli.port.toString(),
             //     "wallet-status",

@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useState, useId } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { showSuccessToast, showErrorToast } from "@/lib/toast";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -203,12 +203,12 @@ export function SendFormEnhanced() {
 
         if (result) {
             const recipientCount = pendingTransaction.recipients.length;
-            toast.success("Transaction sent successfully!", {
+            showSuccessToast("Transaction sent successfully!", {
                 description: `Sent to ${recipientCount} recipient${recipientCount > 1 ? "s" : ""}. Transaction ID: ${result.substring(0, 8)}...`,
             });
             console.log("Transaction sent:", result);
         } else {
-            toast.error("Failed to send transaction", {
+            showErrorToast("Failed to send transaction", {
                 description: error || "Unknown error occurred",
             });
         }

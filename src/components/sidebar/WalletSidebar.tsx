@@ -28,8 +28,8 @@ import {
     useUtxos,
 } from "@/renderer/hooks/use-onchain-data";
 import { useOnchainStore } from "@/store/onchain.store";
-import { useUIStore } from "@/store/ui.store";
 import { usePriceFetchingSettings } from "@/store/neptune-core-settings.store";
+import { useMiningFlags } from "@/renderer/hooks/use-mining-flags";
 
 export function WalletSidebar() {
     const location = useLocation();
@@ -41,8 +41,8 @@ export function WalletSidebar() {
     const network = useOnchainStore((state) => state.network);
     const blockHeight = useOnchainStore((state) => state.blockHeight);
     const peerInfo = useOnchainStore((state) => state.peerInfo);
-    const experimentalMode = useUIStore((state) => state.experimentalMode);
     const priceFetchingSettings = usePriceFetchingSettings();
+    const { hasMiningFlags } = useMiningFlags();
 
     // Get UTXO data
     const { utxos, fetchUtxos } = useUtxos();
@@ -84,14 +84,14 @@ export function WalletSidebar() {
         { icon: Coins, label: "UTXOs & Coins", href: "/wallet/utxos" },
         { icon: BookUser, label: "Address Book", href: "/wallet/address-book" },
         { icon: Network, label: "Peer Manager", href: "/wallet/peers" },
-        // Only show mining button when experimental mode is enabled
-        ...(experimentalMode
+        // Only show mining button when mining flags (--guess, --compose) are enabled
+        ...(hasMiningFlags
             ? [
                   {
                       icon: Zap,
                       label: "Mining",
                       href: "/wallet/mining",
-                      badge: "Experimental",
+                      badge: "Mining Enabled",
                   },
               ]
             : []),

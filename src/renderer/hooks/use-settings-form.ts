@@ -88,7 +88,6 @@ export function useSettingsForm<
 
                 if (result.success && result.settings) {
                     const categoryData = result.settings[category] as T;
-                    setInitialData(categoryData);
 
                     // Transform data for form initialization if needed
                     let formData = categoryData;
@@ -101,6 +100,8 @@ export function useSettingsForm<
                         } as T;
                     }
 
+                    // Set the transformed data as initial data to match form state
+                    setInitialData(formData);
                     reset(formData); // Initialize form with loaded data
                 } else {
                     console.error("Failed to load settings:", result.error);
@@ -163,7 +164,6 @@ export function useSettingsForm<
                         `📝 Updated ${category} data:`,
                         updatedCategoryData,
                     );
-                    setInitialData(updatedCategoryData);
 
                     console.log(
                         `🔄 Resetting ${category} form to clear isDirty...`,
@@ -181,6 +181,8 @@ export function useSettingsForm<
                         } as T;
                     }
 
+                    // Set the transformed data as initial data to match form state
+                    setInitialData(formData);
                     reset(formData); // Reset form state, clears isDirty
                 } else {
                     throw new Error(result.error || "Failed to save settings");

@@ -6,6 +6,7 @@
  * We'll migrate commands here as needed for performance and reliability.
  */
 
+import { access } from "node:fs/promises";
 import { execa } from "execa";
 import { BINARY_PATHS, TIMEOUTS } from "../config/constants";
 
@@ -27,6 +28,28 @@ export class NeptuneCliService {
 
     constructor() {
         this.cliBinaryPath = BINARY_PATHS.NEPTUNE_CLI;
+        this.validateBinaryPath();
+    }
+
+    /**
+     * Validate and set the correct binary path
+     */
+    private async validateBinaryPath(): Promise<void> {
+        // Try the production path first
+        try {
+            await access(this.cliBinaryPath);
+            return;
+        } catch {
+            // Fall back to development path
+            this.cliBinaryPath = BINARY_PATHS.DEV_NEPTUNE_CLI;
+            try {
+                await access(this.cliBinaryPath);
+            } catch {
+                throw new Error(
+                    `neptune-cli binary not found at ${BINARY_PATHS.NEPTUNE_CLI} or ${this.cliBinaryPath}. Please ensure binaries are available.`,
+                );
+            }
+        }
     }
 
     /**
