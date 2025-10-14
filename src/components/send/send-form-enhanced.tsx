@@ -85,24 +85,52 @@ const recipientSchema = z.object({
         ),
 });
 
-const sendFormSchema = z.object({
-    recipients: z.array(recipientSchema).min(1, {
-        message: "At least one recipient is required",
-    }),
-    fee: z
-        .string()
-        .optional()
-        .refine(
-            (val) => {
-                if (!val || val.trim() === "") return true;
-                const num = parseFloat(val);
-                return !Number.isNaN(num) && num >= 0;
-            },
-            { message: "Fee must be a positive number or zero" },
-        ),
-});
+// Helper function to get minimum fee based on proof type
+const getMinimumFee = (proofType: string): number => {
+    switch (proofType) {
+        case "proofcollection":
+            return 0.05;
+        case "singleproof":
+            return 0.02;
+        case "lockscript":
+        default:
+            return 0; // No minimum for lockscript
+    }
+};
 
-type SendFormValues = z.infer<typeof sendFormSchema>;
+// Create dynamic schema based on proof type
+const createSendFormSchema = (proofType: string) => {
+    const minFee = getMinimumFee(proofType);
+    
+    return z.object({
+        recipients: z.array(recipientSchema).min(1, {
+            message: "At least one recipient is required",
+        }),
+        fee: z
+            .string()
+            .optional()
+            .refine(
+                (val) => {
+                    if (!val || val.trim() === "") return true;
+                    const num = parseFloat(val);
+                    return !Number.isNaN(num) && num >= 0;
+                },
+                { message: "Fee must be a positive number or zero" },
+            )
+            .refine(
+                (val) => {
+                    if (!val || val.trim() === "") return true;
+                    const num = parseFloat(val);
+                    return num >= minFee;
+                },
+                { 
+                    message: `Minimum fee for ${proofType} is ${minFee} NPT` 
+                },
+            ),
+    });
+};
+
+type SendFormValues = z.infer<ReturnType<typeof createSendFormSchema>>;
 
 export function SendFormEnhanced() {
     const navigate = useNavigate();
@@ -123,11 +151,12 @@ export function SendFormEnhanced() {
         useState<SendFormValues | null>(null);
     const confirmId = useId();
 
+    // Get current proof type
+    const currentProofType = settings?.performance?.txProvingCapability || "lockscript";
+    
     // Get proof type display name
     const getProofTypeDisplay = () => {
-        const proofType =
-            settings?.performance?.txProvingCapability || "lockscript";
-        switch (proofType) {
+        switch (currentProofType) {
             case "singleproof":
                 return "Single Proof";
             case "proofcollection":
@@ -139,11 +168,17 @@ export function SendFormEnhanced() {
         }
     };
 
+    // Get minimum fee for current proof type
+    const minimumFee = getMinimumFee(currentProofType);
+
+    // Create dynamic schema based on current proof type
+    const dynamicSchema = createSendFormSchema(currentProofType);
+
     const form = useForm<SendFormValues>({
-        resolver: zodResolver(sendFormSchema),
+        resolver: zodResolver(dynamicSchema),
         defaultValues: {
             recipients: [{ address: "", amount: "" }],
-            fee: "",
+            fee: minimumFee > 0 ? minimumFee.toString() : "",
         },
     });
 
@@ -257,7 +292,7 @@ export function SendFormEnhanced() {
         reset();
         form.reset({
             recipients: [{ address: "", amount: "" }],
-            fee: "",
+            fee: minimumFee > 0 ? minimumFee.toString() : "",
         });
         setShowMultiple(false);
     };
@@ -560,8 +595,15 @@ export function SendFormEnhanced() {
                                             </InputGroup>
                                         </FormControl>
                                         <FormDescription>
-                                            Leave empty to use the default
-                                            network fee
+                                            {minimumFee > 0 ? (
+                                                <>
+                                                    Minimum fee for {currentProofType} is {minimumFee} NPT
+                                                    <br />
+                                                    Leave empty to use the default network fee
+                                                </>
+                                            ) : (
+                                                "Leave empty to use the default network fee"
+                                            )}
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
