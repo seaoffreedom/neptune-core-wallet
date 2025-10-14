@@ -765,18 +765,26 @@ export function MempoolOverviewCompact({
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-1">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                            onClick={() => {
-                                                                const explorerUrl = `https://neptune.vxb.ai/block?h=${tx.id}`;
-                                                                window.open(explorerUrl, '_blank');
-                                                            }}
-                                                            title="View transaction details"
-                                                        >
-                                                            <ExternalLink className="h-3 w-3" />
-                                                        </Button>
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-6 w-6 opacity-60 hover:opacity-100 transition-opacity"
+                                                                        onClick={() => {
+                                                                            const explorerUrl = `https://neptune.vxb.ai/block?h=${tx.id}`;
+                                                                            window.open(explorerUrl, '_blank');
+                                                                        }}
+                                                                    >
+                                                                        <ExternalLink className="h-3 w-3" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>View on block explorer</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
                                                         {isOwn && (
                                                             <Button
                                                                 variant="ghost"
