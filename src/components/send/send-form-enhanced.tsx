@@ -18,6 +18,7 @@ import {
     Plus,
     Trash2,
     Users,
+    Maximize,
 } from "lucide-react";
 import { useState, useId } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -101,7 +102,7 @@ const getMinimumFee = (proofType: string): number => {
 // Create dynamic schema based on proof type
 const createSendFormSchema = (proofType: string) => {
     const minFee = getMinimumFee(proofType);
-    
+
     return z.object({
         recipients: z.array(recipientSchema).min(1, {
             message: "At least one recipient is required",
@@ -123,8 +124,8 @@ const createSendFormSchema = (proofType: string) => {
                     const num = parseFloat(val);
                     return num >= minFee;
                 },
-                { 
-                    message: `Minimum fee for ${proofType} is ${minFee} NPT` 
+                {
+                    message: `Minimum fee for ${proofType} is ${minFee} NPT`,
                 },
             ),
     });
@@ -152,8 +153,9 @@ export function SendFormEnhanced() {
     const confirmId = useId();
 
     // Get current proof type
-    const currentProofType = settings?.performance?.txProvingCapability || "lockscript";
-    
+    const currentProofType =
+        settings?.performance?.txProvingCapability || "lockscript";
+
     // Get proof type display name
     const getProofTypeDisplay = () => {
         switch (currentProofType) {
@@ -170,6 +172,14 @@ export function SendFormEnhanced() {
 
     // Get minimum fee for current proof type
     const minimumFee = getMinimumFee(currentProofType);
+
+    // Calculate max amount that can be sent (balance minus fee)
+    const calculateMaxAmount = () => {
+        if (!confirmedBalance) return 0;
+        const balance = parseFloat(confirmedBalance);
+        const currentFee = parseFloat(form.watch("fee") || "0") || minimumFee;
+        return Math.max(0, balance - currentFee);
+    };
 
     // Create dynamic schema based on current proof type
     const dynamicSchema = createSendFormSchema(currentProofType);
@@ -299,6 +309,13 @@ export function SendFormEnhanced() {
 
     const handleViewHistory = () => {
         navigate({ to: "/wallet/history" });
+    };
+
+    const handleSendMax = (index: number) => {
+        const maxAmount = calculateMaxAmount();
+        if (maxAmount > 0) {
+            form.setValue(`recipients.${index}.amount`, maxAmount.toFixed(6));
+        }
     };
 
     const handleAddRecipient = () => {
@@ -534,9 +551,22 @@ export function SendFormEnhanced() {
                                                 field: amountField,
                                             }) => (
                                                 <FormItem>
-                                                    <FormLabel>
-                                                        Amount
-                                                    </FormLabel>
+                                                    <div className="flex items-center justify-between">
+                                                        <FormLabel>
+                                                            Amount
+                                                        </FormLabel>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleSendMax(index)}
+                                                            disabled={!confirmedBalance || calculateMaxAmount() <= 0}
+                                                            className="h-7 px-2 text-xs"
+                                                        >
+                                                            <Maximize className="h-3 w-3 mr-1" />
+                                                            Send Max
+                                                        </Button>
+                                                    </div>
                                                     <FormControl>
                                                         <InputGroup>
                                                             <InputGroupInput
@@ -597,9 +627,12 @@ export function SendFormEnhanced() {
                                         <FormDescription>
                                             {minimumFee > 0 ? (
                                                 <>
-                                                    Minimum fee for {currentProofType} is {minimumFee} NPT
+                                                    Minimum fee for{" "}
+                                                    {currentProofType} is{" "}
+                                                    {minimumFee} NPT
                                                     <br />
-                                                    Leave empty to use the default network fee
+                                                    Leave empty to use the
+                                                    default network fee
                                                 </>
                                             ) : (
                                                 "Leave empty to use the default network fee"
