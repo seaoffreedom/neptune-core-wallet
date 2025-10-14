@@ -2,6 +2,9 @@
  * Utility functions for handling asset paths in development vs production
  */
 
+// Import logos as modules so they get bundled by Vite
+import neptuneLogo from "../../assets/logos/neptune.svg";
+
 /**
  * Get the correct path for an asset file
  * @param assetPath - The asset path relative to the public folder (e.g., "assets/logos/neptune.svg")
@@ -9,11 +12,16 @@
  */
 export function getAssetPath(assetPath: string): string {
     // In development, assets are served from the public folder
-    // In production, assets are in resources/public/
-    if (process.env.NODE_ENV === "development") {
+    // In production, assets should be in the same directory as the renderer
+    if (
+        process.env.NODE_ENV === "development" ||
+        process.env.ELECTRON_IS_DEV === "1"
+    ) {
         return `/${assetPath}`;
     } else {
-        return `resources/public/${assetPath}`;
+        // In production, try multiple possible locations
+        // First try relative to the renderer files
+        return `./${assetPath}`;
     }
 }
 
@@ -23,6 +31,11 @@ export function getAssetPath(assetPath: string): string {
  * @returns The correct path for the logo
  */
 export function getLogoPath(logoName: string): string {
+    // For now, just return the imported logo for neptune.svg
+    // This ensures it gets bundled by Vite
+    if (logoName === "neptune.svg") {
+        return neptuneLogo;
+    }
     return getAssetPath(`assets/logos/${logoName}`);
 }
 

@@ -24,7 +24,7 @@ export default defineConfig(async () => {
                 mangle: false,
                 keep_fnames: true,
             },
-            copyPublicDir: false,
+            copyPublicDir: true,
         },
         server: {
             watch: {
