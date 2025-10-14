@@ -452,22 +452,22 @@ export class NeptuneProcessManager {
             await this.startCore();
             logger.info("✅ neptune-core started successfully");
 
-            // Step 3: Start neptune-cli in parallel while waiting for core
-            logger.info(
-                "Step 3: Starting neptune-cli and waiting for core readiness...",
-            );
-            const [cookie] = await Promise.all([
-                this.waitForCoreReady(),
-                this.startCli(), // Start CLI in parallel
-            ]);
-            logger.info("✅ neptune-cli started and core is ready");
+            // Step 3: Wait for core to be ready first
+            logger.info("Step 3: Waiting for neptune-core to be ready...");
+            const cookie = await this.waitForCoreReady();
+            logger.info("✅ neptune-core is ready");
+
+            // Step 4: Start neptune-cli after core is confirmed ready
+            logger.info("Step 4: Starting neptune-cli...");
+            await this.startCli();
+            logger.info("✅ neptune-cli started");
 
             // Store the cookie
             this.cookie = cookie;
             logger.info("✅ Cookie obtained and stored");
 
-            // Step 4: Start data polling
-            logger.info("Step 4: Starting data polling...");
+            // Step 5: Start data polling
+            logger.info("Step 5: Starting data polling...");
             this.startDataPolling(cookie);
             logger.info("✅ Data polling started");
 
