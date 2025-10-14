@@ -774,22 +774,23 @@ export function MempoolOverviewCompact({
                                                                         variant="ghost"
                                                                         size="icon"
                                                                         className="h-6 w-6 opacity-60 hover:opacity-100 transition-opacity"
-                                                                        onClick={() => {
+                                                                        onClick={async () => {
                                                                             const explorerUrl = `https://neptune.vxb.ai/block?h=${tx.id}`;
-                                                                            window.open(
-                                                                                explorerUrl,
-                                                                                "_blank",
-                                                                            );
+                                                                            try {
+                                                                                await navigator.clipboard.writeText(explorerUrl);
+                                                                                showSuccessToast("Explorer link copied to clipboard");
+                                                                            } catch {
+                                                                                showErrorToast("Failed to copy link to clipboard");
+                                                                            }
                                                                         }}
                                                                     >
-                                                                        <ExternalLink className="h-3 w-3" />
+                                                                        <Copy className="h-3 w-3" />
                                                                     </Button>
                                                                 </TooltipTrigger>
                                                                 <TooltipContent>
                                                                     <p>
-                                                                        View on
-                                                                        block
-                                                                        explorer
+                                                                        Copy explorer
+                                                                        link
                                                                     </p>
                                                                 </TooltipContent>
                                                             </Tooltip>
