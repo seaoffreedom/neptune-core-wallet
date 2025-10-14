@@ -727,7 +727,7 @@ export function MempoolOverviewCompact({
                                                         />
                                                         {tx.synced === true
                                                             ? "Synced"
-                                                            : "Pending"}
+                                                            : "Unsynced"}
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="text-sm">
@@ -767,21 +767,30 @@ export function MempoolOverviewCompact({
                                                     <div className="flex items-center gap-1">
                                                         <TooltipProvider>
                                                             <Tooltip>
-                                                                <TooltipTrigger asChild>
+                                                                <TooltipTrigger
+                                                                    asChild
+                                                                >
                                                                     <Button
                                                                         variant="ghost"
                                                                         size="icon"
                                                                         className="h-6 w-6 opacity-60 hover:opacity-100 transition-opacity"
                                                                         onClick={() => {
                                                                             const explorerUrl = `https://neptune.vxb.ai/block?h=${tx.id}`;
-                                                                            window.open(explorerUrl, '_blank');
+                                                                            window.open(
+                                                                                explorerUrl,
+                                                                                "_blank",
+                                                                            );
                                                                         }}
                                                                     >
                                                                         <ExternalLink className="h-3 w-3" />
                                                                     </Button>
                                                                 </TooltipTrigger>
                                                                 <TooltipContent>
-                                                                    <p>View on block explorer</p>
+                                                                    <p>
+                                                                        View on
+                                                                        block
+                                                                        explorer
+                                                                    </p>
                                                                 </TooltipContent>
                                                             </Tooltip>
                                                         </TooltipProvider>
