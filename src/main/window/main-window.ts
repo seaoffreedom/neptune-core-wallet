@@ -8,6 +8,9 @@ import path from "node:path";
 import { BrowserWindow } from "electron";
 import { getCSPPolicy, SECURITY_HEADERS } from "../security/csp";
 
+// Declare global variables injected by Electron Forge
+declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
+
 let mainWindow: BrowserWindow | null = null;
 
 /**
@@ -38,26 +41,44 @@ export function createMainWindow(): BrowserWindow {
     });
 
     // Load the app
-    // Simple approach: Always try to load from file first, fall back to dev server
-    const rendererPath = path.join(
-        __dirname,
-        "../renderer/main_window/index.html",
-    );
+    // Check if we're in development or production
+    const isDevelopment =
+        process.env.NODE_ENV === "development" ||
+        process.env.ELECTRON_IS_DEV === "1" ||
+        !process.resourcesPath;
 
-    try {
-        console.log("Loading from file:", rendererPath);
-        mainWindow.loadFile(rendererPath);
-    } catch (error) {
-        // Fallback to dev server if file loading fails
-        if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-            console.log(
-                "File loading failed, using dev server:",
-                MAIN_WINDOW_VITE_DEV_SERVER_URL,
-            );
-            mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-        } else {
-            console.error("Failed to load app:", error);
-            throw error;
+    if (isDevelopment && MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+        // Development mode: use dev server
+        console.log(
+            "Development mode - loading from dev server:",
+            MAIN_WINDOW_VITE_DEV_SERVER_URL,
+        );
+        mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+    } else {
+        // Production mode: load from bundled files
+        const rendererPath = path.join(
+            __dirname,
+            "../renderer/main_window/index.html",
+        );
+
+        console.log("Production mode - loading from file:", rendererPath);
+        console.log("__dirname:", __dirname);
+        console.log("process.resourcesPath:", process.resourcesPath);
+
+        try {
+            mainWindow.loadFile(rendererPath);
+        } catch (error) {
+            console.error("Failed to load bundled file:", error);
+            // Fallback to dev server if available
+            if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+                console.log(
+                    "Falling back to dev server:",
+                    MAIN_WINDOW_VITE_DEV_SERVER_URL,
+                );
+                mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+            } else {
+                throw error;
+            }
         }
     }
 
