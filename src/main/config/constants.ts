@@ -5,29 +5,43 @@
  */
 
 import path from "node:path";
+import { platform, arch } from "node:os";
+
+/**
+ * Get the platform-specific binary path
+ * @param binaryName - The name of the binary (without extension)
+ * @returns The full path to the binary for the current platform
+ */
+function getBinaryPath(binaryName: string): string {
+    // Map Node.js platform names to our directory structure
+    const platformMap: Record<string, string> = {
+        "linux": "linux-x64",
+        "darwin": arch() === "arm64" ? "mac-arm64" : "mac-x64",
+        "win32": "win-x64",
+    };
+
+    const platformDir = platformMap[platform()] || "linux-x64";
+    const extension = platform() === "win32" ? ".exe" : "";
+
+    return path.join(
+        process.resourcesPath || "",
+        "binaries",
+        platformDir,
+        `${binaryName}${extension}`,
+    );
+}
 
 /**
  * Binary paths for Neptune executables
  *
- * Simple approach: Use production paths by default, fall back to dev paths if needed
+ * Cross-platform approach: Automatically detects platform and architecture
+ * and uses the appropriate binary path
  */
 export const BINARY_PATHS = {
     // Production paths (bundled binaries in packaged app)
-    NEPTUNE_CORE: path.join(
-        process.resourcesPath || "",
-        "binaries",
-        "neptune-core",
-    ),
-    NEPTUNE_CLI: path.join(
-        process.resourcesPath || "",
-        "binaries",
-        "neptune-cli",
-    ),
-    TRITON_VM_PROVER: path.join(
-        process.resourcesPath || "",
-        "binaries",
-        "triton-vm-prover",
-    ),
+    NEPTUNE_CORE: getBinaryPath("neptune-core"),
+    NEPTUNE_CLI: getBinaryPath("neptune-cli"),
+    TRITON_VM_PROVER: getBinaryPath("triton-vm-prover"),
 
     // Development fallback paths (for local development)
     DEV_NEPTUNE_CORE:

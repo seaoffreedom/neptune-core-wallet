@@ -25,15 +25,17 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:debug": "playwright test --debug",
-    "test:all": "pnpm test:run && pnpm test:e2e",
-    "test:ci": "pnpm test:run --coverage && pnpm test:e2e",
+    "build:binaries": "scripts/build-binaries.sh",
+    "build:binaries:win": "scripts/build-binaries.bat",
     "build:appimage": "electron-builder --linux AppImage",
     "build:deb": "electron-builder --linux deb",
-    "build:linux": "electron-builder --linux",
+    "build:rpm": "electron-builder --linux rpm",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
     "build:all": "electron-builder --linux --mac --win",
+    "test:e2e:debug": "playwright test --debug",
+    "test:all": "pnpm test:run && pnpm test:e2e",
+    "test:ci": "pnpm test:run --coverage && pnpm test:e2e",
     "playwright:install": "playwright install",
     "playwright:install-deps": "playwright install-deps"
   },
@@ -165,7 +167,8 @@
     "extraResources": [
       {
         "from": "resources/binaries",
-        "to": "binaries"
+        "to": "binaries",
+        "filter": ["**/*"]
       }
     ],
     "linux": {
