@@ -155,6 +155,7 @@
   "build": {
     "appId": "com.neptune.core.wallet",
     "productName": "Neptune Core Wallet",
+    "artifactName": "neptune-core-wallet-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "dist-electron-builder"
     },
