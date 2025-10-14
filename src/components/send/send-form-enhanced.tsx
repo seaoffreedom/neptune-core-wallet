@@ -61,6 +61,7 @@ import {
     useSendTransaction,
 } from "@/renderer/hooks/use-onchain-data";
 import { useOnchainStore } from "@/store/onchain.store";
+import { useNeptuneCoreSettingsStore } from "@/store/neptune-core-settings.store";
 import { truncateAddress } from "@/lib/utils";
 import { AddressBookSelect } from "./address-book-select";
 
@@ -111,6 +112,7 @@ export function SendFormEnhanced() {
     const confirmedBalance = useOnchainStore(
         (state) => state.dashboardData?.confirmed_available_balance,
     );
+    const settings = useNeptuneCoreSettingsStore((state) => state.settings);
 
     const [isValidating, setIsValidating] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -120,6 +122,22 @@ export function SendFormEnhanced() {
     const [pendingTransaction, setPendingTransaction] =
         useState<SendFormValues | null>(null);
     const confirmId = useId();
+
+    // Get proof type display name
+    const getProofTypeDisplay = () => {
+        const proofType =
+            settings?.performance?.txProvingCapability || "lockscript";
+        switch (proofType) {
+            case "singleproof":
+                return "Single Proof";
+            case "proofcollection":
+                return "Proof Collection";
+            case "lockscript":
+                return "Lock Script";
+            default:
+                return "Lock Script";
+        }
+    };
 
     const form = useForm<SendFormValues>({
         resolver: zodResolver(sendFormSchema),
@@ -336,16 +354,20 @@ export function SendFormEnhanced() {
 
                         <div className="space-y-2 text-sm text-muted-foreground">
                             <p>
-                                • Your transaction has been created and stored locally
+                                • Your transaction has been created and stored
+                                locally
                             </p>
                             <p>
-                                • It will be broadcast to the network when your node connects to peers
+                                • It will be broadcast to the network when your
+                                node connects to peers
                             </p>
                             <p>
-                                • Keep your node running to ensure proper broadcast
+                                • Keep your node running to ensure proper
+                                broadcast
                             </p>
                             <p>
-                                • Check the transaction history for confirmation status
+                                • Check the transaction history for confirmation
+                                status
                             </p>
                         </div>
                     </div>
@@ -754,6 +776,19 @@ export function SendFormEnhanced() {
                                     </span>
                                 </div>
                             )}
+
+                            {/* Proof Type */}
+                            <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <span className="text-sm text-muted-foreground">
+                                    Proof Type:
+                                </span>
+                                <Badge
+                                    variant="secondary"
+                                    className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+                                >
+                                    {getProofTypeDisplay()}
+                                </Badge>
+                            </div>
 
                             {/* Security Checkbox */}
                             <div className="flex items-center space-x-2 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
