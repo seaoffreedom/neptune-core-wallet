@@ -452,27 +452,27 @@ export class NeptuneProcessManager {
             await this.startCore();
             logger.info("✅ neptune-core started successfully");
 
-            // Step 3: Wait for core to be ready first
-            logger.info("Step 3: Waiting for neptune-core to be ready...");
+            // Step 3: Wait for core readiness first, then start CLI with delay
+            logger.info("Step 3: Waiting for neptune-core readiness...");
             const cookie = await this.waitForCoreReady();
             logger.info("✅ neptune-core is ready");
 
-            // Step 4: Wait additional time for core to fully initialize
-            logger.info("Step 4: Waiting 2 seconds for neptune-core to fully initialize...");
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            logger.info("✅ Wait completed");
+            // Add 2-second delay to prevent race condition
+            logger.info(
+                "Waiting 2 seconds before starting neptune-cli to prevent race condition...",
+            );
+            await new Promise((resolve) => setTimeout(resolve, 2000));
 
-            // Step 5: Start neptune-cli after core is confirmed ready
-            logger.info("Step 5: Starting neptune-cli...");
+            logger.info("Starting neptune-cli...");
             await this.startCli();
-            logger.info("✅ neptune-cli started");
+            logger.info("✅ neptune-cli started successfully");
 
             // Store the cookie
             this.cookie = cookie;
             logger.info("✅ Cookie obtained and stored");
 
-            // Step 6: Start data polling
-            logger.info("Step 6: Starting data polling...");
+            // Step 4: Start data polling
+            logger.info("Step 4: Starting data polling...");
             this.startDataPolling(cookie);
             logger.info("✅ Data polling started");
 
@@ -644,15 +644,6 @@ export class NeptuneProcessManager {
         return pRetry(
             async () => {
                 try {
-                    logger.info(
-                        {
-                            binaryPath,
-                            port: actualCoreRpcPort,
-                            command: `--port ${actualCoreRpcPort} --get-cookie`,
-                        },
-                        "Attempting to get cookie from neptune-core",
-                    );
-
                     const result = await pTimeout(
                         execa(binaryPath, [
                             "--port",
@@ -664,33 +655,17 @@ export class NeptuneProcessManager {
                         },
                     );
 
-                    logger.info(
-                        {
-                            stdout: result.stdout,
-                            stderr: result.stderr,
-                            exitCode: result.exitCode,
-                        },
-                        "Cookie command completed",
-                    );
-
                     const cookie = this.extractCookie(result.stdout);
                     if (!cookie) {
                         throw new Error("Cookie not available yet");
                     }
 
-                    logger.info(
-                        { cookie: cookie.substring(0, 20) + "..." },
-                        "Cookie obtained successfully",
-                    );
+                    logger.info("Cookie obtained successfully");
                     // Cookie retrieved successfully
                     return cookie;
                 } catch (error) {
-                    logger.warn(
-                        { 
-                            error: (error as Error).message,
-                            binaryPath,
-                            port: actualCoreRpcPort,
-                        },
+                    logger.debug(
+                        { error: (error as Error).message },
                         "Core not ready yet, retrying...",
                     );
                     throw error;
