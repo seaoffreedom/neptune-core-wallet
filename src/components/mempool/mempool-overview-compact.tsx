@@ -321,7 +321,7 @@ export function MempoolOverviewCompact({
                             {totalCount}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                            Total TXs
+                            Total Transactions
                         </div>
                     </div>
                     <div className="text-center">
@@ -329,7 +329,7 @@ export function MempoolOverviewCompact({
                             {ownCount}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                            Your TXs
+                            Your Transactions
                         </div>
                     </div>
                     <div className="text-center">
@@ -565,12 +565,9 @@ export function MempoolOverviewCompact({
                                                             {index + 1}
                                                         </span>
                                                         {isOwn && (
-                                                            <Badge
-                                                                variant="default"
-                                                                className="text-xs px-1 py-0 h-4 bg-orange-500 hover:bg-orange-600"
-                                                            >
-                                                                Own
-                                                            </Badge>
+                                                            <span className="text-xs text-orange-600 font-medium">
+                                                                Your transaction
+                                                            </span>
                                                         )}
                                                     </div>
                                                 </TableCell>
@@ -777,10 +774,16 @@ export function MempoolOverviewCompact({
                                                                         onClick={async () => {
                                                                             const explorerUrl = `https://neptune.vxb.ai/block?h=${tx.id}`;
                                                                             try {
-                                                                                await navigator.clipboard.writeText(explorerUrl);
-                                                                                showSuccessToast("Explorer link copied to clipboard");
+                                                                                await navigator.clipboard.writeText(
+                                                                                    explorerUrl,
+                                                                                );
+                                                                                showSuccessToast(
+                                                                                    "Explorer link copied to clipboard",
+                                                                                );
                                                                             } catch {
-                                                                                showErrorToast("Failed to copy link to clipboard");
+                                                                                showErrorToast(
+                                                                                    "Failed to copy link to clipboard",
+                                                                                );
                                                                             }
                                                                         }}
                                                                     >
@@ -789,7 +792,8 @@ export function MempoolOverviewCompact({
                                                                 </TooltipTrigger>
                                                                 <TooltipContent>
                                                                     <p>
-                                                                        Copy explorer
+                                                                        Copy
+                                                                        explorer
                                                                         link
                                                                     </p>
                                                                 </TooltipContent>
