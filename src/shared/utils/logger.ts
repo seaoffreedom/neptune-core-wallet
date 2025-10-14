@@ -40,6 +40,9 @@ const createLoggerConfig = (component?: string) => {
         };
     }
 
+    // Disable worker threads to avoid missing worker.js file
+    config.sync = true;
+
     return config;
 };
 
