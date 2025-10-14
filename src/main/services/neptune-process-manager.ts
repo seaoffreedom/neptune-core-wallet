@@ -221,14 +221,22 @@ export class NeptuneProcessManager {
             logger.info(`✅ Using neptune-core: ${corePath}`);
         } catch (error) {
             // Fall back to explicit development path
-            logger.warn(
+            logger.error(
+                {
+                    error: (error as Error).message,
+                    corePath,
+                    productionPath: BINARY_PATHS.NEPTUNE_CORE,
+                    developmentPath: BINARY_PATHS.DEV_NEPTUNE_CORE,
+                    platform: process.platform,
+                    resourcesPath: process.resourcesPath,
+                },
                 `❌ Auto-selected neptune-core not found at ${corePath}, trying development path`,
             );
             corePath = BINARY_PATHS.DEV_NEPTUNE_CORE;
             try {
                 await access(corePath);
                 logger.info(`✅ Using development neptune-core: ${corePath}`);
-            } catch (devError) {
+            } catch {
                 logger.error(`❌ neptune-core not found at either path:`);
                 logger.error(`  Production: ${BINARY_PATHS.NEPTUNE_CORE}`);
                 logger.error(`  Development: ${corePath}`);
@@ -241,7 +249,7 @@ export class NeptuneProcessManager {
         try {
             await access(cliPath);
             logger.info(`✅ Using neptune-cli: ${cliPath}`);
-        } catch (error) {
+        } catch {
             // Fall back to explicit development path
             logger.warn(
                 `❌ Auto-selected neptune-cli not found at ${cliPath}, trying development path`,
@@ -250,7 +258,7 @@ export class NeptuneProcessManager {
             try {
                 await access(cliPath);
                 logger.info(`✅ Using development neptune-cli: ${cliPath}`);
-            } catch (devError) {
+            } catch {
                 logger.error(`❌ neptune-cli not found at either path:`);
                 logger.error(`  Production: ${BINARY_PATHS.NEPTUNE_CLI}`);
                 logger.error(`  Development: ${cliPath}`);
@@ -472,6 +480,17 @@ export class NeptuneProcessManager {
         );
 
         try {
+            logger.info(
+                {
+                    binaryPath,
+                    args: args.join(" "),
+                    cwd: process.cwd(),
+                    platform: process.platform,
+                    arch: process.arch,
+                },
+                "Starting neptune-core with full context",
+            );
+
             this.coreProcess = execa(binaryPath, args, {
                 stdio: ["ignore", "pipe", "pipe"],
                 detached: false,
@@ -493,7 +512,14 @@ export class NeptuneProcessManager {
             });
 
             this.coreProcess.on("exit", (code, signal) => {
-                logger.info(
+                logger.error(
+                    {
+                        code,
+                        signal,
+                        binaryPath,
+                        args: args.join(" "),
+                        platform: process.platform,
+                    },
                     `neptune-core exited with code ${code}, signal ${signal}`,
                 );
                 // Clear the PID from system resource monitoring
@@ -615,7 +641,7 @@ export class NeptuneProcessManager {
                     logger.warn(
                         {
                             attempt: error.attemptNumber,
-                            error: error.message,
+                            error: error.error?.message || "Unknown error",
                             remainingAttempts: 30 - error.attemptNumber,
                         },
                         `Core readiness check attempt ${error.attemptNumber} failed`,
