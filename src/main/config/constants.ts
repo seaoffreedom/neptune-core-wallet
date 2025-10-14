@@ -87,16 +87,8 @@ function getDevBinaryPath(binaryName: string): string {
  * @returns The full path to the binary for the current platform
  */
 function getBinaryPath(binaryName: string): string {
-    // Check if we're in development mode
-    const isDevelopment =
-        process.env.NODE_ENV === "development" ||
-        process.env.ELECTRON_IS_DEV === "1" ||
-        process.resourcesPath?.includes("node_modules/electron/dist");
-
-    if (isDevelopment) {
-        // Development mode - return empty string to trigger fallback
-        return "";
-    }
+    // Always use production paths to simulate production environment
+    // This helps catch production issues during development
 
     // Map Node.js platform names to our directory structure
     const platformMap: Record<string, string> = {
