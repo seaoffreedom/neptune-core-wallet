@@ -6,6 +6,7 @@
 
 import path from "node:path";
 import { BrowserWindow } from "electron";
+import { logger } from "../../shared/utils/logger";
 
 // Declare global variables injected by Electron Forge
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
@@ -39,28 +40,65 @@ export function createMainWindow(): BrowserWindow {
     });
 
     // Load the app
-    // Check if we're in development or production
-    const isDevelopment =
-        process.env.NODE_ENV === "development" ||
-        process.env.ELECTRON_IS_DEV === "1" ||
-        !process.resourcesPath;
 
     if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+        logger.info(
+            {
+                platform: process.platform,
+                devServerUrl: MAIN_WINDOW_VITE_DEV_SERVER_URL,
+            },
+            "Loading from development server",
+        );
         mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     } else {
-        mainWindow.loadFile(
-            path.join(
-                __dirname,
-                `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`,
-            ),
+        const filePath = path.join(
+            __dirname,
+            `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`,
         );
+        logger.info(
+            {
+                platform: process.platform,
+                filePath,
+                viteName: MAIN_WINDOW_VITE_NAME,
+                resourcesPath: process.resourcesPath,
+            },
+            "Loading from production file",
+        );
+        mainWindow.loadFile(filePath);
     }
 
     // Show window when ready to prevent visual flash
     mainWindow.once("ready-to-show", () => {
         if (mainWindow) {
+            logger.info("Main window ready to show");
             mainWindow.show();
         }
+    });
+
+    // Handle load errors
+    mainWindow.webContents.on(
+        "did-fail-load",
+        (_, errorCode, errorDescription, validatedURL) => {
+            logger.error(
+                {
+                    errorCode,
+                    errorDescription,
+                    validatedURL,
+                    platform: process.platform,
+                },
+                "Failed to load main window",
+            );
+        },
+    );
+
+    mainWindow.webContents.on("render-process-gone", (_, details) => {
+        logger.error(
+            {
+                reason: details.reason,
+                exitCode: details.exitCode,
+            },
+            "WebContents render process gone",
+        );
     });
 
     // Handle window closed
