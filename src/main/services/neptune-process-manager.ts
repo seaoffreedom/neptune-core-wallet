@@ -531,6 +531,9 @@ export class NeptuneProcessManager {
                 reject: false, // Don't reject promise on non-zero exit
             });
 
+            // Attach logging to see what's happening
+            this.setupLogHandling(this.coreProcess, "neptune-core");
+
             // Handle process events
             this.coreProcess.on("error", (error) => {
                 logger.error(
@@ -568,6 +571,30 @@ export class NeptuneProcessManager {
                 systemResourceService.setNeptuneProcessPids(
                     this.coreProcess.pid,
                     this.cliProcess?.pid,
+                );
+
+                // Wait a moment and check if process is still running
+                setTimeout(() => {
+                    if (
+                        this.coreProcess &&
+                        this.coreProcess.exitCode === null
+                    ) {
+                        logger.info(
+                            `neptune-core started successfully with PID ${this.coreProcess.pid}`,
+                        );
+                    } else {
+                        logger.error(
+                            {
+                                pid: this.coreProcess?.pid,
+                                exitCode: this.coreProcess?.exitCode,
+                            },
+                            "neptune-core process failed to start or crashed immediately",
+                        );
+                    }
+                }, 1000);
+            } else {
+                logger.error(
+                    "neptune-core process failed to start - no PID assigned",
                 );
             }
 
@@ -725,6 +752,9 @@ export class NeptuneProcessManager {
                 reject: false, // Don't reject promise on non-zero exit
             });
 
+            // Attach logging to see what's happening
+            this.setupLogHandling(this.cliProcess, "neptune-cli");
+
             // Handle process events
             this.cliProcess.on("error", (error) => {
                 logger.error({ error }, "neptune-cli process error");
@@ -746,6 +776,27 @@ export class NeptuneProcessManager {
                 systemResourceService.setNeptuneProcessPids(
                     this.coreProcess?.pid,
                     this.cliProcess.pid,
+                );
+
+                // Wait a moment and check if process is still running
+                setTimeout(() => {
+                    if (this.cliProcess && this.cliProcess.exitCode === null) {
+                        logger.info(
+                            `neptune-cli started successfully with PID ${this.cliProcess.pid}`,
+                        );
+                    } else {
+                        logger.error(
+                            {
+                                pid: this.cliProcess?.pid,
+                                exitCode: this.cliProcess?.exitCode,
+                            },
+                            "neptune-cli process failed to start or crashed immediately",
+                        );
+                    }
+                }, 1000);
+            } else {
+                logger.error(
+                    "neptune-cli process failed to start - no PID assigned",
                 );
             }
 
