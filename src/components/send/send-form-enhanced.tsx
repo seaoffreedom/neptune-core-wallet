@@ -61,6 +61,7 @@ import {
     useSendTransaction,
 } from "@/renderer/hooks/use-onchain-data";
 import { useOnchainStore } from "@/store/onchain.store";
+import { truncateAddress } from "@/lib/utils";
 import { AddressBookSelect } from "./address-book-select";
 
 // Form validation schema
@@ -685,8 +686,10 @@ export function SendFormEnhanced() {
                                             className="flex justify-between items-center p-3 bg-muted/50 rounded-lg"
                                         >
                                             <div className="flex-1 min-w-0">
-                                                <div className="font-mono text-sm truncate">
-                                                    {recipient.address}
+                                                <div className="font-mono text-sm">
+                                                    {truncateAddress(
+                                                        recipient.address,
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="ml-4 text-right">
