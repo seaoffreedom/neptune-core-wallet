@@ -1,31 +1,18 @@
 /**
  * Extension Sidebar Content
  *
- * Displays Neptune Accomplice browser extension settings and configuration
- * with engine-based organization
+ * Displays Neptune Accomplice identity management and configuration
  */
 
-import {
-    AlertTriangle,
-    CheckCircle,
-    Globe,
-    Key,
-    Link,
-    Shield,
-    XCircle,
-    Users,
-    MessageSquare,
-} from "lucide-react";
+import { CheckCircle, Key, Users, XCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
 export function ExtensionSidebar() {
     // Mock data - will be replaced with real state later
-    const isExtensionConnected = true;
-    const allowedHostsCount = 2;
-    const connectedAppsCount = 3;
-    const activeSessionsCount = 2;
+    const hasIdentity = true;
+    const identityName = "Neptune User";
 
     return (
         <div className="h-full flex flex-col">
@@ -33,7 +20,7 @@ export function ExtensionSidebar() {
             <div className="p-4">
                 <h2 className="text-lg font-semibold">Neptune Accomplice</h2>
                 <p className="text-sm text-muted-foreground">
-                    Identity & Ecosystem Management
+                    Wallet Identity Management
                 </p>
             </div>
 
@@ -43,103 +30,77 @@ export function ExtensionSidebar() {
             <div className="flex-1 min-h-0">
                 <ScrollArea className="h-full">
                     <div className="p-4 space-y-4">
-                        {/* Connection Status */}
+                        {/* Identity Status */}
                         <div className="space-y-2">
                             <h3 className="text-sm font-medium text-muted-foreground">
-                                Connection Status
+                                Identity Status
                             </h3>
                             <div className="p-3 rounded-lg border bg-card">
                                 <div className="flex items-center gap-2">
-                                    {isExtensionConnected ? (
+                                    {hasIdentity ? (
                                         <>
                                             <CheckCircle className="h-4 w-4 text-green-500" />
                                             <span className="text-sm font-medium">
-                                                Connected
+                                                Identity Active
                                             </span>
                                         </>
                                     ) : (
                                         <>
                                             <XCircle className="h-4 w-4 text-red-500" />
                                             <span className="text-sm font-medium">
-                                                Not Connected
+                                                No Identity
                                             </span>
                                         </>
                                     )}
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    {isExtensionConnected
-                                        ? "Extension is connected and ready"
-                                        : "Install Neptune Accomplice to connect"}
+                                    {hasIdentity
+                                        ? `Identity: ${identityName}`
+                                        : "Create an identity to get started"}
                                 </p>
                             </div>
                         </div>
 
                         <Separator />
 
-                        {/* Engine Status */}
-                        <div className="space-y-2">
-                            <h3 className="text-sm font-medium text-muted-foreground">
-                                Engine Status
-                            </h3>
+                        {/* Identity Details */}
+                        {hasIdentity && (
                             <div className="space-y-2">
-                                <div className="flex items-center justify-between p-2 rounded-md bg-card border">
-                                    <div className="flex items-center gap-2">
-                                        <Users className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-sm font-medium">
-                                            Identity
-                                        </span>
+                                <h3 className="text-sm font-medium text-muted-foreground">
+                                    Identity Details
+                                </h3>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between p-2 rounded-md bg-card border">
+                                        <div className="flex items-center gap-2">
+                                            <Users className="h-4 w-4 text-muted-foreground" />
+                                            <span className="text-sm font-medium">
+                                                Profile
+                                            </span>
+                                        </div>
+                                        <Badge
+                                            variant="default"
+                                            className="text-xs"
+                                        >
+                                            Active
+                                        </Badge>
                                     </div>
-                                    <Badge
-                                        variant="default"
-                                        className="text-xs"
-                                    >
-                                        Active
-                                    </Badge>
-                                </div>
-                                <div className="flex items-center justify-between p-2 rounded-md bg-card border">
-                                    <div className="flex items-center gap-2">
-                                        <Globe className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-sm font-medium">
-                                            Ecosystem
-                                        </span>
+                                    <div className="flex items-center justify-between p-2 rounded-md bg-card border">
+                                        <div className="flex items-center gap-2">
+                                            <Key className="h-4 w-4 text-muted-foreground" />
+                                            <span className="text-sm font-medium">
+                                                Keys
+                                            </span>
+                                        </div>
+                                        <Badge
+                                            variant="default"
+                                            className="text-xs"
+                                        >
+                                            Generated
+                                        </Badge>
                                     </div>
-                                    <Badge
-                                        variant="default"
-                                        className="text-xs"
-                                    >
-                                        {connectedAppsCount} apps
-                                    </Badge>
-                                </div>
-                                <div className="flex items-center justify-between p-2 rounded-md bg-card border">
-                                    <div className="flex items-center gap-2">
-                                        <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-sm font-medium">
-                                            Connection
-                                        </span>
-                                    </div>
-                                    <Badge
-                                        variant="default"
-                                        className="text-xs"
-                                    >
-                                        {activeSessionsCount} sessions
-                                    </Badge>
-                                </div>
-                                <div className="flex items-center justify-between p-2 rounded-md bg-card border">
-                                    <div className="flex items-center gap-2">
-                                        <Shield className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-sm font-medium">
-                                            Security
-                                        </span>
-                                    </div>
-                                    <Badge
-                                        variant="default"
-                                        className="text-xs"
-                                    >
-                                        Secure
-                                    </Badge>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         <Separator />
 
@@ -151,21 +112,27 @@ export function ExtensionSidebar() {
                             <div className="space-y-1 text-sm">
                                 <div className="flex justify-between px-3 py-1">
                                     <span className="text-muted-foreground">
-                                        Connected Apps
+                                        Identity Status
                                     </span>
-                                    <span>{connectedAppsCount}</span>
+                                    <span>
+                                        {hasIdentity ? "Active" : "None"}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between px-3 py-1">
                                     <span className="text-muted-foreground">
-                                        Active Sessions
+                                        Web3 Auth
                                     </span>
-                                    <span>{activeSessionsCount}</span>
+                                    <span>
+                                        {hasIdentity ? "Ready" : "Disabled"}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between px-3 py-1">
                                     <span className="text-muted-foreground">
-                                        Allowed Hosts
+                                        Messaging
                                     </span>
-                                    <span>{allowedHostsCount}</span>
+                                    <span>
+                                        {hasIdentity ? "Ready" : "Disabled"}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between px-3 py-1">
                                     <span className="text-muted-foreground">
@@ -184,30 +151,43 @@ export function ExtensionSidebar() {
                                 Quick Actions
                             </h3>
                             <div className="space-y-1">
-                                <button
-                                    type="button"
-                                    className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
-                                >
-                                    View All Engines
-                                </button>
-                                <button
-                                    type="button"
-                                    className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
-                                >
-                                    Security Audit
-                                </button>
+                                {!hasIdentity ? (
+                                    <button
+                                        type="button"
+                                        className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                                    >
+                                        Create Identity
+                                    </button>
+                                ) : (
+                                    <>
+                                        <button
+                                            type="button"
+                                            className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                                        >
+                                            Edit Profile
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                                        >
+                                            Regenerate Keys
+                                        </button>
+                                    </>
+                                )}
                                 <button
                                     type="button"
                                     className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
                                 >
                                     View Documentation
                                 </button>
-                                <button
-                                    type="button"
-                                    className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-destructive"
-                                >
-                                    Revoke All Permissions
-                                </button>
+                                {hasIdentity && (
+                                    <button
+                                        type="button"
+                                        className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-destructive"
+                                    >
+                                        Delete Identity
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
