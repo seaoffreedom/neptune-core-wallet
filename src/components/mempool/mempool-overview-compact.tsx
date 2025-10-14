@@ -314,31 +314,25 @@ export function MempoolOverviewCompact({
                     </CardContent>
                 </Card>
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center">
-                        <div className="text-2xl font-bold text-primary">
-                            {totalCount}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                            Total Transactions
-                        </div>
+                {/* Mempool Summary */}
+                <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Mempool Status</span>
+                        <span className="text-xs text-muted-foreground">
+                            Last updated: {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : "Never"}
+                        </span>
                     </div>
-                    <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-500">
-                            {ownCount}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                            Your Transactions
-                        </div>
-                    </div>
-                    <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-500">
-                            {formatSize(totalSize)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                            Size
-                        </div>
+                    <div className="text-sm text-muted-foreground">
+                        {totalCount === 0 ? (
+                            "No transactions in mempool"
+                        ) : (
+                            <>
+                                <span className="font-medium text-primary">{totalCount}</span> transaction{totalCount !== 1 ? "s" : ""} pending
+                                {totalSize > 0 && (
+                                    <> • <span className="font-medium text-blue-500">{formatSize(totalSize)}</span> total size</>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -565,9 +559,12 @@ export function MempoolOverviewCompact({
                                                             {index + 1}
                                                         </span>
                                                         {isOwn && (
-                                                            <span className="text-xs text-orange-600 font-medium">
-                                                                Your transaction
-                                                            </span>
+                                                            <Badge
+                                                                variant="default"
+                                                                className="text-xs px-1 py-0 h-4 bg-orange-500 hover:bg-orange-600"
+                                                            >
+                                                                Own
+                                                            </Badge>
                                                         )}
                                                     </div>
                                                 </TableCell>
