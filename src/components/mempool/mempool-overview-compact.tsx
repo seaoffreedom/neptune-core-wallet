@@ -437,12 +437,12 @@ export function MempoolOverviewCompact({
 
                 <Separator />
 
-                {/* Recent Transactions */}
+                {/* Transactions in Mempool */}
                 {recentTransactions.length > 0 ? (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <h4 className="text-sm font-medium">
-                                Recent Transactions
+                                Transactions in Mempool
                             </h4>
                             {transactions.length > 5 && (
                                 <Badge variant="secondary" className="text-xs">
