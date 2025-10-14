@@ -174,7 +174,9 @@ export function SendFormEnhanced() {
             );
             const fee = values.fee ? parseFloat(values.fee) : 0;
 
-            if (totalAmount + fee > balance) {
+            // Add small tolerance for floating-point precision issues
+            const tolerance = 0.0001;
+            if (totalAmount + fee > balance + tolerance) {
                 form.setError("recipients.0.amount", {
                     type: "manual",
                     message: `Insufficient balance. Total: ${(totalAmount + fee).toFixed(2)} NPT, Available: ${balance.toFixed(2)} NPT`,
@@ -334,16 +336,16 @@ export function SendFormEnhanced() {
 
                         <div className="space-y-2 text-sm text-muted-foreground">
                             <p>
-                                • Your transaction has been broadcast to the
-                                network
+                                • Your transaction has been created and stored locally
                             </p>
                             <p>
-                                • It will be included in the next block once
-                                confirmed
+                                • It will be broadcast to the network when your node connects to peers
                             </p>
                             <p>
-                                • Check the transaction history for confirmation
-                                status
+                                • Keep your node running to ensure proper broadcast
+                            </p>
+                            <p>
+                                • Check the transaction history for confirmation status
                             </p>
                         </div>
                     </div>

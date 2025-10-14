@@ -5,7 +5,7 @@
  */
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { TransactionHistoryItem } from '@/store/onchain.store';
+import { toast } from 'sonner';
 
 // Extended transaction interface for table display
 export interface Transaction extends TransactionHistoryItem {
@@ -25,7 +26,12 @@ export interface Transaction extends TransactionHistoryItem {
   status: 'confirmed' | 'pending' | 'failed'; // Derived from confirmations
 }
 
-export const transactionColumns: ColumnDef<Transaction>[] = [
+// Function to create columns with modal handlers
+export function createTransactionColumns(
+  onViewDetails: (transaction: Transaction) => void,
+  onViewExplorer: (transaction: Transaction) => void,
+): ColumnDef<Transaction>[] {
+  return [
   {
     accessorKey: 'timestamp',
     header: ({ column }) => {
@@ -141,6 +147,15 @@ export const transactionColumns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => {
       const transaction = row.original;
 
+      const copyToClipboard = async () => {
+        try {
+          await navigator.clipboard.writeText(transaction.digest);
+          toast.success('Transaction ID copied to clipboard');
+        } catch {
+          toast.error('Failed to copy to clipboard');
+        }
+      };
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -151,17 +166,27 @@ export const transactionColumns: ColumnDef<Transaction>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(transaction.digest)}
-            >
+            <DropdownMenuItem onClick={copyToClipboard}>
               Copy transaction ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View details</DropdownMenuItem>
-            <DropdownMenuItem>View on explorer</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onViewDetails(transaction)}>
+              View details
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onViewExplorer(transaction)}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View on explorer
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
     },
   },
-];
+  ];
+}
+
+// Default columns without modal handlers (for backward compatibility)
+export const transactionColumns: ColumnDef<Transaction>[] = createTransactionColumns(
+  () => {}, // No-op for view details
+  () => {}, // No-op for view explorer
+);

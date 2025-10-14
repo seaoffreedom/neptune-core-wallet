@@ -770,10 +770,8 @@ export function MempoolOverviewCompact({
                                                             size="icon"
                                                             className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                                                             onClick={() => {
-                                                                console.log(
-                                                                    "View transaction details:",
-                                                                    tx.id,
-                                                                );
+                                                                const explorerUrl = `https://neptune.vxb.ai/block?h=${tx.id}`;
+                                                                window.open(explorerUrl, '_blank');
                                                             }}
                                                             title="View transaction details"
                                                         >

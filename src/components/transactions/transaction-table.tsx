@@ -24,7 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { type Transaction, transactionColumns } from './transaction-columns';
+import { type Transaction, createTransactionColumns } from './transaction-columns';
+import { TransactionDetailsModal } from './transaction-details-modal';
 
 interface TransactionTableProps {
   data: Transaction[];
@@ -35,10 +36,24 @@ export function TransactionTable({ data }: TransactionTableProps) {
     { id: 'timestamp', desc: true }, // Default to newest first
   ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewDetails = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsModalOpen(true);
+  };
+
+  const handleViewExplorer = (transaction: Transaction) => {
+    const explorerUrl = `https://neptune.vxb.ai/block?h=${transaction.digest}`;
+    window.open(explorerUrl, '_blank');
+  };
+
+  const columns = createTransactionColumns(handleViewDetails, handleViewExplorer);
 
   const table = useReactTable({
     data,
-    columns: transactionColumns,
+    columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
@@ -123,6 +138,16 @@ export function TransactionTable({ data }: TransactionTableProps) {
           Next
         </Button>
       </div>
+
+      {/* Transaction Details Modal */}
+      <TransactionDetailsModal
+        transaction={selectedTransaction}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedTransaction(null);
+        }}
+      />
     </div>
   );
 }

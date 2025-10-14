@@ -28,6 +28,7 @@
     "build:binaries": "scripts/build-cross-platform-binaries.sh",
     "build:binaries:cross-platform": "scripts/build-cross-platform-binaries.sh",
     "build:binaries:win": "scripts/build-cross-platform-binaries.bat",
+    "generate:icons": "scripts/generate-icons.sh",
     "build:appimage": "electron-builder --linux AppImage",
     "build:deb": "electron-builder --linux deb",
     "build:rpm": "electron-builder --linux rpm",
@@ -192,7 +193,7 @@
       ],
       "category": "Finance",
       "description": "Desktop wallet for Neptune blockchain",
-      "icon": "public/assets/logos/neptune.svg"
+      "icon": "public/assets/logos/neptune-256x256.png"
     },
     "mac": {
       "target": [
@@ -205,7 +206,7 @@
         }
       ],
       "category": "public.app-category.finance",
-      "icon": "public/assets/logos/neptune.svg"
+      "icon": "public/assets/logos/neptune.icns"
     },
     "win": {
       "target": [
@@ -216,7 +217,7 @@
           ]
         }
       ],
-      "icon": "public/assets/logos/neptune.svg"
+      "icon": "public/assets/logos/neptune.ico"
     }
   }
 }

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="120" fill="#0ea5e9" stroke="#0284c7" stroke-width="8"/>
+
+  <!-- Neptune trident symbol -->
+  <g transform="translate(128, 128)">
+    <!-- Trident handle -->
+    <rect x="-4" y="-60" width="8" height="80" fill="white" rx="4"/>
+
+    <!-- Trident prongs -->
+    <rect x="-20" y="-80" width="8" height="40" fill="white" rx="4"/>
+    <rect x="-4" y="-80" width="8" height="40" fill="white" rx="4"/>
+    <rect x="12" y="-80" width="8" height="40" fill="white" rx="4"/>
+
+    <!-- Connecting bars -->
+    <rect x="-20" y="-50" width="40" height="6" fill="white" rx="3"/>
+    <rect x="-20" y="-40" width="40" height="6" fill="white" rx="3"/>
+  </g>
+
+  <!-- Wave decoration -->
+  <path d="M 0 200 Q 64 180 128 200 T 256 200 L 256 256 L 0 256 Z" fill="#0284c7" opacity="0.3"/>
+</svg>

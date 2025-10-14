@@ -11,6 +11,7 @@ const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
         extraResource: ["resources/binaries", "public"],
+        icon: "public/assets/logos/neptune", // Base name without extension
     },
     rebuildConfig: {},
     makers: [

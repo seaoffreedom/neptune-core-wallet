@@ -125,8 +125,8 @@ export const mempoolColumns: ColumnDef<MempoolTransaction>[] = [
             size="icon"
             className="h-8 w-8"
             onClick={() => {
-              // TODO: Implement transaction details view
-              console.log('View transaction details:', txId);
+              const explorerUrl = `https://neptune.vxb.ai/block?h=${txId}`;
+              window.open(explorerUrl, '_blank');
             }}
           >
             <ExternalLink className="h-4 w-4" />
