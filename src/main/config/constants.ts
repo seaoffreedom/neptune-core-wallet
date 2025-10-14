@@ -87,9 +87,13 @@ function getDevBinaryPath(binaryName: string): string {
  * @returns The full path to the binary for the current platform
  */
 function getBinaryPath(binaryName: string): string {
-    // In development mode, process.resourcesPath is undefined
-    // In production mode, it points to the app's resources directory
-    if (!process.resourcesPath) {
+    // Check if we're in development mode
+    const isDevelopment =
+        process.env.NODE_ENV === "development" ||
+        process.env.ELECTRON_IS_DEV === "1" ||
+        process.resourcesPath?.includes("node_modules/electron/dist");
+
+    if (isDevelopment) {
         // Development mode - return empty string to trigger fallback
         return "";
     }

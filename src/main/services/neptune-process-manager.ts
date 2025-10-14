@@ -220,8 +220,14 @@ export class NeptuneProcessManager {
             await access(corePath);
             logger.info(`✅ Using neptune-core: ${corePath}`);
         } catch (error) {
+            // Check if we're in development mode
+            const isDevelopment =
+                process.env.NODE_ENV === "development" ||
+                process.env.ELECTRON_IS_DEV === "1" ||
+                process.resourcesPath?.includes("node_modules/electron/dist");
+
             // In production mode, don't fall back to development paths
-            if (process.resourcesPath) {
+            if (!isDevelopment) {
                 logger.error(
                     {
                         error: (error as Error).message,
@@ -267,8 +273,14 @@ export class NeptuneProcessManager {
             await access(cliPath);
             logger.info(`✅ Using neptune-cli: ${cliPath}`);
         } catch (error) {
+            // Check if we're in development mode
+            const isDevelopment =
+                process.env.NODE_ENV === "development" ||
+                process.env.ELECTRON_IS_DEV === "1" ||
+                process.resourcesPath?.includes("node_modules/electron/dist");
+
             // In production mode, don't fall back to development paths
-            if (process.resourcesPath) {
+            if (!isDevelopment) {
                 logger.error(
                     {
                         error: (error as Error).message,
