@@ -457,8 +457,13 @@ export class NeptuneProcessManager {
             const cookie = await this.waitForCoreReady();
             logger.info("✅ neptune-core is ready");
 
-            // Step 4: Start neptune-cli after core is confirmed ready
-            logger.info("Step 4: Starting neptune-cli...");
+            // Step 4: Wait additional time for core to fully initialize
+            logger.info("Step 4: Waiting 2 seconds for neptune-core to fully initialize...");
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            logger.info("✅ Wait completed");
+
+            // Step 5: Start neptune-cli after core is confirmed ready
+            logger.info("Step 5: Starting neptune-cli...");
             await this.startCli();
             logger.info("✅ neptune-cli started");
 
@@ -466,8 +471,8 @@ export class NeptuneProcessManager {
             this.cookie = cookie;
             logger.info("✅ Cookie obtained and stored");
 
-            // Step 5: Start data polling
-            logger.info("Step 5: Starting data polling...");
+            // Step 6: Start data polling
+            logger.info("Step 6: Starting data polling...");
             this.startDataPolling(cookie);
             logger.info("✅ Data polling started");
 
@@ -531,9 +536,6 @@ export class NeptuneProcessManager {
                 reject: false, // Don't reject promise on non-zero exit
             });
 
-            // Attach logging to see what's happening
-            this.setupLogHandling(this.coreProcess, "neptune-core");
-
             // Handle process events
             this.coreProcess.on("error", (error) => {
                 logger.error(
@@ -571,30 +573,6 @@ export class NeptuneProcessManager {
                 systemResourceService.setNeptuneProcessPids(
                     this.coreProcess.pid,
                     this.cliProcess?.pid,
-                );
-
-                // Wait a moment and check if process is still running
-                setTimeout(() => {
-                    if (
-                        this.coreProcess &&
-                        this.coreProcess.exitCode === null
-                    ) {
-                        logger.info(
-                            `neptune-core started successfully with PID ${this.coreProcess.pid}`,
-                        );
-                    } else {
-                        logger.error(
-                            {
-                                pid: this.coreProcess?.pid,
-                                exitCode: this.coreProcess?.exitCode,
-                            },
-                            "neptune-core process failed to start or crashed immediately",
-                        );
-                    }
-                }, 1000);
-            } else {
-                logger.error(
-                    "neptune-core process failed to start - no PID assigned",
                 );
             }
 
@@ -666,6 +644,15 @@ export class NeptuneProcessManager {
         return pRetry(
             async () => {
                 try {
+                    logger.info(
+                        {
+                            binaryPath,
+                            port: actualCoreRpcPort,
+                            command: `--port ${actualCoreRpcPort} --get-cookie`,
+                        },
+                        "Attempting to get cookie from neptune-core",
+                    );
+
                     const result = await pTimeout(
                         execa(binaryPath, [
                             "--port",
@@ -677,17 +664,33 @@ export class NeptuneProcessManager {
                         },
                     );
 
+                    logger.info(
+                        {
+                            stdout: result.stdout,
+                            stderr: result.stderr,
+                            exitCode: result.exitCode,
+                        },
+                        "Cookie command completed",
+                    );
+
                     const cookie = this.extractCookie(result.stdout);
                     if (!cookie) {
                         throw new Error("Cookie not available yet");
                     }
 
-                    logger.info("Cookie obtained successfully");
+                    logger.info(
+                        { cookie: cookie.substring(0, 20) + "..." },
+                        "Cookie obtained successfully",
+                    );
                     // Cookie retrieved successfully
                     return cookie;
                 } catch (error) {
-                    logger.debug(
-                        { error: (error as Error).message },
+                    logger.warn(
+                        { 
+                            error: (error as Error).message,
+                            binaryPath,
+                            port: actualCoreRpcPort,
+                        },
                         "Core not ready yet, retrying...",
                     );
                     throw error;
@@ -752,9 +755,6 @@ export class NeptuneProcessManager {
                 reject: false, // Don't reject promise on non-zero exit
             });
 
-            // Attach logging to see what's happening
-            this.setupLogHandling(this.cliProcess, "neptune-cli");
-
             // Handle process events
             this.cliProcess.on("error", (error) => {
                 logger.error({ error }, "neptune-cli process error");
@@ -776,27 +776,6 @@ export class NeptuneProcessManager {
                 systemResourceService.setNeptuneProcessPids(
                     this.coreProcess?.pid,
                     this.cliProcess.pid,
-                );
-
-                // Wait a moment and check if process is still running
-                setTimeout(() => {
-                    if (this.cliProcess && this.cliProcess.exitCode === null) {
-                        logger.info(
-                            `neptune-cli started successfully with PID ${this.cliProcess.pid}`,
-                        );
-                    } else {
-                        logger.error(
-                            {
-                                pid: this.cliProcess?.pid,
-                                exitCode: this.cliProcess?.exitCode,
-                            },
-                            "neptune-cli process failed to start or crashed immediately",
-                        );
-                    }
-                }, 1000);
-            } else {
-                logger.error(
-                    "neptune-cli process failed to start - no PID assigned",
                 );
             }
 
