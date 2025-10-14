@@ -118,19 +118,19 @@ function getBinaryPath(binaryName: string): string {
  * @returns The full path to the binary, with fallback logic
  */
 function getValidBinaryPath(binaryName: string): string {
-    // In production, always try production path first
-    if (process.resourcesPath) {
-        const prodPath = getBinaryPath(binaryName);
+    // First try production path
+    const prodPath = getBinaryPath(binaryName);
+    if (prodPath) {
         console.log(
-            `[BINARY_PATH] Production mode - using production path for ${binaryName}: ${prodPath}`,
+            `[BINARY_PATH] Using production path for ${binaryName}: ${prodPath}`,
         );
         return prodPath;
     }
 
-    // In development, use development path
+    // Fall back to development path
     const devPath = getDevBinaryPath(binaryName);
     console.log(
-        `[BINARY_PATH] Development mode - using development path for ${binaryName}: ${devPath}`,
+        `[BINARY_PATH] Using development path for ${binaryName}: ${devPath}`,
     );
     return devPath;
 }

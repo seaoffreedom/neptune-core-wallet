@@ -220,7 +220,24 @@ export class NeptuneProcessManager {
             await access(corePath);
             logger.info(`✅ Using neptune-core: ${corePath}`);
         } catch (error) {
-            // Fall back to explicit development path
+            // In production mode, don't fall back to development paths
+            if (process.resourcesPath) {
+                logger.error(
+                    {
+                        error: (error as Error).message,
+                        corePath,
+                        productionPath: BINARY_PATHS.NEPTUNE_CORE,
+                        platform: process.platform,
+                        resourcesPath: process.resourcesPath,
+                    },
+                    `❌ neptune-core binary not found in production package at ${corePath}`,
+                );
+                throw new Error(
+                    `neptune-core binary not found in production package at ${corePath}. The application may not be properly packaged.`,
+                );
+            }
+
+            // In development mode, fall back to development path
             logger.error(
                 {
                     error: (error as Error).message,
@@ -249,8 +266,25 @@ export class NeptuneProcessManager {
         try {
             await access(cliPath);
             logger.info(`✅ Using neptune-cli: ${cliPath}`);
-        } catch {
-            // Fall back to explicit development path
+        } catch (error) {
+            // In production mode, don't fall back to development paths
+            if (process.resourcesPath) {
+                logger.error(
+                    {
+                        error: (error as Error).message,
+                        cliPath,
+                        productionPath: BINARY_PATHS.NEPTUNE_CLI,
+                        platform: process.platform,
+                        resourcesPath: process.resourcesPath,
+                    },
+                    `❌ neptune-cli binary not found in production package at ${cliPath}`,
+                );
+                throw new Error(
+                    `neptune-cli binary not found in production package at ${cliPath}. The application may not be properly packaged.`,
+                );
+            }
+
+            // In development mode, fall back to development path
             logger.warn(
                 `❌ Auto-selected neptune-cli not found at ${cliPath}, trying development path`,
             );
