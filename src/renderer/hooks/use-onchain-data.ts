@@ -923,6 +923,7 @@ export function useAutoPolling(intervalMs = 10000) {
   const { fetchHistory } = useTransactionHistory();
   const { fetchUtxos } = useUtxos();
   const { fetchPeerInfo } = usePeerInfo();
+  const { fetchDifficulty } = useCurrentDifficulty();
 
   // Track if a fetch cycle is in progress to prevent overlapping fetches
   const [isFetching, setIsFetching] = useState(false);
@@ -1008,6 +1009,7 @@ export function useAutoPolling(intervalMs = 10000) {
           fetchHistory().catch(() => {}),
           fetchUtxos().catch(() => {}),
           fetchPeerInfo().catch(() => {}),
+          fetchDifficulty().catch(() => {}),
         ];
 
         // Wait for all fetches to complete (or fail gracefully)
@@ -1035,6 +1037,7 @@ export function useAutoPolling(intervalMs = 10000) {
       fetchHistory,
       fetchUtxos,
       fetchPeerInfo,
+      fetchDifficulty,
     ]
   );
 
