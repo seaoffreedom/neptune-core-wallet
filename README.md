@@ -18,7 +18,7 @@ _Sea of Freedom._
 
 <div align="center">
 
-**The official desktop wallet for the Neptune blockchain - your gateway to quantum-resistant, privacy-preserving cryptocurrency**
+**THE desktop wallet for the Neptune blockchain - your gateway to quantum-resistant, privacy-preserving cryptocurrency**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
