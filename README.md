@@ -107,7 +107,7 @@ Neptune Core Wallet is an open-source project built with passion for the Neptune
 
 ---
 
-_Your support helps us maintain and improve and maintain the wallet and other neptune ecosystem projects and ensure the best possible experience for the Neptune community._
+_Your support helps us maintain and improve the wallet, other neptune ecosystem projects and ensure the best possible experience for the Neptune community._
 
 **⭐ Star this repository if you find it helpful!**
 
