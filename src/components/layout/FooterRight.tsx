@@ -2,6 +2,9 @@ import { Clock, Cpu, HardDrive, Thermometer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSystemStore } from '@/store/system.store';
+import { rendererLoggers } from '../../renderer/utils/logger';
+
+const logger = rendererLoggers.components;
 
 interface SystemStats {
   cpu: number;
@@ -43,7 +46,9 @@ export function FooterRight() {
         setIsLoading(false);
       } catch (error) {
         // Silently handle errors - we'll show "--" for failed stats
-        console.warn('Failed to fetch system stats:', error);
+        logger.warn('Failed to fetch system stats', {
+          error: (error as Error).message,
+        });
         setIsLoading(false);
       }
     };

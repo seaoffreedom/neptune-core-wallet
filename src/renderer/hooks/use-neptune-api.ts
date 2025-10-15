@@ -6,6 +6,9 @@
  */
 
 import { useCallback, useState } from 'react';
+import { rendererLoggers } from '../utils/logger';
+
+const logger = rendererLoggers.hooks;
 
 export interface NeptuneTaskState {
   isLoading: boolean;
@@ -53,7 +56,7 @@ export function useNeptuneAPI(): UseNeptuneAPI {
         }));
 
         if (successMessage) {
-          console.log(successMessage);
+          logger.info(successMessage);
         }
 
         return result;
@@ -81,8 +84,10 @@ export function useNeptuneAPI(): UseNeptuneAPI {
       );
 
       return result?.success || false;
-    } catch (error) {
-      console.error('Failed to initialize Neptune:', error);
+    } catch (_error) {
+      logger.error('Failed to initialize Neptune', {
+        error: errorMessage,
+      });
       return false;
     }
   }, [executeTask]);
@@ -95,8 +100,8 @@ export function useNeptuneAPI(): UseNeptuneAPI {
       );
 
       return result?.success || false;
-    } catch (error) {
-      console.error('Failed to shutdown Neptune:', error);
+    } catch (_error) {
+      logger.error('Failed to shutdown Neptune', { error: errorMessage });
       return false;
     }
   }, [executeTask]);
@@ -109,8 +114,8 @@ export function useNeptuneAPI(): UseNeptuneAPI {
       );
 
       return result?.success || false;
-    } catch (error) {
-      console.error('Failed to restart Neptune:', error);
+    } catch (_error) {
+      logger.error('Failed to restart Neptune', { error: errorMessage });
       return false;
     }
   }, [executeTask]);
@@ -120,7 +125,9 @@ export function useNeptuneAPI(): UseNeptuneAPI {
       const result = await window.electronAPI.getNeptuneStatus();
       return result;
     } catch (error) {
-      console.error('Failed to get Neptune status:', error);
+      logger.error('Failed to get Neptune status', {
+        error: errorMessage,
+      });
       throw error;
     }
   }, []);
@@ -129,8 +136,10 @@ export function useNeptuneAPI(): UseNeptuneAPI {
     try {
       const result = await window.electronAPI.getNeptuneCookie();
       return result.success ? result.cookie || null : null;
-    } catch (error) {
-      console.error('Failed to get Neptune cookie:', error);
+    } catch (_error) {
+      logger.error('Failed to get Neptune cookie', {
+        error: errorMessage,
+      });
       return null;
     }
   }, []);
@@ -140,7 +149,9 @@ export function useNeptuneAPI(): UseNeptuneAPI {
       const result = await window.electronAPI.getNeptuneWalletData();
       return result;
     } catch (error) {
-      console.error('Failed to get Neptune wallet data:', error);
+      logger.error('Failed to get Neptune wallet data', {
+        error: errorMessage,
+      });
       throw error;
     }
   }, []);

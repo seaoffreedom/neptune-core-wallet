@@ -101,11 +101,12 @@ export function useSettingsAPI() {
 
   return {
     getSetting: useCallback(
-      <T = any>(key: string) => electronAPI.getSetting<T>(key),
+      <T = unknown>(key: string) => electronAPI.getSetting<T>(key),
       [electronAPI]
     ),
     setSetting: useCallback(
-      <T = any>(key: string, value: T) => electronAPI.setSetting<T>(key, value),
+      <T = unknown>(key: string, value: T) =>
+        electronAPI.setSetting<T>(key, value),
       [electronAPI]
     ),
     resetSetting: useCallback(

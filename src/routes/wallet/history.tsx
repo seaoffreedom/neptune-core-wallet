@@ -12,6 +12,7 @@ import { History, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTransactionHistory } from "@/renderer/hooks/use-onchain-data";
 import { useOnchainStore } from "@/store/onchain.store";
+import { useMemo } from "react";
 
 function TransactionHistory() {
     // Get transaction history (fetched globally via auto-polling)
@@ -25,34 +26,37 @@ function TransactionHistory() {
     const isInitialLoading = isRefreshing && history.length === 0;
 
     // Transform TransactionHistoryItem to Transaction for the table
-    const transactions: Transaction[] = history.map((item) => {
-        // Determine type based on amount (negative = sent, positive = received)
-        const amount = parseFloat(item.amount);
-        const type: "sent" | "received" = amount < 0 ? "sent" : "received";
+    // Use useMemo to prevent unnecessary re-renders that reset pagination
+    const transactions: Transaction[] = useMemo(() => {
+        return history.map((item) => {
+            // Determine type based on amount (negative = sent, positive = received)
+            const amount = parseFloat(item.amount);
+            const type: "sent" | "received" = amount < 0 ? "sent" : "received";
 
-        // Determine status based on confirmations
-        // If height exists and we have current block height, calculate confirmations
-        let status: "confirmed" | "pending" | "failed" = "pending";
-        if (blockHeight && item.height) {
-            const txHeight = parseInt(item.height, 10);
-            const currentHeight = parseInt(blockHeight, 10);
-            const txConfirmations = currentHeight - txHeight;
-            const requiredConfirmations = confirmations
-                ? parseInt(confirmations, 10)
-                : 6;
+            // Determine status based on confirmations
+            // If height exists and we have current block height, calculate confirmations
+            let status: "confirmed" | "pending" | "failed" = "pending";
+            if (blockHeight && item.height) {
+                const txHeight = parseInt(item.height, 10);
+                const currentHeight = parseInt(blockHeight, 10);
+                const txConfirmations = currentHeight - txHeight;
+                const requiredConfirmations = confirmations
+                    ? parseInt(confirmations, 10)
+                    : 6;
 
-            status =
-                txConfirmations >= requiredConfirmations
-                    ? "confirmed"
-                    : "pending";
-        }
+                status =
+                    txConfirmations >= requiredConfirmations
+                        ? "confirmed"
+                        : "pending";
+            }
 
-        return {
-            ...item,
-            type,
-            status,
-        };
-    });
+            return {
+                ...item,
+                type,
+                status,
+            };
+        });
+    }, [history, blockHeight, confirmations]);
 
     return (
         <PageContainer>

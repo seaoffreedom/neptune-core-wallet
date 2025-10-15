@@ -19,6 +19,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { rendererLoggers } from '../../renderer/utils/logger';
+
+const logger = rendererLoggers.components;
+
 import { Input } from '@/components/ui/input';
 import {
   InputGroup,
@@ -68,7 +72,9 @@ export function DataSettingsForm({ form }: DataSettingsFormProps) {
         handleFieldChange(fieldName, selectedPath);
       }
     } catch (error) {
-      console.error('Error selecting folder:', error);
+      logger.error('Error selecting folder', {
+        error: (error as Error).message,
+      });
     } finally {
       setLoading(false);
     }

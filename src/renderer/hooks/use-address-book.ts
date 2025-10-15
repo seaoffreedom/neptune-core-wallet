@@ -6,6 +6,9 @@
 
 import { useCallback, useState } from 'react';
 import type { AddressBookEntry } from '@/shared/types/api-types';
+import { rendererLoggers } from '../utils/logger';
+
+const logger = rendererLoggers.hooks;
 
 // Cache to prevent unnecessary refetches
 let cachedEntries: AddressBookEntry[] | null = null;
@@ -43,7 +46,9 @@ export function useAddressBook() {
       }
     } catch (err) {
       setError((err as Error).message);
-      console.error('Failed to fetch address book entries:', err);
+      logger.error('Failed to fetch address book entries', {
+        error: err.message,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +77,7 @@ export function useAddressBook() {
       } catch (err) {
         const errorMsg = (err as Error).message;
         setError(errorMsg);
-        console.error('Failed to create entry:', err);
+        logger.error('Failed to create entry', { error: err.message });
         return null;
       }
     },
@@ -105,7 +110,7 @@ export function useAddressBook() {
       } catch (err) {
         const errorMsg = (err as Error).message;
         setError(errorMsg);
-        console.error('Failed to update entry:', err);
+        logger.error('Failed to update entry', { error: err.message });
         return null;
       }
     },
@@ -131,7 +136,7 @@ export function useAddressBook() {
       } catch (err) {
         const errorMsg = (err as Error).message;
         setError(errorMsg);
-        console.error('Failed to delete entry:', err);
+        logger.error('Failed to delete entry', { error: err.message });
         return false;
       }
     },
@@ -152,7 +157,7 @@ export function useAddressBook() {
       }
     } catch (err) {
       setError((err as Error).message);
-      console.error('Failed to search entries:', err);
+      logger.error('Failed to search entries', { error: err.message });
     } finally {
       setIsLoading(false);
     }
@@ -194,7 +199,7 @@ export function useAddressBookIO() {
     } catch (err) {
       const errorMsg = (err as Error).message;
       setError(errorMsg);
-      console.error('Failed to export entries:', err);
+      logger.error('Failed to export entries', { error: err.message });
       return null;
     } finally {
       setIsExporting(false);
@@ -218,7 +223,9 @@ export function useAddressBookIO() {
       } catch (err) {
         const errorMsg = (err as Error).message;
         setError(errorMsg);
-        console.error('Failed to import entries:', err);
+        logger.error('Failed to import entries', {
+          error: err.message,
+        });
         return null;
       } finally {
         setIsImporting(false);

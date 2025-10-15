@@ -68,7 +68,7 @@ vi.mock('@/main/services/system-resource.service', () => ({
 
 describe('NeptuneProcessManager - Real Tests', () => {
   let processManager: NeptuneProcessManager;
-  let mockProcess: any;
+  let mockProcess: unknown;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -174,7 +174,7 @@ describe('NeptuneProcessManager - Real Tests', () => {
 
       validNetworks.forEach((network) => {
         const config = {
-          core: { network: network as any },
+          core: { network: network as string },
         };
         expect(() => new NeptuneProcessManager(config)).not.toThrow();
       });
@@ -216,7 +216,7 @@ describe('NeptuneProcessManager - Real Tests', () => {
 
       logLevels.forEach((level) => {
         const config = {
-          logging: { level: level as any },
+          logging: { level: level as string },
         };
         expect(() => new NeptuneProcessManager(config)).not.toThrow();
       });

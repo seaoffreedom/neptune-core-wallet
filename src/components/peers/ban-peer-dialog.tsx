@@ -31,6 +31,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import type { PeerEntry } from '@/main/stores/peer-store';
 import { usePeerStore } from '@/renderer/stores/peer-store';
+import { rendererLoggers } from '../../renderer/utils/logger';
+
+const logger = rendererLoggers.components;
 
 const banFormSchema = z.object({
   reason: z
@@ -73,7 +76,7 @@ export function BanPeerDialog({
       form.reset();
     } catch (error) {
       showErrorToast('Failed to ban peer');
-      console.error('Ban peer error:', error);
+      logger.error('Ban peer error', { error: (error as Error).message });
     } finally {
       setIsSubmitting(false);
     }

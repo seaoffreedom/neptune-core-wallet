@@ -98,7 +98,7 @@ export async function writeFileWithRetry(
 /**
  * Resilient JSON file read operation
  */
-export async function readJsonWithRetry<T = any>(
+export async function readJsonWithRetry<T = unknown>(
   filePath: string,
   options: { retries?: number; timeout?: number } = {}
 ): Promise<T> {

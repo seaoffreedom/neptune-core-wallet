@@ -1,26 +1,26 @@
-import { useTheme } from "next-themes";
-import { Toaster as Sonner, type ToasterProps } from "sonner";
+import { useTheme } from 'next-themes';
+import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
 const Toaster = ({ ...props }: ToasterProps) => {
-    const { theme = "system" } = useTheme();
+  const { theme = 'system' } = useTheme();
 
-    return (
-        <Sonner
-            theme={theme as ToasterProps["theme"]}
-            className="toaster group"
-            position="top-right"
-            offset="1rem"
-            expand={false}
-            richColors={true}
-            closeButton={true}
-            toastOptions={{
-                style: {
-                    maxWidth: "400px",
-                },
-            }}
-            {...props}
-        />
-    );
+  return (
+    <Sonner
+      theme={theme as ToasterProps['theme']}
+      className="toaster group"
+      position="top-right"
+      offset="1rem"
+      expand={false}
+      richColors={true}
+      closeButton={true}
+      toastOptions={{
+        style: {
+          maxWidth: '400px',
+        },
+      }}
+      {...props}
+    />
+  );
 };
 
 export { Toaster };

@@ -7,6 +7,9 @@
 import { AlertTriangle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { rendererLoggers } from '../../renderer/utils/logger';
+
+const logger = rendererLoggers.components;
 
 interface RAMWarningData {
   hasSufficientRAM: boolean;
@@ -31,7 +34,9 @@ export function RAMWarningAlert() {
           });
         }
       } catch (error) {
-        console.warn('Failed to check RAM for mining:', error);
+        logger.warn('Failed to check RAM for mining', {
+          error: (error as Error).message,
+        });
       } finally {
         setIsLoading(false);
       }

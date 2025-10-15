@@ -8,7 +8,7 @@
 import type { IpcChannel } from '../constants/ipc-channels';
 
 // Base IPC message structure
-export interface IpcMessage<T = any> {
+export interface IpcMessage<T = unknown> {
   channel: IpcChannel;
   data: T;
 }
@@ -95,13 +95,13 @@ export interface SettingsGetRequest {
   key: string;
 }
 
-export interface SettingsGetResponse<T = any> {
+export interface SettingsGetResponse<T = unknown> {
   success: boolean;
   value?: T;
   error?: string;
 }
 
-export interface SettingsSetRequest<T = any> {
+export interface SettingsSetRequest<T = unknown> {
   key: string;
   value: T;
 }

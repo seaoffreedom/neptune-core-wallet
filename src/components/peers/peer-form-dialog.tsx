@@ -28,6 +28,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { rendererLoggers } from '../../renderer/utils/logger';
+
+const logger = rendererLoggers.components;
+
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
@@ -137,7 +141,9 @@ export function PeerFormDialog({
       showErrorToast(
         isEditMode ? 'Failed to update peer' : 'Failed to add peer'
       );
-      console.error('Peer form error:', error);
+      logger.error('Peer form error', {
+        error: (error as Error).message,
+      });
     } finally {
       setIsSubmitting(false);
     }

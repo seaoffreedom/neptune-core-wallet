@@ -2,8 +2,8 @@
  * Settings Components - Barrel Export
  */
 
-export { BaseSettingsForm, SettingsFormFields } from './base-settings-form';
 export { AdvancedSettingsForm } from './advanced-settings-form';
+export { BaseSettingsForm, SettingsFormFields } from './base-settings-form';
 export { DataSettingsForm } from './data-settings-form';
 export { MiningSettingsForm } from './mining-settings-form';
 export { NetworkSettingsForm } from './network-settings-form';

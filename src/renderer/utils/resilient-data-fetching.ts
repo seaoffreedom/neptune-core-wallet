@@ -7,6 +7,9 @@
 
 import pRetry from 'p-retry';
 import pTimeout from 'p-timeout';
+import { rendererLoggers } from './logger';
+
+const logger = rendererLoggers.utils;
 
 /**
  * Circuit Breaker for data fetching operations
@@ -46,9 +49,7 @@ export class DataFetchingCircuitBreaker {
         (this.options.resetTimeout || 15000)
       ) {
         this.state = 'half-open';
-        console.info(
-          `[${this.options.context}] Circuit breaker transitioning to half-open`
-        );
+        logger.info(`Circuit breaker transitioning to half-open`);
       } else {
         throw new Error(`Circuit breaker is open for ${this.options.context}`);
       }
@@ -63,8 +64,8 @@ export class DataFetchingCircuitBreaker {
           minTimeout: 1000,
           maxTimeout: 4000,
           onFailedAttempt: (error) => {
-            console.warn(
-              `[${this.options.context}] Data fetch attempt ${error.attemptNumber} failed:`,
+            logger.warn(
+              `Data fetch attempt ${error.attemptNumber} failed:`,
               error instanceof Error ? error.message : String(error)
             );
           },
@@ -74,9 +75,7 @@ export class DataFetchingCircuitBreaker {
       if (this.state === 'half-open') {
         this.state = 'closed';
         this.failures = 0;
-        console.info(
-          `[${this.options.context}] Circuit breaker closed after successful operation`
-        );
+        logger.info(`Circuit breaker closed after successful operation`);
       }
 
       return result as T;
@@ -86,9 +85,7 @@ export class DataFetchingCircuitBreaker {
 
       if (this.failures >= (this.options.failureThreshold || 3)) {
         this.state = 'open';
-        console.error(
-          `[${this.options.context}] Circuit breaker opened due to ${this.failures} failures`
-        );
+        logger.error(`Circuit breaker opened due to ${this.failures} failures`);
       }
 
       throw error;
@@ -107,7 +104,7 @@ export class DataFetchingCircuitBreaker {
     this.failures = 0;
     this.lastFailureTime = 0;
     this.state = 'closed';
-    console.info(`[${this.options.context}] Circuit breaker manually reset`);
+    logger.info(`Circuit breaker manually reset`);
   }
 }
 
@@ -121,7 +118,7 @@ export class DataFetchingDeduplicator {
     // Check if request is already pending
     const existingRequest = this.pendingRequests.get(key);
     if (existingRequest) {
-      console.debug(`[DataFetchingDeduplicator] Deduplicating request: ${key}`);
+      logger.debug(`Deduplicating request: ${key}`);
       return existingRequest as Promise<T>;
     }
 
@@ -136,7 +133,7 @@ export class DataFetchingDeduplicator {
 
   clear() {
     this.pendingRequests.clear();
-    console.info('[DataFetchingDeduplicator] Cleared all pending requests');
+    logger.info('Cleared all pending requests');
   }
 
   getPendingCount() {
@@ -215,7 +212,7 @@ export class ResilientDataFetcher {
   reset() {
     this.circuitBreaker.reset();
     this.deduplicator.clear();
-    console.info(`[${this.options.context}] Resilient data fetcher reset`);
+    logger.info(`Resilient data fetcher reset`);
   }
 }
 

@@ -7,6 +7,9 @@ import type {
   CombinedResourceStats,
   SystemResourceStats,
 } from '@/preload/api/system-api';
+import { rendererLoggers } from '../../renderer/utils/logger';
+
+const logger = rendererLoggers.components;
 
 interface SystemResourceCardsProps {
   className?: string;
@@ -51,7 +54,9 @@ export function SystemResourceCards({ className }: SystemResourceCardsProps) {
         setIsLoading(false);
       } catch (error) {
         // Silently handle errors - we'll show error state for failed stats
-        console.warn('Failed to fetch system stats:', error);
+        logger.warn('Failed to fetch system stats', {
+          error: (error as Error).message,
+        });
         setIsLoading(false);
       }
     };

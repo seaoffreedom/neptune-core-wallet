@@ -11,6 +11,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type PaginationState,
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table';
@@ -24,7 +25,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { type Transaction, createTransactionColumns } from './transaction-columns';
+import {
+  createTransactionColumns,
+  type Transaction,
+} from './transaction-columns';
 import { TransactionDetailsModal } from './transaction-details-modal';
 
 interface TransactionTableProps {
@@ -36,7 +40,12 @@ export function TransactionTable({ data }: TransactionTableProps) {
     { id: 'timestamp', desc: true }, // Default to newest first
   ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleViewDetails = (transaction: Transaction) => {
@@ -44,12 +53,23 @@ export function TransactionTable({ data }: TransactionTableProps) {
     setIsModalOpen(true);
   };
 
-  const handleViewExplorer = (transaction: Transaction) => {
+  const handleViewExplorer = async (transaction: Transaction) => {
     const explorerUrl = `https://neptune.vxb.ai/block?h=${transaction.digest}`;
-    window.open(explorerUrl, '_blank');
+    try {
+      await navigator.clipboard.writeText(explorerUrl);
+      // Import toast dynamically to avoid circular dependency
+      const { toast } = await import('sonner');
+      toast.success('Explorer link copied to clipboard');
+    } catch {
+      // Fallback to opening in new tab if clipboard fails
+      window.open(explorerUrl, '_blank');
+    }
   };
 
-  const columns = createTransactionColumns(handleViewDetails, handleViewExplorer);
+  const columns = createTransactionColumns(
+    handleViewDetails,
+    handleViewExplorer
+  );
 
   const table = useReactTable({
     data,
@@ -60,9 +80,16 @@ export function TransactionTable({ data }: TransactionTableProps) {
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
+      pagination,
+    },
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
     },
   });
 
@@ -108,7 +135,7 @@ export function TransactionTable({ data }: TransactionTableProps) {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={transactionColumns.length}
+                  colSpan={columns.length}
                   className="h-24 text-center"
                 >
                   No results.
@@ -120,23 +147,38 @@ export function TransactionTable({ data }: TransactionTableProps) {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-end space-x-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          Showing{' '}
+          {table.getState().pagination.pageIndex *
+            table.getState().pagination.pageSize +
+            1}{' '}
+          to{' '}
+          {Math.min(
+            (table.getState().pagination.pageIndex + 1) *
+              table.getState().pagination.pageSize,
+            table.getFilteredRowModel().rows.length
+          )}{' '}
+          of {table.getFilteredRowModel().rows.length} transactions
+        </div>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
       </div>
 
       {/* Transaction Details Modal */}

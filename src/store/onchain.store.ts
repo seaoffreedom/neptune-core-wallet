@@ -7,6 +7,9 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { rendererLoggers } from '../renderer/utils/logger';
+
+const logger = rendererLoggers.store;
 
 // ============================================================================
 // Types - Tier 1: Critical Endpoints
@@ -346,9 +349,26 @@ export const useOnchainStore = create<OnchainState & OnchainActions>()(
         }),
 
       setTransactionHistory: (history) =>
-        set({
-          transactionHistory: history,
-          lastUpdate: Date.now(),
+        set((state) => {
+          // Only update if the history has actually changed
+          if (
+            state.transactionHistory.length === history.length &&
+            state.transactionHistory.every(
+              (item, index) =>
+                item.digest === history[index]?.digest &&
+                item.height === history[index]?.height &&
+                item.timestamp === history[index]?.timestamp &&
+                item.amount === history[index]?.amount
+            )
+          ) {
+            // No changes, don't update
+            return state;
+          }
+
+          return {
+            transactionHistory: history,
+            lastUpdate: Date.now(),
+          };
         }),
 
       addTransaction: (tx) =>
@@ -528,16 +548,14 @@ export const useOnchainStore = create<OnchainState & OnchainActions>()(
           const isStale = dataAge > 5 * 60 * 1000; // 5 minutes
 
           if (isStale) {
-            console.log(
-              '🔄 Persisted data is stale, will refresh on next fetch'
-            );
+            logger.info('Persisted data is stale, will refresh on next fetch');
             // Reset critical data to force fresh fetch
             state.dashboardData = null;
             state.transactionHistory = [];
             state.utxos = [];
             state.peerInfo = [];
           } else {
-            console.log('✅ Using fresh persisted data');
+            logger.info('Using fresh persisted data');
           }
         }
       },

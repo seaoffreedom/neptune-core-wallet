@@ -156,6 +156,22 @@
     @apply bg-background text-foreground;
   }
 
+  /* Custom title bar and drag region styles */
+  .drag-region {
+    -webkit-app-region: drag;
+    @apply bg-background;
+  }
+
+  /* Prevent dragging on interactive elements */
+  .drag-region button,
+  .drag-region input,
+  .drag-region select,
+  .drag-region textarea,
+  .drag-region a,
+  .drag-region [role="button"] {
+    -webkit-app-region: no-drag;
+  }
+
   /* Native scrollbar styling for better integration */
   ::-webkit-scrollbar {
     width: 8px;

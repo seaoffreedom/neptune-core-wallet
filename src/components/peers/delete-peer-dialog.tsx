@@ -18,6 +18,9 @@ import { Button } from '@/components/ui/button';
 import { showErrorToast, showSuccessToast } from '@/lib/toast';
 import type { PeerEntry } from '@/main/stores/peer-store';
 import { usePeerStore } from '@/renderer/stores/peer-store';
+import { rendererLoggers } from '../../renderer/utils/logger';
+
+const logger = rendererLoggers.components;
 
 interface DeletePeerDialogProps {
   open: boolean;
@@ -51,7 +54,9 @@ export function DeletePeerDialog({
           ? 'Cannot delete default bootstrap peers'
           : 'Failed to delete peer'
       );
-      console.error('Delete peer error:', error);
+      logger.error('Delete peer error', {
+        error: (error as Error).message,
+      });
     } finally {
       setIsDeleting(false);
     }

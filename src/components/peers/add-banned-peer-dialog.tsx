@@ -18,6 +18,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { rendererLoggers } from '../../renderer/utils/logger';
+
+const logger = rendererLoggers.components;
+
 import { Field } from '@/components/ui/field';
 import {
   Form,
@@ -107,7 +111,9 @@ export function AddBannedPeerDialog({
       form.reset();
     } catch (error) {
       showErrorToast('Failed to add banned peer');
-      console.error('Add banned peer error:', error);
+      logger.error('Add banned peer error', {
+        error: (error as Error).message,
+      });
     } finally {
       setIsSubmitting(false);
     }

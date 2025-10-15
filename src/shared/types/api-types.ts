@@ -89,7 +89,7 @@ export interface ElectronAPI {
   }>;
 
   // Settings management
-  getSetting: <T = any>(
+  getSetting: <T = unknown>(
     key: string
   ) => Promise<{
     success: boolean;
@@ -97,7 +97,7 @@ export interface ElectronAPI {
     error?: string;
   }>;
 
-  setSetting: <T = any>(
+  setSetting: <T = unknown>(
     key: string,
     value: T
   ) => Promise<{

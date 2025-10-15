@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import type { PeerEntry } from '../../main/stores/peer-store';
+import { rendererLoggers } from '../utils/logger';
+
+const logger = rendererLoggers.store;
 
 interface PeerState {
   activePeers: PeerEntry[];
@@ -23,18 +26,18 @@ export const usePeerStore = create<PeerState>((set, get) => ({
   error: null,
 
   loadPeers: async (network: string) => {
-    console.log('🔍 loadPeers called for network:', network);
+    logger.info('loadPeers called for network', { network });
     set({ isLoading: true, error: null });
     try {
       // First, let's check what ALL peers exist (regardless of network)
       const allPeers = await window.electronAPI.peer.getAll();
-      console.log('📋 All peers in store:', allPeers);
+      logger.debug('All peers in store', allPeers);
 
       const [active, banned] = await Promise.all([
         window.electronAPI.peer.getActive(network),
         window.electronAPI.peer.getBanned(network),
       ]);
-      console.log(`✅ Peers loaded for network '${network}':`, {
+      logger.info(`Peers loaded for network '${network}'`, {
         active: active.length,
         banned: banned.length,
         activeDetails: active,
@@ -42,7 +45,9 @@ export const usePeerStore = create<PeerState>((set, get) => ({
       });
       set({ activePeers: active, bannedPeers: banned, isLoading: false });
     } catch (error) {
-      console.error('❌ Failed to load peers:', error);
+      logger.error('Failed to load peers', {
+        error: (error as Error).message,
+      });
       set({
         error: (error as Error).message,
         isLoading: false,

@@ -7,6 +7,9 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { rendererLoggers } from '../renderer/utils/logger';
+
+const logger = rendererLoggers.store;
 
 // Process status types
 export type ProcessStatus =
@@ -239,7 +242,7 @@ export const useNeptuneStore = create<NeptuneStore>()(
 
           try {
             // This will be implemented with IPC calls to the main process
-            console.log('Initializing Neptune processes...');
+            logger.info('Initializing Neptune processes...');
             // TODO: Implement actual initialization logic
           } catch (error) {
             setAppStep('error', (error as Error).message);
@@ -261,10 +264,12 @@ export const useNeptuneStore = create<NeptuneStore>()(
             // Reset app state
             setAppReady(false);
 
-            console.log('Shutting down Neptune processes...');
+            logger.info('Shutting down Neptune processes...');
             // TODO: Implement actual shutdown logic
           } catch (error) {
-            console.error('Error during shutdown:', error);
+            logger.error('Error during shutdown', {
+              error: (error as Error).message,
+            });
           }
         },
       },

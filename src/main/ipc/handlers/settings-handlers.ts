@@ -32,7 +32,7 @@ import type {
 } from '../../../shared/types/ipc-channels';
 
 // In-memory settings cache
-let settingsCache: Record<string, any> = {};
+let settingsCache: Record<string, unknown> = {};
 let settingsLoaded = false;
 
 /**
@@ -85,7 +85,7 @@ async function saveSettings(): Promise<void> {
 /**
  * Handle get setting request
  */
-export async function handleSettingsGet<T = any>(
+export async function handleSettingsGet<T = unknown>(
   _event: Electron.IpcMainInvokeEvent,
   request: SettingsGetRequest
 ): Promise<SettingsGetResponse<T>> {
@@ -111,7 +111,7 @@ export async function handleSettingsGet<T = any>(
 /**
  * Handle set setting request
  */
-export async function handleSettingsSet<T = any>(
+export async function handleSettingsSet<T = unknown>(
   _event: Electron.IpcMainInvokeEvent,
   request: SettingsSetRequest<T>
 ): Promise<SettingsSetResponse> {

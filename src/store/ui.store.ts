@@ -58,186 +58,186 @@
  * - Performance optimization
  */
 
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 // Available currencies for price display
 export const AVAILABLE_CURRENCIES: Currency[] = [
-    { code: "USD", symbol: "$", name: "US Dollar" },
-    { code: "EUR", symbol: "€", name: "Euro" },
-    { code: "GBP", symbol: "£", name: "British Pound" },
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GBP', symbol: '£', name: 'British Pound' },
 ];
 
 interface SidebarState {
-    isOpen: boolean;
-    variant: "icon" | "full";
+  isOpen: boolean;
+  variant: 'icon' | 'full';
 }
 
 interface NavigationState {
-    lastClickedRoute: string | null;
+  lastClickedRoute: string | null;
 }
 
 export interface Currency {
-    code: string;
-    symbol: string;
-    name: string;
+  code: string;
+  symbol: string;
+  name: string;
 }
 
 interface UIStore {
-    // Sidebar state
-    sidebar: SidebarState;
+  // Sidebar state
+  sidebar: SidebarState;
 
-    // Navigation state
-    navigation: NavigationState;
+  // Navigation state
+  navigation: NavigationState;
 
-    // Currency state
-    selectedCurrency: Currency;
+  // Currency state
+  selectedCurrency: Currency;
 
-    // Experimental features
-    experimentalMode: boolean;
+  // Experimental features
+  experimentalMode: boolean;
 
-    // Hydration state
-    isHydrated: boolean;
+  // Hydration state
+  isHydrated: boolean;
 
-    // Sidebar actions
-    toggleSidebar: () => void;
-    setSidebarOpen: (open: boolean) => void;
-    setSidebarVariant: (variant: "icon" | "full") => void;
+  // Sidebar actions
+  toggleSidebar: () => void;
+  setSidebarOpen: (open: boolean) => void;
+  setSidebarVariant: (variant: 'icon' | 'full') => void;
 
-    // Navigation actions
-    setLastClickedRoute: (route: string | null) => void;
-    handleNavigationClick: (route: string, currentRoute: string) => boolean;
+  // Navigation actions
+  setLastClickedRoute: (route: string | null) => void;
+  handleNavigationClick: (route: string, currentRoute: string) => boolean;
 
-    // Currency actions
-    setCurrency: (currencyCode: string) => void;
+  // Currency actions
+  setCurrency: (currencyCode: string) => void;
 
-    // Experimental actions
-    toggleExperimentalMode: () => void;
-    setExperimentalMode: (enabled: boolean) => void;
+  // Experimental actions
+  toggleExperimentalMode: () => void;
+  setExperimentalMode: (enabled: boolean) => void;
 
-    // Hydration actions
-    setHydrated: (hydrated: boolean) => void;
+  // Hydration actions
+  setHydrated: (hydrated: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>()(
-    persist(
-        (set, get) => ({
-            // Initial sidebar state
-            sidebar: {
-                isOpen: true,
-                variant: "icon",
-            },
+  persist(
+    (set, get) => ({
+      // Initial sidebar state
+      sidebar: {
+        isOpen: true,
+        variant: 'icon',
+      },
 
-            // Initial navigation state
-            navigation: {
-                lastClickedRoute: null,
-            },
+      // Initial navigation state
+      navigation: {
+        lastClickedRoute: null,
+      },
 
-            // Initial currency state
-            selectedCurrency: AVAILABLE_CURRENCIES[0] || {
-                code: "USD",
-                symbol: "$",
-                name: "US Dollar",
-            }, // Default to USD
+      // Initial currency state
+      selectedCurrency: AVAILABLE_CURRENCIES[0] || {
+        code: 'USD',
+        symbol: '$',
+        name: 'US Dollar',
+      }, // Default to USD
 
-            // Initial experimental state
-            experimentalMode: false,
+      // Initial experimental state
+      experimentalMode: false,
 
-            // Initial hydration state
-            isHydrated: false,
+      // Initial hydration state
+      isHydrated: false,
 
-            // Sidebar actions
-            toggleSidebar: () =>
-                set((state) => ({
-                    sidebar: {
-                        ...state.sidebar,
-                        isOpen: !state.sidebar.isOpen,
-                    },
-                })),
+      // Sidebar actions
+      toggleSidebar: () =>
+        set((state) => ({
+          sidebar: {
+            ...state.sidebar,
+            isOpen: !state.sidebar.isOpen,
+          },
+        })),
 
-            setSidebarOpen: (open: boolean) =>
-                set((state) => ({
-                    sidebar: {
-                        ...state.sidebar,
-                        isOpen: open,
-                    },
-                })),
+      setSidebarOpen: (open: boolean) =>
+        set((state) => ({
+          sidebar: {
+            ...state.sidebar,
+            isOpen: open,
+          },
+        })),
 
-            setSidebarVariant: (variant: "icon" | "full") =>
-                set((state) => ({
-                    sidebar: {
-                        ...state.sidebar,
-                        variant,
-                    },
-                })),
+      setSidebarVariant: (variant: 'icon' | 'full') =>
+        set((state) => ({
+          sidebar: {
+            ...state.sidebar,
+            variant,
+          },
+        })),
 
-            // Navigation actions
-            setLastClickedRoute: (route: string | null) =>
-                set((state) => ({
-                    navigation: {
-                        ...state.navigation,
-                        lastClickedRoute: route,
-                    },
-                })),
+      // Navigation actions
+      setLastClickedRoute: (route: string | null) =>
+        set((state) => ({
+          navigation: {
+            ...state.navigation,
+            lastClickedRoute: route,
+          },
+        })),
 
-            handleNavigationClick: (route: string, _currentRoute: string) => {
-                const state = get();
-                const { lastClickedRoute } = state.navigation;
+      handleNavigationClick: (route: string, _currentRoute: string) => {
+        const state = get();
+        const { lastClickedRoute } = state.navigation;
 
-                // If clicking the same route that was last clicked, just toggle sidebar
-                if (lastClickedRoute === route) {
-                    state.toggleSidebar();
-                    return false; // Don't navigate
-                }
+        // If clicking the same route that was last clicked, just toggle sidebar
+        if (lastClickedRoute === route) {
+          state.toggleSidebar();
+          return false; // Don't navigate
+        }
 
-                // If clicking a different route, navigate and open sidebar
-                state.setLastClickedRoute(route);
-                state.setSidebarOpen(true);
-                return true; // Should navigate
-            },
+        // If clicking a different route, navigate and open sidebar
+        state.setLastClickedRoute(route);
+        state.setSidebarOpen(true);
+        return true; // Should navigate
+      },
 
-            // Currency actions
-            setCurrency: (currencyCode: string) => {
-                const newCurrency = AVAILABLE_CURRENCIES.find(
-                    (c) => c.code === currencyCode,
-                );
-                if (newCurrency) {
-                    set({ selectedCurrency: newCurrency });
-                }
-            },
+      // Currency actions
+      setCurrency: (currencyCode: string) => {
+        const newCurrency = AVAILABLE_CURRENCIES.find(
+          (c) => c.code === currencyCode
+        );
+        if (newCurrency) {
+          set({ selectedCurrency: newCurrency });
+        }
+      },
 
-            // Experimental actions
-            toggleExperimentalMode: () =>
-                set((state) => ({
-                    experimentalMode: !state.experimentalMode,
-                })),
+      // Experimental actions
+      toggleExperimentalMode: () =>
+        set((state) => ({
+          experimentalMode: !state.experimentalMode,
+        })),
 
-            setExperimentalMode: (enabled: boolean) =>
-                set({ experimentalMode: enabled }),
+      setExperimentalMode: (enabled: boolean) =>
+        set({ experimentalMode: enabled }),
 
-            // Hydration actions
-            setHydrated: (hydrated: boolean) => set({ isHydrated: hydrated }),
-        }),
-        {
-            name: "ui-store",
-            partialize: (state) => ({
-                sidebar: state.sidebar,
-                navigation: state.navigation,
-                selectedCurrency: state.selectedCurrency,
-                experimentalMode: state.experimentalMode,
-            }),
-        },
-    ),
+      // Hydration actions
+      setHydrated: (hydrated: boolean) => set({ isHydrated: hydrated }),
+    }),
+    {
+      name: 'ui-store',
+      partialize: (state) => ({
+        sidebar: state.sidebar,
+        navigation: state.navigation,
+        selectedCurrency: state.selectedCurrency,
+        experimentalMode: state.experimentalMode,
+      }),
+    }
+  )
 );
 
 // Selector hooks for currency
 export const useSelectedCurrency = () =>
-    useUIStore((state) => state.selectedCurrency);
+  useUIStore((state) => state.selectedCurrency);
 
 export const useSetCurrency = () => useUIStore((state) => state.setCurrency);
 
 // Hook to get currency with fallback
 export const useSelectedCurrencySafe = () => {
-    const currency = useSelectedCurrency();
-    return currency || AVAILABLE_CURRENCIES[0];
+  const currency = useSelectedCurrency();
+  return currency || AVAILABLE_CURRENCIES[0];
 };

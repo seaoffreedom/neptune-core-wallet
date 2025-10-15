@@ -23,7 +23,7 @@ export const settingsAPI = {
   /**
    * Get setting value
    */
-  getSetting: async <T = any>(
+  getSetting: async <T = unknown>(
     key: string
   ): Promise<{
     success: boolean;
@@ -45,7 +45,7 @@ export const settingsAPI = {
   /**
    * Set setting value
    */
-  setSetting: async <T = any>(
+  setSetting: async <T = unknown>(
     key: string,
     value: T
   ): Promise<{
