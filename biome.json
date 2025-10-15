@@ -11,7 +11,13 @@
     "experimentalScannerIgnores": [
       "src/routeTree.gen.ts",
       "**/*.gen.ts",
-      "**/*.generated.*"
+      "**/*.generated.*",
+      "src/components/ui/**",
+      "dist/**",
+      "out/**",
+      "dist-electron-builder/**",
+      ".vite/**",
+      "node_modules/**"
     ]
   },
   "formatter": {
@@ -52,5 +58,22 @@
     "linter": {
       "enabled": false
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/components/ui/**"],
+      "linter": {
+        "enabled": false
+      }
+    },
+    {
+      "includes": ["dist/**", "out/**", "dist-electron-builder/**", ".vite/**"],
+      "linter": {
+        "enabled": false
+      },
+      "formatter": {
+        "enabled": false
+      }
+    }
+  ]
 }
