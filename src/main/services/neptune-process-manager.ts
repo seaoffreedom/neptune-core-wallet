@@ -533,6 +533,14 @@ export class NeptuneProcessManager {
           cwd: process.cwd(),
           platform: process.platform,
           arch: process.arch,
+          isPackaged: process.resourcesPath && !process.resourcesPath.includes('node_modules/electron/dist'),
+          resourcesPath: process.resourcesPath,
+          env: {
+            PATH: process.env.PATH?.substring(0, 200) + '...', // Truncate PATH for logging
+            USERPROFILE: process.env.USERPROFILE,
+            APPDATA: process.env.APPDATA,
+            LOCALAPPDATA: process.env.LOCALAPPDATA,
+          },
         },
         'Starting neptune-core with full context'
       );
@@ -541,6 +549,11 @@ export class NeptuneProcessManager {
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: false,
         reject: false, // Don't reject promise on non-zero exit
+        // Windows-specific options
+        ...(process.platform === 'win32' && {
+          windowsHide: true, // Hide the spawned console window on Windows
+          shell: false, // Don't use shell on Windows to avoid issues
+        }),
       });
 
       // Handle process events
@@ -644,6 +657,26 @@ export class NeptuneProcessManager {
       'Waiting for neptune-core to be ready on configured RPC port'
     );
 
+    // Windows-specific retry configuration
+    const isWindows = process.platform === 'win32';
+    const retryConfig = {
+      retries: isWindows ? 60 : 30, // More retries on Windows due to slower startup
+      factor: isWindows ? 1.05 : 1.1, // Slower backoff on Windows
+      minTimeout: isWindows ? 500 : 200, // Longer initial wait on Windows
+      maxTimeout: isWindows ? 2000 : 1000, // Longer max timeout on Windows
+      onFailedAttempt: (error: { attemptNumber: number; error?: Error }) => {
+        logger.warn(
+          {
+            attempt: error.attemptNumber,
+            error: error.error?.message || 'Unknown error',
+            remainingAttempts: (isWindows ? 60 : 30) - error.attemptNumber,
+            platform: process.platform,
+          },
+          `Core readiness check attempt ${error.attemptNumber} failed`
+        );
+      },
+    };
+
     return pRetry(
       async () => {
         try {
@@ -652,9 +685,15 @@ export class NeptuneProcessManager {
               '--port',
               actualCoreRpcPort.toString(),
               '--get-cookie',
-            ]),
+            ], {
+              // Windows-specific execa options
+              ...(isWindows && {
+                windowsHide: true,
+                shell: false,
+              }),
+            }),
             {
-              milliseconds: 5000,
+              milliseconds: isWindows ? 10000 : 5000, // Longer timeout on Windows
             }
           );
 
@@ -668,28 +707,16 @@ export class NeptuneProcessManager {
           return cookie;
         } catch (error) {
           logger.debug(
-            { error: (error as Error).message },
+            { 
+              error: (error as Error).message,
+              platform: process.platform,
+            },
             'Core not ready yet, retrying...'
           );
           throw error;
         }
       },
-      {
-        retries: 30, // More retries for faster detection
-        factor: 1.1, // Slower backoff for more frequent checks
-        minTimeout: 200, // Faster initial checks
-        maxTimeout: 1000, // Cap at 1 second
-        onFailedAttempt: (error) => {
-          logger.warn(
-            {
-              attempt: error.attemptNumber,
-              error: error.error?.message || 'Unknown error',
-              remainingAttempts: 30 - error.attemptNumber,
-            },
-            `Core readiness check attempt ${error.attemptNumber} failed`
-          );
-        },
-      }
+      retryConfig
     );
   }
 
@@ -731,6 +758,11 @@ export class NeptuneProcessManager {
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: false,
         reject: false, // Don't reject promise on non-zero exit
+        // Windows-specific options
+        ...(process.platform === 'win32' && {
+          windowsHide: true, // Hide the spawned console window on Windows
+          shell: false, // Don't use shell on Windows to avoid issues
+        }),
       });
 
       // Handle process events
@@ -919,7 +951,25 @@ export class NeptuneProcessManager {
     if (this.cliProcess && !this.cliProcess.killed) {
       logger.info('Stopping neptune-cli...');
       try {
-        this.cliProcess.kill('SIGTERM');
+        // Windows-specific cleanup
+        if (process.platform === 'win32') {
+          // On Windows, use taskkill for more reliable process termination
+          if (this.cliProcess.pid) {
+            const { execa } = await import('execa');
+            try {
+              await execa('taskkill', ['/F', '/T', '/PID', this.cliProcess.pid.toString()], {
+                timeout: 5000,
+                reject: false,
+              });
+            } catch (taskkillError) {
+              logger.warn({ error: taskkillError }, 'taskkill failed, trying standard kill');
+              this.cliProcess.kill('SIGTERM');
+            }
+          }
+        } else {
+          this.cliProcess.kill('SIGTERM');
+        }
+        
         await new Promise((resolve) => setTimeout(resolve, 2000));
         if (!this.cliProcess.killed) {
           this.cliProcess.kill('SIGKILL');
@@ -933,7 +983,25 @@ export class NeptuneProcessManager {
     if (this.coreProcess && !this.coreProcess.killed) {
       logger.info('Stopping neptune-core...');
       try {
-        this.coreProcess.kill('SIGTERM');
+        // Windows-specific cleanup
+        if (process.platform === 'win32') {
+          // On Windows, use taskkill for more reliable process termination
+          if (this.coreProcess.pid) {
+            const { execa } = await import('execa');
+            try {
+              await execa('taskkill', ['/F', '/T', '/PID', this.coreProcess.pid.toString()], {
+                timeout: 5000,
+                reject: false,
+              });
+            } catch (taskkillError) {
+              logger.warn({ error: taskkillError }, 'taskkill failed, trying standard kill');
+              this.coreProcess.kill('SIGTERM');
+            }
+          }
+        } else {
+          this.coreProcess.kill('SIGTERM');
+        }
+        
         await new Promise((resolve) => setTimeout(resolve, 2000));
         if (!this.coreProcess.killed) {
           this.coreProcess.kill('SIGKILL');
