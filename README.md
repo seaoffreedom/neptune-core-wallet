@@ -37,61 +37,18 @@ _Sea of Freedom._
 - 💰 **Complete Wallet Management**: Send, receive, and manage your Neptune tokens
 - 🌐 **Real-time Blockchain Data**: Live network stats, mempool activity, and transaction history
 
-## 📋 Prerequisites
+## Prerequisites
 
 ### Required Software
 
-- **Node.js** 18+ ([Download](https://nodejs.org/))
-- **pnpm** package manager
-- **Neptune Core Binaries** (see below)
+- Node.js 18+ ([Download](https://nodejs.org/))
+- pnpm package manager
 
 ### Install pnpm
 
 ```bash
 curl -fsSL https://get.pnpm.io/install.sh | sh -
 ```
-
-### 🔑 Neptune Binaries Setup
-
-**CRITICAL:** The wallet requires Neptune blockchain binaries that are **NOT included in this repository** (excluded via `.gitignore`).
-
-#### Required Binaries
-
-Place these in `resources/binaries/linux-x64/`:
-
-- `neptune-core` - Core blockchain node
-- `neptune-cli` - Command-line interface
-- `triton-vm-prover` - Zero-knowledge proof system
-
-#### How to Obtain Binaries
-
-**Option 1: Build from Source** (Recommended)
-
-```bash
-# Clone Neptune Core
-git clone https://github.com/Neptune-Crypto/neptune-core
-cd neptune-core
-
-# Build binaries
-cargo build --release
-
-# Copy to wallet project
-cp target/release/neptune-core ../neptune-core-wallet/resources/binaries/linux-x64/
-cp target/release/neptune-cli ../neptune-core-wallet/resources/binaries/linux-x64/
-cp target/release/triton-vm-prover ../neptune-core-wallet/resources/binaries/linux-x64/
-```
-
-**Option 2: Download Pre-built** (If available)
-Check Neptune Core releases for pre-built binaries.
-
-#### Verify Binary Setup
-
-```bash
-ls -la resources/binaries/linux-x64/
-# Should show: neptune-core, neptune-cli, triton-vm-prover
-```
-
-**⚠️ Without these binaries, the wallet will hang at the splash screen!**
 
 ### Linux Development Setup
 
@@ -106,7 +63,7 @@ Or run with `--no-sandbox` flag (handled automatically by `pnpm start`).
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # Clone the repository
@@ -115,8 +72,6 @@ cd neptune-core-wallet
 
 # Install dependencies
 pnpm install
-
-# IMPORTANT: Setup Neptune binaries (see Prerequisites above)
 
 # Start development server
 pnpm start
@@ -157,17 +112,13 @@ pnpm run build:appimage
 
 ### Troubleshooting
 
-**Problem: "ENOENT: no such file or directory, lstat 'resources/binaries'"**
-
-- **Solution:** Follow the [Neptune Binaries Setup](#-neptune-binaries-setup) instructions above
-
-**Problem: Wallet hangs at "Connecting to UI"**
-
-- **Solution:** Verify Neptune binaries are present and executable in `resources/binaries/linux-x64/`
-
 **Problem: SUID sandbox helper binary error**
 
 - **Solution:** Run `pnpm start` which includes `--no-sandbox` flag, or fix permissions as shown in prerequisites
+
+**Problem: Wallet hangs at splash screen**
+
+- **Solution:** Ensure Neptune Core is accessible on your network and ports are not blocked
 
 ## 🤝 Contributing
 
