@@ -200,10 +200,10 @@ describe("SystemHandlers - Real Tests", () => {
             const result = await SystemHandlers.handleGetProcessStats(1234);
 
             expect(result.success).toBe(true);
-            expect(result.stats).toHaveProperty("cpu");
-            expect(result.stats).toHaveProperty("memory");
-            expect(result.stats).toHaveProperty("pid");
-            expect(result.stats).toHaveProperty("timestamp");
+            expect(result.stats).toHaveProperty("isRunning");
+            expect(result.stats?.stats).toHaveProperty("cpu");
+            expect(result.stats?.stats).toHaveProperty("memory");
+            expect(result.stats?.stats).toHaveProperty("elapsed");
         });
     });
 
@@ -220,12 +220,20 @@ describe("SystemHandlers - Real Tests", () => {
                         memory: expect.any(Number),
                         timestamp: expect.any(Number),
                     },
-                    process: {
+                    neptuneCore: {
                         cpu: expect.any(Number),
                         memory: expect.any(Number),
                         pid: expect.any(Number),
                         timestamp: expect.any(Number),
                     },
+                    neptuneCli: {
+                        cpu: expect.any(Number),
+                        memory: expect.any(Number),
+                        pid: expect.any(Number),
+                        timestamp: expect.any(Number),
+                    },
+                    totalCpu: expect.any(Number),
+                    totalMemory: expect.any(Number),
                 },
             });
 
