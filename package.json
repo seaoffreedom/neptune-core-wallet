@@ -1,7 +1,7 @@
 {
   "name": "neptune-core-wallet",
   "productName": "neptune-core-wallet",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Neptune Core Wallet - Desktop wallet for Neptune blockchain",
   "main": ".vite/build/main/index.js",
   "scripts": {
