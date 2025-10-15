@@ -18,7 +18,7 @@ _Sea of Freedom._
 
 <div align="center">
 
-**A privacy-preserving, quantum-resistant, zk-STARKs-based desktop wallet for the Neptune blockchain**
+**The official desktop wallet for the Neptune blockchain - your gateway to quantum-resistant, privacy-preserving cryptocurrency**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -29,11 +29,13 @@ _Sea of Freedom._
 
 ## ✨ Features
 
-- 🔒 **Privacy-Preserving**: Advanced cryptographic techniques for transaction privacy
-- 🛡️ **Quantum-Resistant**: Protection against future quantum computing threats
-- ⚡ **zk-STARKs Technology**: Scalable, transparent, and secure proof systems
-- 🖥️ **Cross-Platform**: Native desktop experience on Windows, macOS, and Linux
-- 🎨 **Modern UI**: Beautiful, intuitive interface built with React and Tailwind CSS
+- 🔒 **Access to Privacy-Preserving Transactions**: Interface with Neptune's advanced cryptographic techniques
+- 🛡️ **Quantum-Resistant Security**: Interact with Neptune's quantum-resistant blockchain technology
+- ⚡ **zk-STARKs Integration**: Seamlessly use Neptune's scalable, transparent proof systems
+- 🖥️ **Cross-Platform Desktop App**: Native experience on Windows, macOS, and Linux
+- 🎨 **Modern, Intuitive Interface**: Beautiful UI built with React and Tailwind CSS
+- 💰 **Complete Wallet Management**: Send, receive, and manage your Neptune tokens
+- 🌐 **Real-time Blockchain Data**: Live network stats, mempool activity, and transaction history
 
 ## 🚀 Quick Start
 
