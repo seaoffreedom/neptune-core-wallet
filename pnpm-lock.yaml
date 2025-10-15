@@ -226,6 +226,9 @@ importers:
       '@playwright/test':
         specifier: ^1.56.0
         version: 1.56.0
+      '@tanstack/router-cli':
+        specifier: ^1.132.51
+        version: 1.132.51
       '@tanstack/router-plugin':
         specifier: ^1.132.51
         version: 1.132.51(@tanstack/react-router@1.132.47(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(vite@5.4.20(@types/node@24.7.2)(lightningcss@1.30.1)(terser@5.44.0))
@@ -2054,6 +2057,11 @@ packages:
     peerDependencies:
       react: '>=16.8'
       react-dom: '>=16.8'
+
+  '@tanstack/router-cli@1.132.51':
+    resolution: {integrity: sha512-Kibdf2iIZWbTgr1bPQvSVw0YTHEBrQpH2MqPCWhJE2tzahojhBEHwLbI63kDEE1Ka0JOFW5jzbWLnZnbfLi28g==}
+    engines: {node: '>=12'}
+    hasBin: true
 
   '@tanstack/router-core@1.132.47':
     resolution: {integrity: sha512-8YKFHmG6VUqXaWAJzEqjyW6w31dARS2USd2mtI5ZeZcihqMbskK28N4iotBXNn+sSKJnPRjc7A4jTnnEf8Mn8Q==}
@@ -7240,6 +7248,14 @@ snapshots:
       '@tanstack/table-core': 8.21.3
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
+
+  '@tanstack/router-cli@1.132.51':
+    dependencies:
+      '@tanstack/router-generator': 1.132.51
+      chokidar: 3.6.0
+      yargs: 17.7.2
+    transitivePeerDependencies:
+      - supports-color
 
   '@tanstack/router-core@1.132.47':
     dependencies:

@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import { defineConfig, type UserConfig } from 'vite';
 
 // https://vitejs.dev/config
@@ -33,7 +33,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
     },
     plugins: [
       tailwindcss.default(),
-      TanStackRouterVite({
+      tanstackRouter({
         routesDirectory: './src/routes',
         generatedRouteTree: './src/routeTree.gen.ts',
         routeFileIgnorePrefix: '-',
