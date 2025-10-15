@@ -3,7 +3,8 @@
  */
 
 // Import logos as modules so they get bundled by Vite
-import neptuneLogo from '../../assets/logos/neptune.svg';
+// Note: neptune.svg doesn't exist, using PNG instead
+import neptuneLogo from '../../assets/logos/neptune-256x256.png';
 
 /**
  * Get the correct path for an asset file
@@ -31,9 +32,9 @@ export function getAssetPath(assetPath: string): string {
  * @returns The correct path for the logo
  */
 export function getLogoPath(logoName: string): string {
-  // For now, just return the imported logo for neptune.svg
+  // For now, just return the imported logo for neptune logos
   // This ensures it gets bundled by Vite
-  if (logoName === 'neptune.svg') {
+  if (logoName === 'neptune.svg' || logoName === 'neptune-256x256.png') {
     return neptuneLogo;
   }
   return getAssetPath(`assets/logos/${logoName}`);

@@ -163,13 +163,10 @@ export const priceSettingsSchema = z.object({
     enabled: z.boolean(),
     currency: z.enum(["USD", "EUR", "GBP"]),
     cacheTtl: z
-        .string()
+        .number()
+        .int()
         .min(1, "Cache TTL must be at least 1 minute")
-        .max(2, "Cache TTL must be at most 60 minutes")
-        .refine((val) => {
-            const num = parseInt(val, 10);
-            return !isNaN(num) && num >= 1 && num <= 60;
-        }, "Cache TTL must be between 1 and 60 minutes"),
+        .max(60, "Cache TTL must be at most 60 minutes"),
 });
 
 export type PriceSettingsFormData = z.infer<typeof priceSettingsSchema>;
