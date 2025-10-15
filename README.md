@@ -1,5 +1,9 @@
 # Neptune Core Wallet
 
+<div align="center">
+  <img src="public/assets/logos/neptune-core-wallet.png" alt="Neptune Core Wallet Interface" style="max-width: 100%; height: auto;">
+</div>
+
 > _"Different wars. Different continents. Different decades. But the same salvation: the sea."_
 
 Throughout history, when oppression threatened freedom, people turned to the sea. They braved storms, uncertainty, and the unknown because the sea offered something precious: liberation from control, censorship, and authoritarian hands.
@@ -13,7 +17,6 @@ _Sea of Freedom._
 ---
 
 <div align="center">
-  <img src="public/assets/logos/neptune-core-wallet.png" alt="Neptune Core Wallet Interface" style="max-width: 100%; height: auto;">
 
 **A privacy-preserving, quantum-resistant, zk-STARKs-based desktop wallet for the Neptune blockchain**
 
