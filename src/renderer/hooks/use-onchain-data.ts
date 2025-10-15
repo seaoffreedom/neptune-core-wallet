@@ -73,7 +73,7 @@ export function useDashboardData() {
         setError(result.error || 'Failed to fetch dashboard data');
       }
     } catch (error) {
-      setError((error as Error).message);
+      setError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsRefreshing(false);
       setLoading(false);
@@ -142,7 +142,7 @@ export function useCurrentDifficulty() {
         setCurrentDifficulty(null);
       }
     } catch (error) {
-      setError((error as Error).message);
+      setError(error instanceof Error ? error.message : 'Unknown error');
       setCurrentDifficulty(null);
     } finally {
       setIsRefreshing(false);
@@ -198,7 +198,7 @@ export function useBalance() {
         setError(result.error || 'Failed to fetch balance');
       }
     } catch (error) {
-      setError((error as Error).message);
+      setError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsRefreshing(false);
       setLoading(false);
@@ -245,7 +245,7 @@ export function useNetworkInfo() {
         setBlockHeight(heightResult.height);
       }
     } catch (error) {
-      setError((error as Error).message);
+      setError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsRefreshing(false);
       setLoading(false);
@@ -332,7 +332,7 @@ export function useReceivingAddress() {
         setError(result.error || 'Failed to fetch receiving address');
       }
     } catch (error) {
-      setError((error as Error).message);
+      setError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsRefreshing(false);
       setLoading(false);
@@ -372,9 +372,9 @@ export function useNthReceivingAddress(n: number = 0) {
         setError(result.error || 'Failed to fetch receiving address');
       }
     } catch (error) {
-      setError((error as Error).message);
+      setError(error instanceof Error ? error.message : 'Unknown error');
       logger.error('Failed to fetch nth receiving address', {
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     } finally {
       setIsLoading(false);
@@ -405,7 +405,7 @@ export function useSendTransaction() {
       setTxId(null);
 
       try {
-        logger.info('Sending transaction', params);
+        logger.info('Sending transaction', { params });
 
         const result = await window.electronAPI.blockchain.send(params);
 
@@ -534,7 +534,9 @@ export function useMempoolInfo() {
       // Silently ignore errors (mempool endpoints are optional)
     } catch (error) {
       // Debug: Log any errors that might be causing polling to stop
-      logger.error('Mempool fetch error', { error: error.message });
+      logger.error('Mempool fetch error', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       // Silently ignore mempool fetch errors (non-critical)
     } finally {
       setIsRefreshing(false);
@@ -588,7 +590,7 @@ export function useMempoolInfo() {
           });
         }
       } catch (error) {
-        setError((error as Error).message);
+        setError(error instanceof Error ? error.message : 'Unknown error');
         // Set empty overview on error
         setMempoolOverview({
           transactions: [],
@@ -728,7 +730,7 @@ export function usePeerInfo() {
         setError(result.error || 'Failed to fetch peer info');
       }
     } catch (error) {
-      setError((error as Error).message);
+      setError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsRefreshing(false);
       setLoading(false);

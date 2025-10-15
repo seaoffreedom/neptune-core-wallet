@@ -60,7 +60,7 @@ export class AddressBookService {
   getEntryById(id: string): AddressBookEntry | null {
     try {
       const entries = this.store.get('entries', []);
-      const entry = entries.find((e) => e.id === id);
+      const entry = entries.find((e: AddressBookEntry) => e.id === id);
       logger.info({ id, found: !!entry }, 'Retrieved entry by ID');
       return entry || null;
     } catch (error) {
@@ -81,7 +81,9 @@ export class AddressBookService {
       const entries = this.store.get('entries', []);
 
       // Check for duplicate address
-      const existingEntry = entries.find((e) => e.address === data.address);
+      const existingEntry = entries.find(
+        (e: AddressBookEntry) => e.address === data.address
+      );
       if (existingEntry) {
         throw new Error(
           `Address already exists in address book: ${existingEntry.title}`
@@ -122,7 +124,9 @@ export class AddressBookService {
   ): AddressBookEntry {
     try {
       const entries = this.store.get('entries', []);
-      const entryIndex = entries.findIndex((e) => e.id === id);
+      const entryIndex = entries.findIndex(
+        (e: AddressBookEntry) => e.id === id
+      );
 
       if (entryIndex === -1) {
         throw new Error(`Entry not found: ${id}`);
@@ -163,7 +167,9 @@ export class AddressBookService {
   deleteEntry(id: string): boolean {
     try {
       const entries = this.store.get('entries', []);
-      const entryIndex = entries.findIndex((e) => e.id === id);
+      const entryIndex = entries.findIndex(
+        (e: AddressBookEntry) => e.id === id
+      );
 
       if (entryIndex === -1) {
         throw new Error(`Entry not found: ${id}`);
@@ -190,7 +196,7 @@ export class AddressBookService {
       const lowercaseQuery = query.toLowerCase();
 
       const results = entries.filter(
-        (entry) =>
+        (entry: AddressBookEntry) =>
           entry.title.toLowerCase().includes(lowercaseQuery) ||
           entry.address.toLowerCase().includes(lowercaseQuery) ||
           entry.description.toLowerCase().includes(lowercaseQuery)

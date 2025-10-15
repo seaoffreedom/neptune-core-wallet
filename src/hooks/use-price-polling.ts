@@ -40,7 +40,9 @@ export function usePricePolling() {
   const previousEnabledRef = useRef<boolean | null>(null);
   const priceFetchingSettingsRef = useRef(priceFetchingSettings);
   const updatePriceFetchingSettingsRef = useRef(updatePriceFetchingSettings);
-  const fetchAndUpdatePricesRef = useRef<() => Promise<void>>();
+  const fetchAndUpdatePricesRef = useRef<() => Promise<void>>(() =>
+    Promise.resolve()
+  );
 
   // Function to fetch and update prices
   const fetchAndUpdatePrices = useCallback(async () => {

@@ -64,10 +64,9 @@ export class DataFetchingCircuitBreaker {
           minTimeout: 1000,
           maxTimeout: 4000,
           onFailedAttempt: (error) => {
-            logger.warn(
-              `Data fetch attempt ${error.attemptNumber} failed:`,
-              error instanceof Error ? error.message : String(error)
-            );
+            logger.warn(`Data fetch attempt ${error.attemptNumber} failed`, {
+              error: error instanceof Error ? error.message : String(error),
+            });
           },
         }
       );

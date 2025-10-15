@@ -31,7 +31,7 @@ export const usePeerStore = create<PeerState>((set, get) => ({
     try {
       // First, let's check what ALL peers exist (regardless of network)
       const allPeers = await window.electronAPI.peer.getAll();
-      logger.debug('All peers in store', allPeers);
+      logger.debug('All peers in store', { peers: allPeers });
 
       const [active, banned] = await Promise.all([
         window.electronAPI.peer.getActive(network),

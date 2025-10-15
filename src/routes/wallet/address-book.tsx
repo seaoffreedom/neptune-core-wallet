@@ -178,7 +178,7 @@ function AddressBook() {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={fetchEntries}
+                                            onClick={() => fetchEntries()}
                                             disabled={isLoading}
                                         >
                                             <RefreshCw

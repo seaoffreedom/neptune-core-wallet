@@ -47,7 +47,7 @@ export function useAddressBook() {
     } catch (err) {
       setError((err as Error).message);
       logger.error('Failed to fetch address book entries', {
-        error: err.message,
+        error: err instanceof Error ? err.message : 'Unknown error',
       });
     } finally {
       setIsLoading(false);
@@ -77,7 +77,9 @@ export function useAddressBook() {
       } catch (err) {
         const errorMsg = (err as Error).message;
         setError(errorMsg);
-        logger.error('Failed to create entry', { error: err.message });
+        logger.error('Failed to create entry', {
+          error: err instanceof Error ? err.message : 'Unknown error',
+        });
         return null;
       }
     },
@@ -110,7 +112,9 @@ export function useAddressBook() {
       } catch (err) {
         const errorMsg = (err as Error).message;
         setError(errorMsg);
-        logger.error('Failed to update entry', { error: err.message });
+        logger.error('Failed to update entry', {
+          error: err instanceof Error ? err.message : 'Unknown error',
+        });
         return null;
       }
     },
@@ -136,7 +140,9 @@ export function useAddressBook() {
       } catch (err) {
         const errorMsg = (err as Error).message;
         setError(errorMsg);
-        logger.error('Failed to delete entry', { error: err.message });
+        logger.error('Failed to delete entry', {
+          error: err instanceof Error ? err.message : 'Unknown error',
+        });
         return false;
       }
     },
@@ -157,7 +163,9 @@ export function useAddressBook() {
       }
     } catch (err) {
       setError((err as Error).message);
-      logger.error('Failed to search entries', { error: err.message });
+      logger.error('Failed to search entries', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -199,7 +207,9 @@ export function useAddressBookIO() {
     } catch (err) {
       const errorMsg = (err as Error).message;
       setError(errorMsg);
-      logger.error('Failed to export entries', { error: err.message });
+      logger.error('Failed to export entries', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+      });
       return null;
     } finally {
       setIsExporting(false);
@@ -224,7 +234,7 @@ export function useAddressBookIO() {
         const errorMsg = (err as Error).message;
         setError(errorMsg);
         logger.error('Failed to import entries', {
-          error: err.message,
+          error: err instanceof Error ? err.message : 'Unknown error',
         });
         return null;
       } finally {

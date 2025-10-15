@@ -700,8 +700,10 @@ export function MempoolOverviewCompact({
                                 className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-orange-600 hover:text-orange-700"
                                 onClick={() => {
                                   logger.debug(
-                                    'Broadcast individual transaction:',
-                                    tx.id
+                                    'Broadcast individual transaction',
+                                    {
+                                      txId: tx.id,
+                                    }
                                   );
                                   showInfoToast(
                                     'Individual transaction broadcast not yet implemented'

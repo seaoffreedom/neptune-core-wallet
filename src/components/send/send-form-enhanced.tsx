@@ -274,7 +274,7 @@ export function SendFormEnhanced() {
       showSuccessToast('Transaction sent successfully!', {
         description: `Sent to ${recipientCount} recipient${recipientCount > 1 ? 's' : ''}. Transaction ID: ${result.substring(0, 8)}...`,
       });
-      logger.info('Transaction sent', result);
+      logger.info('Transaction sent', { txId: result });
     } else {
       showErrorToast('Failed to send transaction', {
         description: error || 'Unknown error occurred',

@@ -148,12 +148,15 @@ export function useSettingsForm<
         if (category === 'priceFetching') {
           transformedData = {
             ...data,
-            cacheTtl: parseInt((data as { cacheTtl: string }).cacheTtl, 10),
+            cacheTtl: parseInt(
+              (data as unknown as { cacheTtl: string }).cacheTtl,
+              10
+            ),
           };
         }
 
         const updateMethod = getUpdateMethod(category);
-        const result = await window.electronAPI.neptuneCoreSettings[
+        const result = await (window.electronAPI.neptuneCoreSettings as any)[
           updateMethod
         ](transformedData as never);
 

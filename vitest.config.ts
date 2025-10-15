@@ -74,9 +74,8 @@ export default defineConfig({
     watch: false,
 
     // Thread configuration
-    threads: true,
-    maxThreads: 4,
-    minThreads: 1,
+    // maxThreads: 4,
+    // minThreads: 1,
   },
 
   // Resolve configuration

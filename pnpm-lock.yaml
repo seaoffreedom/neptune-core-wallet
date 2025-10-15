@@ -238,9 +238,6 @@ importers:
       '@types/bcrypt':
         specifier: ^6.0.0
         version: 6.0.0
-      '@types/dompurify':
-        specifier: ^3.2.0
-        version: 3.2.0
       '@types/electron-squirrel-startup':
         specifier: ^1.0.2
         version: 1.0.2
@@ -259,9 +256,6 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.1
         version: 19.2.1(@types/react@19.2.2)
-      '@types/uuid':
-        specifier: ^11.0.0
-        version: 11.0.0
       '@vitejs/plugin-react':
         specifier: ^4.7.0
         version: 4.7.0(vite@5.4.20(@types/node@24.7.2)(lightningcss@1.30.1)(terser@5.44.0))
@@ -2183,10 +2177,6 @@ packages:
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
-  '@types/dompurify@3.2.0':
-    resolution: {integrity: sha512-Fgg31wv9QbLDA0SpTOXO3MaxySc4DKGLi8sna4/Utjo4r3ZRPdCt4UQee8BWr+Q5z21yifghREPJGYaEOEIACg==}
-    deprecated: This is a stub types definition. dompurify provides its own type definitions, so you do not need this installed.
-
   '@types/electron-squirrel-startup@1.0.2':
     resolution: {integrity: sha512-AzxnvBzNh8K/0SmxMmZtpJf1/IWoGXLP+pQDuUaVkPyotI8ryvAtBSqgxR/qOSvxWHYWrxkeNsJ+Ca5xOuUxJQ==}
 
@@ -2260,10 +2250,6 @@ packages:
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
-
-  '@types/uuid@11.0.0':
-    resolution: {integrity: sha512-HVyk8nj2m+jcFRNazzqyVKiZezyhDKrGUA3jlEcg/nZ6Ms+qHwocba1Y/AaVaznJTAM9xpdFSh+ptbNrhOGvZA==}
-    deprecated: This is a stub types definition. uuid provides its own type definitions, so you do not need this installed.
 
   '@types/verror@1.10.11':
     resolution: {integrity: sha512-RlDm9K7+o5stv0Co8i8ZRGxDbrTxhJtgjqjFyVh/tXQyl/rYtTKlnTvZ88oSTeYREWurwx20Js4kTuKCsFkUtg==}
@@ -7426,10 +7412,6 @@ snapshots:
 
   '@types/deep-eql@4.0.2': {}
 
-  '@types/dompurify@3.2.0':
-    dependencies:
-      dompurify: 3.2.7
-
   '@types/electron-squirrel-startup@1.0.2': {}
 
   '@types/estree@1.0.8': {}
@@ -7515,10 +7497,6 @@ snapshots:
 
   '@types/trusted-types@2.0.7':
     optional: true
-
-  '@types/uuid@11.0.0':
-    dependencies:
-      uuid: 13.0.0
 
   '@types/verror@1.10.11':
     optional: true

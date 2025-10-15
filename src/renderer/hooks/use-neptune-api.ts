@@ -86,7 +86,7 @@ export function useNeptuneAPI(): UseNeptuneAPI {
       return result?.success || false;
     } catch (_error) {
       logger.error('Failed to initialize Neptune', {
-        error: errorMessage,
+        error: _error instanceof Error ? _error.message : 'Unknown error',
       });
       return false;
     }
@@ -101,7 +101,9 @@ export function useNeptuneAPI(): UseNeptuneAPI {
 
       return result?.success || false;
     } catch (_error) {
-      logger.error('Failed to shutdown Neptune', { error: errorMessage });
+      logger.error('Failed to shutdown Neptune', {
+        error: _error instanceof Error ? _error.message : 'Unknown error',
+      });
       return false;
     }
   }, [executeTask]);
@@ -115,7 +117,9 @@ export function useNeptuneAPI(): UseNeptuneAPI {
 
       return result?.success || false;
     } catch (_error) {
-      logger.error('Failed to restart Neptune', { error: errorMessage });
+      logger.error('Failed to restart Neptune', {
+        error: _error instanceof Error ? _error.message : 'Unknown error',
+      });
       return false;
     }
   }, [executeTask]);
@@ -126,7 +130,7 @@ export function useNeptuneAPI(): UseNeptuneAPI {
       return result;
     } catch (error) {
       logger.error('Failed to get Neptune status', {
-        error: errorMessage,
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
     }
@@ -138,7 +142,7 @@ export function useNeptuneAPI(): UseNeptuneAPI {
       return result.success ? result.cookie || null : null;
     } catch (_error) {
       logger.error('Failed to get Neptune cookie', {
-        error: errorMessage,
+        error: _error instanceof Error ? _error.message : 'Unknown error',
       });
       return null;
     }
@@ -150,7 +154,7 @@ export function useNeptuneAPI(): UseNeptuneAPI {
       return result;
     } catch (error) {
       logger.error('Failed to get Neptune wallet data', {
-        error: errorMessage,
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
     }

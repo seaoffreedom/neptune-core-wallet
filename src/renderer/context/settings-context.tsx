@@ -188,7 +188,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         .filter(([_, state]) => state.isDirty && state.handleSave)
         .map(([cat]) => cat as SettingsCategory);
 
-      logger.info('Saving all dirty categories', categoriesToSave);
+      logger.info('Saving all dirty categories', {
+        categories: categoriesToSave,
+      });
 
       // Save all dirty categories in parallel
       const savePromises = categoriesToSave.map((category) => {
@@ -214,7 +216,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             dirtyCount: 0,
           };
         });
-        logger.debug('Manually cleared isDirty for', categoriesToSave);
+        logger.debug('Manually cleared isDirty for', {
+          categories: categoriesToSave,
+        });
         return updated;
       });
 
@@ -232,7 +236,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   // Reset all dirty categories
   const resetAllChanges = useCallback(() => {
-    logger.info('Resetting all dirty categories', dirtyCategories);
+    logger.info('Resetting all dirty categories', {
+      categories: dirtyCategories,
+    });
 
     dirtyCategories.forEach((category) => {
       const state = categories[category];

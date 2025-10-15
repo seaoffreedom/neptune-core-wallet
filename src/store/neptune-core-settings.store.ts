@@ -160,7 +160,9 @@ export const useNeptuneCoreSettingsStore = create<NeptuneCoreSettingsState>()(
             settings: result.settings,
             isLoading: false,
           });
-          logger.info('Settings loaded', result.settings);
+          logger.info('Settings loaded', {
+            settings: result.settings,
+          });
         } else {
           throw new Error(result.error || 'Failed to load settings');
         }
