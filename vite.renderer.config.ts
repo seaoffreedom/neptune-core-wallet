@@ -1,5 +1,5 @@
 import path from "node:path";
-import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import { defineConfig, type UserConfig } from "vite";
 
 // https://vitejs.dev/config
@@ -31,15 +31,15 @@ export default defineConfig(async (): Promise<UserConfig> => {
                 ignored: ["**/data/**", "**/node_modules/**"],
             },
         },
-    plugins: [
-        tailwindcss.default(),
-        tanstackRouter({
-            routesDirectory: "./src/routes",
-            generatedRouteTree: "./src/routeTree.gen.ts",
-            routeFileIgnorePrefix: "-",
-            quoteStyle: "single",
-        }),
-    ],
+        plugins: [
+            tailwindcss.default(),
+            TanStackRouterVite({
+                routesDirectory: "./src/routes",
+                generatedRouteTree: "./src/routeTree.gen.ts",
+                routeFileIgnorePrefix: "-",
+                quoteStyle: "single",
+            }),
+        ],
         resolve: {
             alias: {
                 "@": path.resolve(__dirname, "./src"),
